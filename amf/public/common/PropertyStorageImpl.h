@@ -47,7 +47,7 @@ namespace amf
 {
     //---------------------------------------------------------------------------------------------
     template<typename _TBase> class AMFPropertyStorageImpl :
-        public _TBase, 
+        public _TBase,
         public AMFObservableImpl<AMFPropertyStorageObserver>
     {
     public:
