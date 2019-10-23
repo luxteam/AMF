@@ -59,5 +59,6 @@ AMF_RESULT AMFFactoryImpl::GetTrace(amf::AMFTrace **ppTrace)
 
 AMF_RESULT AMFFactoryImpl::GetPrograms(amf::AMFPrograms **ppPrograms)
 {
-    return AMF_NOT_IMPLEMENTED;
+    *ppPrograms = &m_Programs;
+    return AMF_OK;
 }

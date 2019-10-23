@@ -3,7 +3,7 @@
 
 #include "../../common/TraceAdapter.h"
 #include "../../include/core/Factory.h"
-
+#include "ProgramsImpl.h"
 
 class AMFFactoryImpl : public amf::AMFFactory
 {
@@ -19,6 +19,9 @@ public:
     virtual AMF_RESULT GetDebug(amf::AMFDebug **ppDebug) override;
     virtual AMF_RESULT GetTrace(amf::AMFTrace **ppTrace) override;
     virtual AMF_RESULT GetPrograms(amf::AMFPrograms **ppPrograms) override;
+
+private:
+    AMFProgramsImpl m_Programs;
 };
 
 #endif // AMFFACTORYIMPL_H

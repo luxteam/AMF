@@ -84,6 +84,7 @@ SOURCES += \
     ../../../src/core/DeviceOCLImpl.cpp \
     ../../../src/core/FactoryImpl.cpp \
     ../../../src/core/PlaneImpl.cpp \
+    ../../../src/core/ProgramsImpl.cpp \
     ../../../src/core/SurfaceImpl.cpp \
     ../../../src/core/TraceImpl.cpp
 
@@ -154,6 +155,7 @@ HEADERS += \
     ../../../src/core/DeviceOCLImpl.h \
     ../../../src/core/FactoryImpl.h \
     ../../../src/core/PlaneImpl.h \
+    ../../../src/core/ProgramsImpl.h \
     ../../../src/core/SurfaceImpl.h \
     ../../../src/core/TraceImpl.h
 
