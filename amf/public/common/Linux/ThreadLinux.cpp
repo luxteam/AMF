@@ -1,4 +1,4 @@
-// 
+//
 // Notice Regarding Standards.  AMD does not provide a license or sublicense to
 // any Intellectual Property Rights relating to any standards, including but not
 // limited to any audio and/or video codec technologies such as MPEG-2, MPEG-4;
@@ -6,9 +6,9 @@
 // (collectively, the "Media Technologies"). For clarity, you will pay any
 // royalties due for such third party technologies, which may include the Media
 // Technologies that are owed as a result of AMD providing the Software to you.
-// 
-// MIT license 
-// 
+//
+// MIT license
+//
 // Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,7 +34,7 @@
 #include "../Thread.h"
 
 
-#if defined (__linux)
+#if defined (__linux) || defined(__APPLE__) || defined(__MACOSX)
 
 #if defined(__GNUC__)
     //disable gcc warinings on STL code
@@ -47,7 +47,9 @@
 #include <algorithm>
 #include <dirent.h>
 #include <fnmatch.h>
+#if !defined(__APPLE__) && !defined(__MACOSX)
 #include <malloc.h>
+#endif
 #include <pwd.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -59,7 +61,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <dlfcn.h>
-#include <sys/time.h>	
+#include <sys/time.h>
 
 #if defined(__ANDROID__)
 #include <android/log.h>
@@ -83,8 +85,8 @@ void perror(const char* errorModule)
     strerror_r(errno, buf, sizeof(buf));
     fprintf(stderr, "%s: %s", buf, errorModule);
 #else
-    char* err = strerror_r(errno, buf, sizeof(buf));
-    fprintf(stderr, "%s: %s", err, errorModule);
+    /*char* err = */strerror_r(errno, buf, sizeof(buf));
+    fprintf(stderr, "%s: %s", buf, errorModule);
 #endif
 
     exit(1);
@@ -92,7 +94,11 @@ void perror(const char* errorModule)
 
 amf_uint32 AMF_STD_CALL get_current_thread_id()
 {
-    return static_cast<amf_uint32>(pthread_self());
+#ifndef __APPLE__
+    return static_cast<amf_uint64>(pthread_self());
+#else
+    throw "Error: not implemented!";
+#endif
 }
 
 // int clock_gettime(clockid_t clk_id, struct timespec *tp);
@@ -353,22 +359,12 @@ bool AMF_STD_CALL amf_wait_for_mutex(amf_handle hmutex, unsigned long timeout)
     {
         return pthread_mutex_lock(mutex) == 0;
     }
-
     // ulTimeout is in milliseconds
-    long timeout_sec = timeout / 1000;      /* Seconds */;
-    long timeout_nsec = (timeout - (timeout / 1000) * 1000) * 1000000;
-
     timespec wait_time; //absolute time
     clock_gettime(CLOCK_REALTIME, &wait_time);
 
-    wait_time.tv_sec += timeout_sec;
-    wait_time.tv_nsec += timeout_nsec;
-
-    if (wait_time.tv_nsec >= 1000000000)
-    {
-        wait_time.tv_sec++;
-        wait_time.tv_nsec -= 1000000000;
-    }
+    wait_time.tv_sec += timeout / 1000;      /* Seconds */
+    wait_time.tv_nsec += (timeout - (timeout / 1000) * 1000) * 1000;     /* Nanoseconds [0 .. 999999999] */
 
 #ifdef __APPLE__
     int* tmpptr = NULL;
@@ -423,26 +419,17 @@ bool AMF_STD_CALL amf_delete_semaphore(amf_handle hsemaphore)
 //----------------------------------------------------------------------------------------
 bool AMF_STD_CALL amf_wait_for_semaphore(amf_handle hsemaphore, amf_ulong timeout)
 {
+#ifndef __APPLE__
     if(hsemaphore == NULL)
     {
         return true;
     }
-
     // ulTimeout is in milliseconds
-    long timeout_sec = timeout / 1000;      /* Seconds */;
-    long timeout_nsec = (timeout - (timeout / 1000) * 1000) * 1000000;
-
     timespec wait_time; //absolute time
     clock_gettime(CLOCK_REALTIME, &wait_time);
 
-    wait_time.tv_sec += timeout_sec;
-    wait_time.tv_nsec += timeout_nsec;
-
-    if (wait_time.tv_nsec >= 1000000000)
-    {
-        wait_time.tv_sec++;
-        wait_time.tv_nsec -= 1000000000;
-    }
+    wait_time.tv_sec += timeout / 1000;      /* Seconds */
+    wait_time.tv_nsec += (timeout - (timeout / 1000) * 1000) * 1000;     /* Nanoseconds [0 .. 999999999] */
 
     sem_t* semaphore = (sem_t*)hsemaphore;
     if(timeout != AMF_INFINITE)
@@ -453,6 +440,9 @@ bool AMF_STD_CALL amf_wait_for_semaphore(amf_handle hsemaphore, amf_ulong timeou
     {
         return sem_wait(semaphore) == 0;
     }
+#else
+    throw "Error: not implemented!";
+#endif
 }
 //----------------------------------------------------------------------------------------
 bool AMF_STD_CALL amf_release_semaphore(amf_handle hsemaphore, amf_long iCount, amf_long* iOldCount)
@@ -557,7 +547,11 @@ void AMF_STD_CALL amf_virtual_free(void* ptr)
 //----------------------------------------------------------------------------------------
 void* AMF_STD_CALL amf_aligned_alloc(size_t count, size_t alignment)
 {
+#ifndef __APPLE__
     return memalign(alignment, count);
+#else
+    throw "Error: not implemented!";
+#endif
 }
 //----------------------------------------------------------------------------------------
 void AMF_STD_CALL amf_aligned_free(void* ptr)
@@ -597,11 +591,13 @@ amf_pts AMF_STD_CALL amf_high_precision_clock()
 amf_handle AMF_STD_CALL amf_load_library(const wchar_t* filename)
 {
     void *ret = dlopen(amf_from_unicode_to_multibyte(filename).c_str(), RTLD_NOW | RTLD_GLOBAL);
-    if(ret ==0 )
+
+    if(!ret)
     {
         const char *err = dlerror();
-        int a=1;
+        fprintf(stderr, "\nError: %s\n", err);
     }
+
     return ret;
 }
 

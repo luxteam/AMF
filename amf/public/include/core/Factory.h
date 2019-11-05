@@ -1,4 +1,4 @@
-// 
+//
 // Notice Regarding Standards.  AMD does not provide a license or sublicense to
 // any Intellectual Property Rights relating to any standards, including but not
 // limited to any audio and/or video codec technologies such as MPEG-2, MPEG-4;
@@ -6,9 +6,9 @@
 // (collectively, the "Media Technologies"). For clarity, you will pay any
 // royalties due for such third party technologies, which may include the Media
 // Technologies that are owed as a result of AMD providing the Software to you.
-// 
-// MIT license 
-// 
+//
+// MIT license
+//
 // Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -100,28 +100,47 @@ extern "C"
     typedef AMF_RESULT             (AMF_CDECL_CALL *AMFInit_Fn)(amf_uint64 version, amf::AMFFactory **ppFactory);
     typedef AMF_RESULT             (AMF_CDECL_CALL *AMFQueryVersion_Fn)(amf_uint64 *pVersion);
 }
-#else 
+#else
     typedef AMF_RESULT             (AMF_CDECL_CALL *AMFInit_Fn)(amf_uint64 version, AMFFactory **ppFactory);
     typedef AMF_RESULT             (AMF_CDECL_CALL *AMFQueryVersion_Fn)(amf_uint64 *pVersion);
 #endif
 
-#if defined(_WIN32)
-    #if defined(_M_AMD64)
-        #define AMF_DLL_NAME    L"amfrt64.dll"
-        #define AMF_DLL_NAMEA   "amfrt64.dll"
-    #else
-        #define AMF_DLL_NAME    L"amfrt32.dll"
-        #define AMF_DLL_NAMEA   "amfrt32.dll"
+//to allow external setting of AMF library name
+#if defined(AMF_LIBRARY_NAME)
+
+    //  todo: use environment variable 'AMF_DLL_NAME' to set shared library name instead of the following way
+    //
+    //  this way to set shared library name does not works with params
+    //  contining 'linux' '_win32' 'mac' parts
+    //  because these parts are evaluated by compiler macro preprocessor to '1' on the related platform
+
+    #define AMF_INTERNAL_EXPAND(arg)    #arg
+    #define AMF_INTERNAL_EXPAND1(arg)   AMF_INTERNAL_EXPAND(arg)
+    #define AMF_INTERNAL_CONCAT(A, B)   A ## B
+    #define AMF_INTERNAL_CONCAT1(A, B)  AMF_INTERNAL_CONCAT(A, B)
+
+    #define AMF_DLL_NAME                AMF_INTERNAL_CONCAT1(L, AMF_INTERNAL_EXPAND1(AMF_LIBRARY_NAME))
+    #define AMF_DLL_NAMEA               AMF_INTERNAL_EXPAND1(AMF_LIBRARY_NAME)
+
+#else
+    #if defined(_WIN32)
+        #if defined(_M_AMD64)
+            #define AMF_DLL_NAME    L"amfrt64.dll"
+            #define AMF_DLL_NAMEA   "amfrt64.dll"
+        #else
+            #define AMF_DLL_NAME    L"amfrt32.dll"
+            #define AMF_DLL_NAMEA   "amfrt32.dll"
+        #endif
+    #elif defined(__linux) || defined(__APPLE__) || defined(__MACOSX)
+        #if defined(__x86_64__)
+            #define AMF_DLL_NAME    L"libamfrt64.so.1"
+            #define AMF_DLL_NAMEA   "libamfrt64.so.1"
+        #else
+            #define AMF_DLL_NAME    L"libamfrt32.so.1"
+            #define AMF_DLL_NAMEA   "libamfrt32.so.1"
+        #endif
     #endif
-#elif defined(__linux__)
-    #if defined(__x86_64__)
-        #define AMF_DLL_NAME    L"libamfrt64.so.1"
-        #define AMF_DLL_NAMEA   "libamfrt64.so.1"
-    #else
-        #define AMF_DLL_NAME    L"libamfrt32.so.1"
-        #define AMF_DLL_NAMEA   "libamfrt32.so.1"
-    #endif
-#endif 
+#endif
 //----------------------------------------------------------------------------------------------
 
 #endif  // AMF_Factory_h

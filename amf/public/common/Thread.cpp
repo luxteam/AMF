@@ -1,4 +1,4 @@
-// 
+//
 // Notice Regarding Standards.  AMD does not provide a license or sublicense to
 // any Intellectual Property Rights relating to any standards, including but not
 // limited to any audio and/or video codec technologies such as MPEG-2, MPEG-4;
@@ -6,9 +6,9 @@
 // (collectively, the "Media Technologies"). For clarity, you will pay any
 // royalties due for such third party technologies, which may include the Media
 // Technologies that are owed as a result of AMD providing the Software to you.
-// 
-// MIT license 
-// 
+//
+// MIT license
+//
 // Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,20 +29,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
+#include "Thread.h"
 
 #if defined(_WIN32)
-#include <process.h>
+    #include <process.h>
 #else
-#include <pthread.h>
+    #include <pthread.h>
 #endif
-#include "Thread.h"
 
 #if defined(METRO_APP)
     #include <ppl.h>
     #include <ppltasks.h>
 #endif
-
-
 
 namespace amf
 {
@@ -449,7 +447,7 @@ namespace amf
     }
 
     #endif //#if defined(_WIN32)
-    #if defined(__linux)
+    #if defined(__linux) || defined(__APPLE__) || defined(__MACOSX)
         class AMFThreadObj
         {
         public:
@@ -509,29 +507,25 @@ namespace amf
 
     bool AMFThreadObj::Start()
     {
-        bool result = true;
-        if (IsRunning() == false)
-        {
-            result = (0 == pthread_create(&m_hThread, 0, AMFThreadProc, (void*)this));
-        }
-        return result;
+        return 0 == pthread_create(&m_hThread, 0, AMFThreadProc, (void*)this);
     }
 
     bool AMFThreadObj::RequestStop()
     {
-        if(m_hThread == (uintptr_t)0L)
-        {
-            return true;
-        }
+        //if(m_hThread)
+        //{
+        //    return true;
+        //}
         pthread_mutex_lock(&m_hMutex);
         m_bStopRequested = true;
         pthread_mutex_unlock(&m_hMutex);
+
         return true;
     }
 
     bool AMFThreadObj::WaitForStop()
     {
-        if(m_hThread != (uintptr_t)0L)
+        if(m_hThread)
         {
             pthread_join(m_hThread, 0);
         }
@@ -548,7 +542,7 @@ namespace amf
 
     bool AMFThreadObj::IsRunning()
     {
-        return m_hThread != (uintptr_t)0L;
+        return m_hThread;
     }
 
     void ExitThread()
@@ -556,7 +550,7 @@ namespace amf
         pthread_exit(0);
     }
 
-    #endif //#if defined(__linux)
+    #endif //#if defined(__linux) || defined(__APPLE__) || defined(__MACOSX)
 
     AMFThread::AMFThread() : m_thread()
     {
