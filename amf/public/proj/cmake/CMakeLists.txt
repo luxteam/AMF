@@ -27,6 +27,7 @@ include_directories(../../..)
 set(
   SOURCE_LIB
 
+  ../../common/AMFFactory.cpp
   ../../common/AMFSTL.cpp
   ../../common/CurrentTimeImpl.cpp
   ../../common/DataStreamFactory.cpp
