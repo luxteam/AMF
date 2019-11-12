@@ -64,19 +64,19 @@ AMF_RESULT OpenCLLoader::Init()
     CHECK_RETURN(m_hDLL != NULL, AMF_FAIL, L"Cannot load OpenCL library");
 
     // load OpenCL functions
-    clGetPlatformIDs        = (clGetPlatformIDs_Fn     )amf_get_proc_address(m_hDLL, "clGetPlatformIDs");       
-    clGetPlatformInfo       = (clGetPlatformInfo_Fn    )amf_get_proc_address(m_hDLL, "clGetPlatformInfo");      
-    clGetDeviceIDs          = (clGetDeviceIDs_Fn       )amf_get_proc_address(m_hDLL, "clGetDeviceIDs");          
-    clGetDeviceInfo         = (clGetDeviceInfo_Fn      )amf_get_proc_address(m_hDLL, "clGetDeviceInfo");        
-    clCreateContext         = (clCreateContext_Fn      )amf_get_proc_address(m_hDLL, "clCreateContext");         
-    clCreateCommandQueue    = (clCreateCommandQueue_Fn )amf_get_proc_address(m_hDLL, "clCreateCommandQueue");    
-    clReleaseCommandQueue   = (clReleaseCommandQueue_Fn)amf_get_proc_address(m_hDLL, "clReleaseCommandQueue");   
-    clReleaseDevice         = (clReleaseDevice_Fn      )amf_get_proc_address(m_hDLL, "clReleaseDevice");         
-    clReleaseContext        = (clReleaseContext_Fn     )amf_get_proc_address(m_hDLL, "clReleaseContext");        
-    clEnqueueFillImage      = (clEnqueueFillImage_Fn   )amf_get_proc_address(m_hDLL, "clEnqueueFillImage");
+    clGetPlatformIDs        = (clGetPlatformIDs_Fn      )amf_get_proc_address(m_hDLL, "clGetPlatformIDs");       
+    clGetPlatformInfo       = (clGetPlatformInfo_Fn     )amf_get_proc_address(m_hDLL, "clGetPlatformInfo");      
+    clGetDeviceIDs          = (clGetDeviceIDs_Fn        )amf_get_proc_address(m_hDLL, "clGetDeviceIDs");          
+    clGetDeviceInfo         = (clGetDeviceInfo_Fn       )amf_get_proc_address(m_hDLL, "clGetDeviceInfo");        
+    clCreateContext         = (clCreateContext_Fn       )amf_get_proc_address(m_hDLL, "clCreateContext");         
+    clCreateCommandQueue    = (clCreateCommandQueue_Fn  )amf_get_proc_address(m_hDLL, "clCreateCommandQueue");    
+    clReleaseCommandQueue   = (clReleaseCommandQueue_Fn )amf_get_proc_address(m_hDLL, "clReleaseCommandQueue");   
+    clReleaseDevice         = (clReleaseDevice_Fn       )amf_get_proc_address(m_hDLL, "clReleaseDevice");         
+    clReleaseContext        = (clReleaseContext_Fn      )amf_get_proc_address(m_hDLL, "clReleaseContext");        
+    clEnqueueFillImage      = (clEnqueueFillImage_Fn    )amf_get_proc_address(m_hDLL, "clEnqueueFillImage");
     clGetExtensionFunctionAddressForPlatform = (clGetExtensionFunctionAddressForPlatform_Fn   )amf_get_proc_address(m_hDLL, "clGetExtensionFunctionAddressForPlatform");
-    clFlush                 = (clFlush_Fn   )amf_get_proc_address(m_hDLL, "clFlush");
-    clFinish                = (clFinish_Fn   )amf_get_proc_address(m_hDLL, "clFinish");
+    clFlush                 = (clFlush_Fn               )amf_get_proc_address(m_hDLL, "clFlush");
+    clFinish                = (clFinish_Fn              )amf_get_proc_address(m_hDLL, "clFinish");
 
     amf_atomic_inc(&m_iRefCount);
 
