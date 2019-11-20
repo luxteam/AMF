@@ -11,6 +11,47 @@
 
 using namespace amf;
 
+class AMFComputeKernelOCL : public AMFInterfaceImpl<AMFComputeKernel>
+{
+public:
+    AMFComputeKernelOCL(cl_program program, cl_kernel kernel, cl_command_queue command_queue, AMF_KERNEL_ID kernelID, cl_device_id deviceID, cl_context context);
+
+    virtual void*               AMF_STD_CALL GetNative();
+    virtual const wchar_t*      AMF_STD_CALL GetIDName();
+
+    virtual AMF_RESULT          AMF_STD_CALL SetArgPlaneNative(amf_size index, void* pPlane, AMF_ARGUMENT_ACCESS_TYPE eAccess);
+    virtual AMF_RESULT          AMF_STD_CALL SetArgBufferNative(amf_size index, void* pBuffer, AMF_ARGUMENT_ACCESS_TYPE eAccess);
+
+    virtual AMF_RESULT          AMF_STD_CALL SetArgPlane(amf_size index, AMFPlane* pPlane, AMF_ARGUMENT_ACCESS_TYPE eAccess);
+    virtual AMF_RESULT          AMF_STD_CALL SetArgBuffer(amf_size index, AMFBuffer* pBuffer, AMF_ARGUMENT_ACCESS_TYPE eAccess);
+
+    virtual AMF_RESULT          AMF_STD_CALL SetArgInt32(amf_size index, amf_int32 data);
+    virtual AMF_RESULT          AMF_STD_CALL SetArgInt64(amf_size index, amf_int64 data);
+    virtual AMF_RESULT          AMF_STD_CALL SetArgFloat(amf_size index, amf_float data);
+    virtual AMF_RESULT          AMF_STD_CALL SetArgBlob(amf_size index, amf_size dataSize, const void* pData);
+
+    virtual AMF_RESULT          AMF_STD_CALL GetCompileWorkgroupSize(amf_size workgroupSize[3]);
+
+    virtual AMF_RESULT          AMF_STD_CALL Enqueue(amf_size dimension, amf_size globalOffset[3], amf_size globalSize[3], amf_size localSize[3]);
+private:
+    AMF_KERNEL_ID m_kernelID;
+    cl_kernel m_kernel;
+    cl_context m_context;
+    cl_program m_program;
+    cl_command_queue m_command_queue;
+    cl_device_id m_deviceID;
+    struct BufferDesc
+    {
+        cl_mem buffer;
+        void *data;
+        uint8_t access;
+        int index;
+        int size;
+    };
+
+    std::vector<BufferDesc> m_buffers;
+};
+
 class AMFComputeOCL : public AMFInterfaceImpl<AMFCompute>
 {
 public:

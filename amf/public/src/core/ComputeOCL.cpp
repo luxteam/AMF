@@ -1,4 +1,17 @@
 #include "ComputeOCL.h"
+#include "ProgramsImpl.h"
+
+static uint32_t amf_to_cl_format(enum AMF_ARGUMENT_ACCESS_TYPE format)
+{
+    if (format == AMF_ARGUMENT_ACCESS_READWRITE)
+        return CL_MEM_READ_WRITE;
+    if (format == AMF_ARGUMENT_ACCESS_WRITE)
+        return CL_MEM_WRITE_ONLY;
+    if (format == AMF_ARGUMENT_ACCESS_READ)
+        return CL_MEM_READ_ONLY;
+
+    return CL_MEM_READ_ONLY;
+}
 
 AMFComputeOCL::AMFComputeOCL(cl_device_id deviceID, cl_context context, cl_command_queue command_queue)
     :m_deviceID(deviceID), m_context(context), m_command_queue(command_queue)
@@ -28,7 +41,45 @@ void *AMFComputeOCL::GetNativeCommandQueue()
 
 AMF_RESULT AMFComputeOCL::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel **kernel)
 {
-    return AMF_NOT_IMPLEMENTED;
+    AMFKernelStorage::KernelData *kernelData;
+    AMFKernelStorage::Instance()->GetKernelData(&kernelData, kernelID);
+    cl_program program;
+    cl_kernel kernel_CL;
+    int err;
+
+    const char * source = (const char *)kernelData->data;
+    program = clCreateProgramWithSource(m_context, 1, &source, NULL, &err);
+    if (!program)
+    {
+        printf("Error: Failed to create compute program!\n");
+        return AMF_FAIL;
+    }
+
+    // Build the program executable
+    err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+    if (err != CL_SUCCESS)
+    {
+        size_t len;
+        char buffer[2048];
+        printf("Error: Failed to build program executable!\n");
+        clGetProgramBuildInfo(program, m_deviceID, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
+        printf("%s\n", buffer);
+        return AMF_FAIL;
+    }
+
+    // Create the compute kernel in the program we wish to run
+    //kernel_CL = clCreateKernel(program, kernelData->kernelName, &err);
+    kernel_CL = clCreateKernel(program, "square", &err);
+    if (!kernel_CL || err != CL_SUCCESS)
+    {
+        printf("Error: Failed to create compute kernel!\n");
+        return AMF_FAIL;
+    }
+
+    AMFComputeKernelOCL * computeKernel = new AMFComputeKernelOCL(program, kernel_CL, m_command_queue, kernelID, m_deviceID, m_context);
+    *kernel = computeKernel;
+    (*kernel)->Acquire();
+    return AMF_OK;
 }
 
 AMF_RESULT AMFComputeOCL::PutSyncPoint(AMFComputeSyncPoint **ppSyncPoint)
@@ -43,7 +94,8 @@ AMF_RESULT AMFComputeOCL::FinishQueue()
 
 AMF_RESULT AMFComputeOCL::FlushQueue()
 {
-    return AMF_NOT_IMPLEMENTED;
+    clFinish(m_command_queue);
+    return AMF_OK;
 }
 
 AMF_RESULT AMFComputeOCL::FillPlane(AMFPlane *pPlane, const amf_size origin[], const amf_size region[], const void *pColor)
@@ -187,8 +239,12 @@ void *AMFComputeDeviceOCL::GetNativeContext()
 AMF_RESULT AMFComputeDeviceOCL::CreateCompute(void *reserved, AMFCompute **ppCompute)
 {
     cl_int status = 0;
-    cl_command_queue commandQueue = clCreateCommandQueue(m_context, m_deviceID, (cl_command_queue_properties)NULL, &status);
-
+    cl_command_queue commandQueue = clCreateCommandQueueWithProperties(m_context, m_deviceID, (cl_command_queue_properties)NULL, &status);
+    if (!commandQueue)
+    {
+        printf("Error: Failed to create a commands Queue!\n");
+        return AMF_FAIL;
+    }
     AMFComputeOCL *computeOCL = new AMFComputeOCL(m_deviceID, m_context, commandQueue);
     *ppCompute = computeOCL;
     (*ppCompute)->Acquire();
@@ -206,3 +262,143 @@ AMF_RESULT AMFComputeDeviceOCL::CreateComputeEx(void *pCommandQueue, AMFCompute 
 //****************** end AMFComputeDeviceOCL ******************
 
 
+//****************** AMFComputeKernelOCL ******************
+void *AMFComputeKernelOCL::GetNative()
+{
+    return m_kernel;
+}
+
+AMF_RESULT AMFComputeKernelOCL::Enqueue(amf_size dimension, amf_size globalOffset[], amf_size globalSize[], amf_size localSize[])
+{
+    int err = 0;
+    for (int i = 0; i < m_buffers.size(); ++i)
+    {
+        BufferDesc &desc = m_buffers[i];
+        if (desc.access == CL_MEM_READ_WRITE || CL_MEM_READ_ONLY)
+        {
+            err = clEnqueueWriteBuffer(m_command_queue, desc.buffer, CL_TRUE, 0, sizeof(float) * desc.size, desc.data, 0, NULL, NULL);
+            err |= clSetKernelArg(m_kernel, desc.index, sizeof(cl_mem), &desc.buffer);
+            if (err != 0)
+            {
+                printf("Error: Failed to setup input buffer!\n index = %d", err, desc.index);
+                return AMF_FAIL;
+            }
+        }
+    }
+    err = clEnqueueNDRangeKernel(m_command_queue, m_kernel, dimension, &globalOffset[0], &globalSize[0], &localSize[0], 0, NULL, NULL);
+    if (err)
+    {
+        printf("Error: Failed to execute kernel!\n", err);
+        return AMF_FAIL;
+    }
+    clFinish(m_command_queue);
+
+    for (int i = 0; i < m_buffers.size(); ++i)
+    {
+        BufferDesc &desc = m_buffers[i];
+        if (desc.access == CL_MEM_READ_WRITE || CL_MEM_WRITE_ONLY)
+        {
+            float  *outputData = static_cast<float*>(desc.data);
+            int err = clEnqueueReadBuffer(m_command_queue, desc.buffer, CL_TRUE, 0, 1024 * sizeof(float), outputData, 0, NULL, NULL);
+            if (err != CL_SUCCESS)
+            {
+                printf("Error: Failed to read output array! %d\n", err);
+                return AMF_FAIL;
+            }
+        }
+    }
+    return AMF_OK;
+}
+
+AMF_RESULT AMFComputeKernelOCL::GetCompileWorkgroupSize(amf_size workgroupSize[])
+{
+    int err = 0;
+    amf_size res[3];
+    err = clGetKernelWorkGroupInfo(m_kernel, m_deviceID, CL_KERNEL_WORK_GROUP_SIZE, 3 * sizeof(size_t), &res, NULL);
+    if (err != CL_SUCCESS)
+    {
+        printf("Error: Failed to retrieve kernel work group info! %d\n", err);
+        return AMF_FAIL;
+    }
+    workgroupSize[0] = res[0];
+    workgroupSize[1] = res[1];
+    workgroupSize[2] = res[2];
+
+    return AMF_OK;
+}
+
+AMF_RESULT AMFComputeKernelOCL::SetArgBlob(amf_size index, amf_size dataSize, const void *pData)
+{
+    return AMF_NOT_IMPLEMENTED;
+}
+
+AMF_RESULT AMFComputeKernelOCL::SetArgFloat(amf_size index, amf_float data)
+{
+    return AMF_NOT_IMPLEMENTED;
+}
+
+AMF_RESULT AMFComputeKernelOCL::SetArgInt64(amf_size index, amf_int64 data)
+{
+    int err = 0;
+    err = clSetKernelArg(m_kernel, index, sizeof(amf_int64), &data);
+    if (err != 0)
+    {
+        return AMF_FAIL;
+    }
+    return AMF_OK;
+}
+
+AMF_RESULT AMFComputeKernelOCL::SetArgInt32(amf_size index, amf_int32 data)
+{
+    int err = 0;
+    err = clSetKernelArg(m_kernel, index, sizeof(amf_int32), &data);
+    if (err != 0)
+    {
+        return AMF_FAIL;
+    }
+    return AMF_OK;
+}
+
+AMF_RESULT AMFComputeKernelOCL::SetArgBuffer(amf_size index, AMFBuffer *pBuffer, AMF_ARGUMENT_ACCESS_TYPE eAccess)
+{
+
+    cl_mem buffer = clCreateBuffer(m_context, amf_to_cl_format(eAccess), sizeof(float) * pBuffer->GetSize(), NULL, NULL);
+
+    AMFComputeKernelOCL::BufferDesc desc;
+    desc.buffer = buffer;
+    desc.data = pBuffer->GetNative();
+    desc.access = amf_to_cl_format(eAccess);
+    desc.index = index;
+    desc.size = pBuffer->GetSize();
+
+    m_buffers.push_back(desc);
+
+    return AMF_OK;
+}
+
+AMF_RESULT AMFComputeKernelOCL::SetArgPlane(amf_size index, AMFPlane *pPlane, AMF_ARGUMENT_ACCESS_TYPE eAccess)
+{
+    return AMF_NOT_IMPLEMENTED;
+}
+
+AMF_RESULT AMFComputeKernelOCL::SetArgBufferNative(amf_size index, void *pBuffer, AMF_ARGUMENT_ACCESS_TYPE eAccess)
+{
+    return AMF_NOT_IMPLEMENTED;
+}
+
+AMF_RESULT AMFComputeKernelOCL::SetArgPlaneNative(amf_size index, void *pPlane, AMF_ARGUMENT_ACCESS_TYPE eAccess)
+{
+    return AMF_NOT_IMPLEMENTED;
+}
+
+const wchar_t *AMFComputeKernelOCL::GetIDName()
+{
+    return L"";
+}
+
+AMFComputeKernelOCL::AMFComputeKernelOCL(cl_program program, cl_kernel kernel, cl_command_queue command_queue, AMF_KERNEL_ID kernelID, cl_device_id deviceID, cl_context context)
+    : m_program (program), m_kernel(kernel), m_kernelID(kernelID), m_command_queue(command_queue), m_deviceID(deviceID), m_context(context)
+{
+
+
+}

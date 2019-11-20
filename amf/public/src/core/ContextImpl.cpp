@@ -1,6 +1,7 @@
 #include "ContextImpl.h"
 #include "DeviceHostImpl.h"
 #include "ComputeOCL.h"
+#include "BufferImpl.h"
 
 AMFContextImpl::AMFContextImpl()
 {
@@ -164,7 +165,11 @@ AMF_RESULT AMFContextImpl::UnlockGralloc()
 
 AMF_RESULT AMFContextImpl::AllocBuffer(AMF_MEMORY_TYPE type, amf_size size, AMFBuffer **ppBuffer)
 {
-    return AMF_NOT_IMPLEMENTED;
+    AMFBufferImpl * impl = new AMFBufferImpl(this);
+    AMF_RESULT res = impl->Allocate(type, size);
+    *ppBuffer = impl;
+    (*ppBuffer)->Acquire();
+    return res;
 }
 
 AMF_RESULT AMFContextImpl::AllocSurface(AMF_MEMORY_TYPE type, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, AMFSurface **ppSurface)
@@ -274,6 +279,8 @@ AMF_RESULT AMFContextImpl::GetVulkanDeviceExtensions(amf_size *pCount, const cha
 
 AMFDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
 {
+    if (type == AMF_MEMORY_HOST)
+        return GetDeviceHost();
     return nullptr;
 }
 
