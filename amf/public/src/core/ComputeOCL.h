@@ -8,6 +8,7 @@
 #include "../../common/TraceAdapter.h"
 #include "../../common/PropertyStorageImpl.h"
 #include <CL/cl.h>
+#include "DeviceOCLImpl.h"
 
 using namespace amf;
 
@@ -81,6 +82,7 @@ private:
     cl_device_id m_deviceID;
     cl_context m_context;
     cl_command_queue m_command_queue;
+    AMFDeviceOCLImpl * m_deviceImpl;
 };
 
 class AMFComputeDeviceOCL : public AMFInterfaceImpl<AMFPropertyStorageImpl<AMFComputeDevice>>

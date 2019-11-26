@@ -89,13 +89,13 @@ AMF_RESULT AMFComputeOCL::PutSyncPoint(AMFComputeSyncPoint **ppSyncPoint)
 
 AMF_RESULT AMFComputeOCL::FinishQueue()
 {
-    return AMF_NOT_IMPLEMENTED;
+    clFinish(m_command_queue);
+    return AMF_OK;
 }
 
 AMF_RESULT AMFComputeOCL::FlushQueue()
 {
-    clFinish(m_command_queue);
-    return AMF_OK;
+    return AMF_NOT_IMPLEMENTED;
 }
 
 AMF_RESULT AMFComputeOCL::FillPlane(AMFPlane *pPlane, const amf_size origin[], const amf_size region[], const void *pColor)
@@ -105,7 +105,7 @@ AMF_RESULT AMFComputeOCL::FillPlane(AMFPlane *pPlane, const amf_size origin[], c
 
 AMF_RESULT AMFComputeOCL::FillBuffer(AMFBuffer *pBuffer, amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_deviceImpl->FillBuffer(pBuffer, dstOffset, dstSize, pSourcePattern, patternSize);
 }
 
 AMF_RESULT AMFComputeOCL::ConvertPlaneToBuffer(AMFPlane *pSrcPlane, AMFBuffer **ppDstBuffer)
@@ -115,7 +115,7 @@ AMF_RESULT AMFComputeOCL::ConvertPlaneToBuffer(AMFPlane *pSrcPlane, AMFBuffer **
 
 AMF_RESULT AMFComputeOCL::CopyBuffer(AMFBuffer *pSrcBuffer, amf_size srcOffset, amf_size size, AMFBuffer *pDstBuffer, amf_size dstOffset)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_deviceImpl->CopyBuffer(pDstBuffer, dstOffset, pSrcBuffer, srcOffset, size);
 }
 
 AMF_RESULT AMFComputeOCL::CopyPlane(AMFPlane *pSrcPlane, const amf_size srcOrigin[], const amf_size region[], AMFPlane *pDstPlane, const amf_size dstOrigin[])
@@ -125,12 +125,12 @@ AMF_RESULT AMFComputeOCL::CopyPlane(AMFPlane *pSrcPlane, const amf_size srcOrigi
 
 AMF_RESULT AMFComputeOCL::CopyBufferToHost(AMFBuffer *pSrcBuffer, amf_size srcOffset, amf_size size, void *pDest, amf_bool blocking)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_deviceImpl->CopyBufferToHost(pDest, pSrcBuffer, srcOffset, size, blocking);
 }
 
 AMF_RESULT AMFComputeOCL::CopyBufferFromHost(const void *pSource, amf_size size, AMFBuffer *pDstBuffer, amf_size dstOffsetInBytes, amf_bool blocking)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_deviceImpl->CopyBufferFromHost(pDstBuffer, dstOffsetInBytes, pSource, size, blocking);
 }
 
 AMF_RESULT AMFComputeOCL::CopyPlaneToHost(AMFPlane *pSrcPlane, const amf_size origin[], const amf_size region[], void *pDest, amf_size dstPitch, amf_bool blocking)
@@ -271,41 +271,11 @@ void *AMFComputeKernelOCL::GetNative()
 AMF_RESULT AMFComputeKernelOCL::Enqueue(amf_size dimension, amf_size globalOffset[], amf_size globalSize[], amf_size localSize[])
 {
     int err = 0;
-    for (int i = 0; i < m_buffers.size(); ++i)
-    {
-        BufferDesc &desc = m_buffers[i];
-        if (desc.access == CL_MEM_READ_WRITE || CL_MEM_READ_ONLY)
-        {
-            err = clEnqueueWriteBuffer(m_command_queue, desc.buffer, CL_TRUE, 0, sizeof(float) * desc.size, desc.data, 0, NULL, NULL);
-            err |= clSetKernelArg(m_kernel, desc.index, sizeof(cl_mem), &desc.buffer);
-            if (err != 0)
-            {
-                printf("Error: Failed to setup input buffer!\n index = %d", err, desc.index);
-                return AMF_FAIL;
-            }
-        }
-    }
     err = clEnqueueNDRangeKernel(m_command_queue, m_kernel, dimension, &globalOffset[0], &globalSize[0], &localSize[0], 0, NULL, NULL);
     if (err)
     {
         printf("Error: Failed to execute kernel!\n", err);
         return AMF_FAIL;
-    }
-    clFinish(m_command_queue);
-
-    for (int i = 0; i < m_buffers.size(); ++i)
-    {
-        BufferDesc &desc = m_buffers[i];
-        if (desc.access == CL_MEM_READ_WRITE || CL_MEM_WRITE_ONLY)
-        {
-            float  *outputData = static_cast<float*>(desc.data);
-            int err = clEnqueueReadBuffer(m_command_queue, desc.buffer, CL_TRUE, 0, 1024 * sizeof(float), outputData, 0, NULL, NULL);
-            if (err != CL_SUCCESS)
-            {
-                printf("Error: Failed to read output array! %d\n", err);
-                return AMF_FAIL;
-            }
-        }
     }
     return AMF_OK;
 }
@@ -334,7 +304,13 @@ AMF_RESULT AMFComputeKernelOCL::SetArgBlob(amf_size index, amf_size dataSize, co
 
 AMF_RESULT AMFComputeKernelOCL::SetArgFloat(amf_size index, amf_float data)
 {
-    return AMF_NOT_IMPLEMENTED;
+    int err = 0;
+    err = clSetKernelArg(m_kernel, index, sizeof(amf_float), &data);
+    if (err != 0)
+    {
+        return AMF_FAIL;
+    }
+    return AMF_OK;
 }
 
 AMF_RESULT AMFComputeKernelOCL::SetArgInt64(amf_size index, amf_int64 data)
@@ -361,18 +337,18 @@ AMF_RESULT AMFComputeKernelOCL::SetArgInt32(amf_size index, amf_int32 data)
 
 AMF_RESULT AMFComputeKernelOCL::SetArgBuffer(amf_size index, AMFBuffer *pBuffer, AMF_ARGUMENT_ACCESS_TYPE eAccess)
 {
+    int err = 0;
+    if (pBuffer->GetMemoryType() != AMF_MEMORY_OPENCL)
+    {
+        pBuffer->Convert(AMF_MEMORY_OPENCL);
+    }
 
-    cl_mem buffer = clCreateBuffer(m_context, amf_to_cl_format(eAccess), sizeof(float) * pBuffer->GetSize(), NULL, NULL);
-
-    AMFComputeKernelOCL::BufferDesc desc;
-    desc.buffer = buffer;
-    desc.data = pBuffer->GetNative();
-    desc.access = amf_to_cl_format(eAccess);
-    desc.index = index;
-    desc.size = pBuffer->GetSize();
-
-    m_buffers.push_back(desc);
-
+    err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), pBuffer->GetNative());
+    if (err != 0)
+    {
+        printf("Error: Failed to setup arg buffer!\n index = %d", err, index);
+        return AMF_FAIL;
+    }
     return AMF_OK;
 }
 
@@ -383,7 +359,15 @@ AMF_RESULT AMFComputeKernelOCL::SetArgPlane(amf_size index, AMFPlane *pPlane, AM
 
 AMF_RESULT AMFComputeKernelOCL::SetArgBufferNative(amf_size index, void *pBuffer, AMF_ARGUMENT_ACCESS_TYPE eAccess)
 {
-    return AMF_NOT_IMPLEMENTED;
+    int err = 0;
+
+    err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), (cl_mem)pBuffer);
+    if (err != 0)
+    {
+        printf("Error: Failed to setup arg buffer!\n index = %d", err, index);
+        return AMF_FAIL;
+    }
+    return AMF_OK;
 }
 
 AMF_RESULT AMFComputeKernelOCL::SetArgPlaneNative(amf_size index, void *pPlane, AMF_ARGUMENT_ACCESS_TYPE eAccess)
@@ -393,7 +377,7 @@ AMF_RESULT AMFComputeKernelOCL::SetArgPlaneNative(amf_size index, void *pPlane, 
 
 const wchar_t *AMFComputeKernelOCL::GetIDName()
 {
-    return L"";
+    return L"AMFComputeKernelOCL";
 }
 
 AMFComputeKernelOCL::AMFComputeKernelOCL(cl_program program, cl_kernel kernel, cl_command_queue command_queue, AMF_KERNEL_ID kernelID, cl_device_id deviceID, cl_context context)

@@ -1,5 +1,6 @@
 #include "ContextImpl.h"
 #include "DeviceHostImpl.h"
+#include "DeviceOCLImpl.h"
 #include "ComputeOCL.h"
 #include "BufferImpl.h"
 
@@ -281,6 +282,8 @@ AMFDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
 {
     if (type == AMF_MEMORY_HOST)
         return GetDeviceHost();
+    if (type == AMF_MEMORY_OPENCL)
+        return GetDeviceOCL();
     return nullptr;
 }
 
@@ -291,4 +294,13 @@ AMFDevice* AMF_STD_CALL AMFContextImpl::GetDeviceHost()
         m_pDeviceHost = new AMFDeviceHostImpl(this);
     }
     return m_pDeviceHost;
+}
+
+AMFDevice *AMFContextImpl::GetDeviceOCL()
+{
+    if(m_pDeviceOCL == NULL)
+    {
+        m_pDeviceOCL = new AMFDeviceOCLImpl(this);
+    }
+    return m_pDeviceOCL;
 }

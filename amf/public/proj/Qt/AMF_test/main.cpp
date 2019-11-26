@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
         {
             inputData[k] = rand() / 50.00;;
         }
-        res = context->AllocBuffer(amf::AMF_MEMORY_HOST, 1024, &output);
+        res = context->AllocBuffer(amf::AMF_MEMORY_OPENCL, 1024, &output);
 
         pKernel->SetArgBuffer(0, input, amf::AMF_ARGUMENT_ACCESS_READ);
         pKernel->SetArgBuffer(1, output, amf::AMF_ARGUMENT_ACCESS_WRITE);
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
         //pCompute->FlushQueue();
         amf_uint8 nullData = 0;
         //res = pCompute->FillBuffer(output, 0, 1024, &nullData, sizeof(nullData));
-
+        output->Convert(amf::AMF_MEMORY_HOST);
         float  *outputData = static_cast<float*>(output->GetNative());
         for (i = 0; i < 1024; i++ )
         {
