@@ -14,11 +14,16 @@ int main(int argc, char *argv[])
 
     amf::AMFContextPtr context;
     factory->CreateContext(&context);
+    context->InitOpenCL();
     amf::AMFComputeFactoryPtr oclComputeFactory;
     context->GetOpenCLComputeFactory(&oclComputeFactory);
 
     amf::AMFPrograms* pPrograms;
     factory->GetPrograms(&pPrograms);
+
+    //initopencl - создает дефолтный компьют
+
+
 
     //TODO create real block
     amf::AMF_KERNEL_ID kernel = 0;
@@ -32,6 +37,7 @@ int main(int argc, char *argv[])
     pPrograms->RegisterKernelSource(&kernel, L"kernelIDName", "kernelName", strlen(kernel_src), (amf_uint8*)kernel_src, "option");
 
     int deviceCount = oclComputeFactory->GetDeviceCount();
+
     for(int i = 0; i < deviceCount; ++i)
     {
         AMF_RESULT res;
@@ -53,11 +59,22 @@ int main(int argc, char *argv[])
         {
             inputData[k] = rand() / 50.00;;
         }
+
+        input->Convert(amf::AMF_MEMORY_OPENCL);
+
+
         res = context->AllocBuffer(amf::AMF_MEMORY_OPENCL, 1024, &output);
 
-        pKernel->SetArgBuffer(0, input, amf::AMF_ARGUMENT_ACCESS_READ);
-        pKernel->SetArgBuffer(1, output, amf::AMF_ARGUMENT_ACCESS_WRITE);
-        pKernel->SetArgInt32(2, 1024);
+        res = pKernel->SetArgBuffer(1, output, amf::AMF_ARGUMENT_ACCESS_WRITE);
+        res = pKernel->SetArgBuffer(0, input, amf::AMF_ARGUMENT_ACCESS_READ);
+        res = pKernel->SetArgInt32(2, 1024);
+//        input->Convert(amf::AMF_MEMORY_HOST);
+
+//        inputData = static_cast<float*>(input->GetNative());
+//        for (int k = 0; k < 1024; k++)
+//        {
+//            printf("result[%d] = %f ", k, inputData[k]);
+//        }
 
         amf_size sizeLocal[3] = {1024, 0, 0};
         amf_size sizeGlobal[3] = {1024, 0, 0};
@@ -66,16 +83,13 @@ int main(int argc, char *argv[])
         pKernel->GetCompileWorkgroupSize(sizeLocal);
 
         pKernel->Enqueue(1, offset, sizeGlobal, sizeLocal);
-
-
-        //pCompute->FlushQueue();
-        amf_uint8 nullData = 0;
-        //res = pCompute->FillBuffer(output, 0, 1024, &nullData, sizeof(nullData));
+        pCompute->FlushQueue();
+        pCompute->FinishQueue();
         output->Convert(amf::AMF_MEMORY_HOST);
         float  *outputData = static_cast<float*>(output->GetNative());
-        for (i = 0; i < 1024; i++ )
+        for (int k = 0; k < 1024; k++ )
         {
-            printf("result[%d] = %f ", i, outputData[i]);
+            printf("result[%d] = %f ", k, outputData[k]);
         }
     }
 

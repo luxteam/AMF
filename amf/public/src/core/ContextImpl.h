@@ -86,7 +86,6 @@ public:
 public:
     AMFDevice* AMF_STD_CALL GetDevice(AMF_MEMORY_TYPE type);
     AMFDevice* AMF_STD_CALL GetDeviceHost();
-    AMFDevice* AMF_STD_CALL GetDeviceOCL();
 private:
     AMFDevicePtr m_pDeviceHost;
     AMFDevicePtr m_pDeviceOCL;

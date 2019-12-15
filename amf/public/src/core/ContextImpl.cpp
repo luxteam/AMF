@@ -57,7 +57,36 @@ AMF_RESULT AMFContextImpl::UnlockDX11()
 
 AMF_RESULT AMFContextImpl::InitOpenCL(void *pCommandQueue)
 {
-    return AMF_NOT_IMPLEMENTED;
+    if (!pCommandQueue)
+    {
+        AMF_RESULT res;
+        amf::AMFComputeFactoryPtr oclComputeFactory;
+        res = GetOpenCLComputeFactory(&oclComputeFactory);
+        if (res == AMF_OK && oclComputeFactory->GetDeviceCount() > 0)
+        {
+            AMFComputeDevice* pComputeDevice;
+            res = oclComputeFactory->GetDeviceAt(0, &pComputeDevice);
+            if (res == AMF_OK)
+            {
+                AMFDeviceOCLImpl * device = static_cast<AMFDeviceOCLImpl*>(pComputeDevice);
+                m_pDeviceOCL = device;
+            }
+        }
+        return res;
+    }
+    else
+    {
+        cl_context context;
+        cl_device_id deviceId;
+        cl_platform_id platformId;
+
+        size_t resultsize;
+        int err = clGetCommandQueueInfo(cl_command_queue(pCommandQueue), CL_QUEUE_CONTEXT, sizeof(cl_context), context, &resultsize);
+        err |= clGetCommandQueueInfo(cl_command_queue(pCommandQueue), CL_QUEUE_DEVICE, sizeof(cl_device_id), deviceId, &resultsize);
+        err |= clGetDeviceInfo(deviceId, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), platformId, &resultsize);
+
+        m_pDeviceOCL = new AMFDeviceOCLImpl(platformId, deviceId, this, context);
+    }
 }
 
 void *AMFContextImpl::GetOpenCLContext()
@@ -77,7 +106,7 @@ void *AMFContextImpl::GetOpenCLDeviceID()
 
 AMF_RESULT AMFContextImpl::GetOpenCLComputeFactory(AMFComputeFactory **ppFactory)
 {
-    AMFComputeFactoryOCL *computeFactoryOCL = new AMFComputeFactoryOCL;
+    AMFComputeFactoryOCL *computeFactoryOCL = new AMFComputeFactoryOCL(this);
     computeFactoryOCL->Init();
     *ppFactory = computeFactoryOCL;
     (*ppFactory)->Acquire();
@@ -283,7 +312,7 @@ AMFDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
     if (type == AMF_MEMORY_HOST)
         return GetDeviceHost();
     if (type == AMF_MEMORY_OPENCL)
-        return GetDeviceOCL();
+        return m_pDeviceOCL;
     return nullptr;
 }
 
@@ -296,11 +325,3 @@ AMFDevice* AMF_STD_CALL AMFContextImpl::GetDeviceHost()
     return m_pDeviceHost;
 }
 
-AMFDevice *AMFContextImpl::GetDeviceOCL()
-{
-    if(m_pDeviceOCL == NULL)
-    {
-        m_pDeviceOCL = new AMFDeviceOCLImpl(this);
-    }
-    return m_pDeviceOCL;
-}

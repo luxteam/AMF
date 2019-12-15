@@ -1,5 +1,6 @@
 #include "ComputeOCL.h"
 #include "ProgramsImpl.h"
+#include "DeviceOCLImpl.h"
 
 static uint32_t amf_to_cl_format(enum AMF_ARGUMENT_ACCESS_TYPE format)
 {
@@ -11,141 +12,6 @@ static uint32_t amf_to_cl_format(enum AMF_ARGUMENT_ACCESS_TYPE format)
         return CL_MEM_READ_ONLY;
 
     return CL_MEM_READ_ONLY;
-}
-
-AMFComputeOCL::AMFComputeOCL(cl_device_id deviceID, cl_context context, cl_command_queue command_queue)
-    :m_deviceID(deviceID), m_context(context), m_command_queue(command_queue)
-{
-
-}
-
-AMF_MEMORY_TYPE AMFComputeOCL::GetMemoryType()
-{
-    return AMF_MEMORY_OPENCL;
-}
-
-void *AMFComputeOCL::GetNativeContext()
-{
-    return m_context;
-}
-
-void *AMFComputeOCL::GetNativeDeviceID()
-{
-    return m_deviceID;
-}
-
-void *AMFComputeOCL::GetNativeCommandQueue()
-{
-    return m_command_queue;
-}
-
-AMF_RESULT AMFComputeOCL::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel **kernel)
-{
-    AMFKernelStorage::KernelData *kernelData;
-    AMFKernelStorage::Instance()->GetKernelData(&kernelData, kernelID);
-    cl_program program;
-    cl_kernel kernel_CL;
-    int err;
-
-    const char * source = (const char *)kernelData->data;
-    program = clCreateProgramWithSource(m_context, 1, &source, NULL, &err);
-    if (!program)
-    {
-        printf("Error: Failed to create compute program!\n");
-        return AMF_FAIL;
-    }
-
-    // Build the program executable
-    err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-    if (err != CL_SUCCESS)
-    {
-        size_t len;
-        char buffer[2048];
-        printf("Error: Failed to build program executable!\n");
-        clGetProgramBuildInfo(program, m_deviceID, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
-        printf("%s\n", buffer);
-        return AMF_FAIL;
-    }
-
-    // Create the compute kernel in the program we wish to run
-    //kernel_CL = clCreateKernel(program, kernelData->kernelName, &err);
-    kernel_CL = clCreateKernel(program, "square", &err);
-    if (!kernel_CL || err != CL_SUCCESS)
-    {
-        printf("Error: Failed to create compute kernel!\n");
-        return AMF_FAIL;
-    }
-
-    AMFComputeKernelOCL * computeKernel = new AMFComputeKernelOCL(program, kernel_CL, m_command_queue, kernelID, m_deviceID, m_context);
-    *kernel = computeKernel;
-    (*kernel)->Acquire();
-    return AMF_OK;
-}
-
-AMF_RESULT AMFComputeOCL::PutSyncPoint(AMFComputeSyncPoint **ppSyncPoint)
-{
-    return AMF_NOT_IMPLEMENTED;
-}
-
-AMF_RESULT AMFComputeOCL::FinishQueue()
-{
-    clFinish(m_command_queue);
-    return AMF_OK;
-}
-
-AMF_RESULT AMFComputeOCL::FlushQueue()
-{
-    return AMF_NOT_IMPLEMENTED;
-}
-
-AMF_RESULT AMFComputeOCL::FillPlane(AMFPlane *pPlane, const amf_size origin[], const amf_size region[], const void *pColor)
-{
-    return AMF_NOT_IMPLEMENTED;
-}
-
-AMF_RESULT AMFComputeOCL::FillBuffer(AMFBuffer *pBuffer, amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize)
-{
-    return m_deviceImpl->FillBuffer(pBuffer, dstOffset, dstSize, pSourcePattern, patternSize);
-}
-
-AMF_RESULT AMFComputeOCL::ConvertPlaneToBuffer(AMFPlane *pSrcPlane, AMFBuffer **ppDstBuffer)
-{
-    return AMF_NOT_IMPLEMENTED;
-}
-
-AMF_RESULT AMFComputeOCL::CopyBuffer(AMFBuffer *pSrcBuffer, amf_size srcOffset, amf_size size, AMFBuffer *pDstBuffer, amf_size dstOffset)
-{
-    return m_deviceImpl->CopyBuffer(pDstBuffer, dstOffset, pSrcBuffer, srcOffset, size);
-}
-
-AMF_RESULT AMFComputeOCL::CopyPlane(AMFPlane *pSrcPlane, const amf_size srcOrigin[], const amf_size region[], AMFPlane *pDstPlane, const amf_size dstOrigin[])
-{
-    return AMF_NOT_IMPLEMENTED;
-}
-
-AMF_RESULT AMFComputeOCL::CopyBufferToHost(AMFBuffer *pSrcBuffer, amf_size srcOffset, amf_size size, void *pDest, amf_bool blocking)
-{
-    return m_deviceImpl->CopyBufferToHost(pDest, pSrcBuffer, srcOffset, size, blocking);
-}
-
-AMF_RESULT AMFComputeOCL::CopyBufferFromHost(const void *pSource, amf_size size, AMFBuffer *pDstBuffer, amf_size dstOffsetInBytes, amf_bool blocking)
-{
-    return m_deviceImpl->CopyBufferFromHost(pDstBuffer, dstOffsetInBytes, pSource, size, blocking);
-}
-
-AMF_RESULT AMFComputeOCL::CopyPlaneToHost(AMFPlane *pSrcPlane, const amf_size origin[], const amf_size region[], void *pDest, amf_size dstPitch, amf_bool blocking)
-{
-    return AMF_NOT_IMPLEMENTED;
-}
-
-AMF_RESULT AMFComputeOCL::CopyPlaneFromHost(void *pSource, const amf_size origin[], const amf_size region[], amf_size srcPitch, AMFPlane *pDstPlane, amf_bool blocking)
-{
-    return AMF_NOT_IMPLEMENTED;
-}
-
-AMF_RESULT AMFComputeOCL::ConvertPlaneToPlane(AMFPlane *pSrcPlane, AMFPlane **ppDstPlane, AMF_CHANNEL_ORDER order, AMF_CHANNEL_TYPE type)
-{
-    return AMF_NOT_IMPLEMENTED;
 }
 
 AMF_RESULT AMFComputeFactoryOCL::Init()
@@ -196,7 +62,7 @@ AMF_RESULT AMFComputeFactoryOCL::Init()
         for (int i = 0; i < numDevices; ++i)
         {
             cl_context context = clCreateContext(&cps[0], 1, &deviceIDs[i], NULL, NULL, &status);
-            m_devices.push_back(new AMFComputeDeviceOCL(platformID, deviceIDs[i], context));
+            m_devices.push_back(new AMFDeviceOCLImpl(platformID, deviceIDs[i], m_pContext, context));
         }
     }
 }
@@ -211,51 +77,6 @@ AMF_RESULT AMFComputeFactoryOCL::GetDeviceAt(amf_int32 index, AMFComputeDevice *
     //TODO: check out of range
     *ppDevice = m_devices.at(index);
     (*ppDevice)->Acquire();
-    return AMF_OK;
-}
-
-//****************** AMFComputeDeviceOCL ******************
-AMFComputeDeviceOCL::AMFComputeDeviceOCL(cl_platform_id platformID, cl_device_id deviceID, cl_context context)
-    :m_platformID(platformID), m_deviceID(deviceID), m_context(context)
-{
-
-}
-
-void *AMFComputeDeviceOCL::GetNativePlatform()
-{
-    return m_platformID;
-}
-
-void *AMFComputeDeviceOCL::GetNativeDeviceID()
-{
-    return m_deviceID;
-}
-
-void *AMFComputeDeviceOCL::GetNativeContext()
-{
-    return m_context;
-}
-
-AMF_RESULT AMFComputeDeviceOCL::CreateCompute(void *reserved, AMFCompute **ppCompute)
-{
-    cl_int status = 0;
-    cl_command_queue commandQueue = clCreateCommandQueueWithProperties(m_context, m_deviceID, (cl_command_queue_properties)NULL, &status);
-    if (!commandQueue)
-    {
-        printf("Error: Failed to create a commands Queue!\n");
-        return AMF_FAIL;
-    }
-    AMFComputeOCL *computeOCL = new AMFComputeOCL(m_deviceID, m_context, commandQueue);
-    *ppCompute = computeOCL;
-    (*ppCompute)->Acquire();
-    return AMF_OK;
-}
-
-AMF_RESULT AMFComputeDeviceOCL::CreateComputeEx(void *pCommandQueue, AMFCompute **ppCompute)
-{
-    AMFComputeOCL *computeOCL = new AMFComputeOCL(m_deviceID, m_context, static_cast<cl_command_queue>(pCommandQueue));
-    *ppCompute = computeOCL;
-    (*ppCompute)->Acquire();
     return AMF_OK;
 }
 
@@ -317,7 +138,7 @@ AMF_RESULT AMFComputeKernelOCL::SetArgInt64(amf_size index, amf_int64 data)
 {
     int err = 0;
     err = clSetKernelArg(m_kernel, index, sizeof(amf_int64), &data);
-    if (err != 0)
+    if (err != CL_SUCCESS)
     {
         return AMF_FAIL;
     }
@@ -338,12 +159,27 @@ AMF_RESULT AMFComputeKernelOCL::SetArgInt32(amf_size index, amf_int32 data)
 AMF_RESULT AMFComputeKernelOCL::SetArgBuffer(amf_size index, AMFBuffer *pBuffer, AMF_ARGUMENT_ACCESS_TYPE eAccess)
 {
     int err = 0;
+    AMF_RESULT res = AMF_FAIL;
+
     if (pBuffer->GetMemoryType() != AMF_MEMORY_OPENCL)
     {
-        pBuffer->Convert(AMF_MEMORY_OPENCL);
+        res =  pBuffer->Convert(AMF_MEMORY_OPENCL);
+        if (res != AMF_OK)
+        {
+            printf("Error: Failed to Convert arg buffer to OpenCl memory!\n index = %d", err, index);
+            return AMF_FAIL;
+        }
     }
 
-    err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), pBuffer->GetNative());
+    cl_mem mem = (cl_mem)pBuffer->GetNative();
+//    size_t info;
+//    size_t resultsize;
+//    err =  clGetMemObjectInfo (mem, CL_MEM_SIZE, sizeof(size_t), &info, &resultsize);
+//    info /= sizeof(float);
+
+//    mem = clCreateBuffer(m_context, CL_MEM_READ_WRITE, 1024 * sizeof(float), NULL, NULL);
+
+    err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), mem);
     if (err != 0)
     {
         printf("Error: Failed to setup arg buffer!\n index = %d", err, index);
