@@ -1,0 +1,3 @@
+/Users/user/TAN/amfOpen/amf/public/proj/cmake/mac-gnumake/CMakeFiles/rebuild_cache.dir
+/Users/user/TAN/amfOpen/amf/public/proj/cmake/mac-gnumake/CMakeFiles/edit_cache.dir
+/Users/user/TAN/amfOpen/amf/public/proj/cmake/mac-gnumake/CMakeFiles/amf.dir
