@@ -14,7 +14,8 @@ get_property(AMF_NAME GLOBAL PROPERTY AMF_NAME)
 
 if(NOT AMF_NAME)
   #set_property(GLOBAL PROPERTY AMF_NAME open_amf)
-  message(FATAL_ERROR "Error: open AMF project name not set!")
+  set_property(GLOBAL PROPERTY AMF_NAME amf)
+  message(WARNING "Open AMF will be built with the default library name: amf")
 endif()
 
 # library name
