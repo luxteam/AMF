@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
                              " if(i < count) \n" \
                              " output[i] = -input[i]; \n" \
                              "}                     \n";
-    pPrograms->RegisterKernelSource(&kernel, L"kernelIDName", "kernelName", strlen(kernel_src), (amf_uint8*)kernel_src, "option");
+    pPrograms->RegisterKernelSource(&kernel, L"kernelIDName", "square", strlen(kernel_src), (amf_uint8*)kernel_src, "option");
 
     int deviceCount = oclComputeFactory->GetDeviceCount();
 
@@ -91,6 +91,7 @@ int main(int argc, char *argv[])
         {
             printf("result[%d] = %f ", k, outputData[k]);
         }
+        return 0;
     }
 
     return a.exec();

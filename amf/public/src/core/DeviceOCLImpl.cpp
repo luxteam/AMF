@@ -145,7 +145,6 @@ AMF_RESULT AMFDeviceOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel 
         return AMF_FAIL;
     }
 
-    // Build the program executable
     err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
     if (err != CL_SUCCESS)
     {
@@ -157,9 +156,7 @@ AMF_RESULT AMFDeviceOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel 
         return AMF_FAIL;
     }
 
-    // Create the compute kernel in the program we wish to run
-    //kernel_CL = clCreateKernel(program, kernelData->kernelName, &err);
-    kernel_CL = clCreateKernel(program, "square", &err);//FIXME: real name
+    kernel_CL = clCreateKernel(program, kernelData->kernelName, &err);
     if (!kernel_CL || err != CL_SUCCESS)
     {
         printf("Error: Failed to create compute kernel!\n");
@@ -191,7 +188,14 @@ AMF_RESULT AMFDeviceOCLImpl::FinishQueue()
 
 AMF_RESULT AMFDeviceOCLImpl::FlushQueue()
 {
-    return AMF_NOT_IMPLEMENTED;
+    int err = 0;
+    err = clFlush(m_command_queue);
+    if (err != CL_SUCCESS)
+    {
+        printf("Error: Failed to Flush Queue! Error code = %d\n", err);
+        return AMF_FAIL;
+    }
+    return AMF_OK;
 }
 
 AMF_RESULT AMFDeviceOCLImpl::FillPlane(AMFPlane *pPlane, const amf_size origin[], const amf_size region[], const void *pColor)

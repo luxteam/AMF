@@ -179,7 +179,7 @@ AMF_RESULT AMFComputeKernelOCL::SetArgBuffer(amf_size index, AMFBuffer *pBuffer,
 
 //    mem = clCreateBuffer(m_context, CL_MEM_READ_WRITE, 1024 * sizeof(float), NULL, NULL);
 
-    err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), mem);
+    err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), &mem);
     if (err != 0)
     {
         printf("Error: Failed to setup arg buffer!\n index = %d", err, index);

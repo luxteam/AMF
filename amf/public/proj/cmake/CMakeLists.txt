@@ -8,7 +8,7 @@ set(CMAKE_SKIP_RULE_DEPENDENCY TRUE)
 enable_language(CXX)
 
 message("Prepare open AMF project")
-
+set_property(GLOBAL PROPERTY AMF_NAME open_amf)
 # detects demanded name (previosly set in setup_amf.cmake)
 get_property(AMF_NAME GLOBAL PROPERTY AMF_NAME)
 
