@@ -32,6 +32,13 @@ AMFDeviceOCLImpl::AMFDeviceOCLImpl(cl_platform_id platformID, cl_device_id devic
     }
 }
 
+AMFDeviceOCLImpl::~AMFDeviceOCLImpl()
+{
+	clReleaseCommandQueue(m_command_queue);
+	clReleaseDevice(m_deviceID);
+	clReleaseContext(m_context);
+}
+
 AMF_RESULT AMFDeviceOCLImpl::AllocateBuffer(amf_size size, void **ppHandle)
 {
     return AllocateBufferEx(size, ppHandle, AMF_ARGUMENT_ACCESS_READWRITE);

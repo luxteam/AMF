@@ -65,6 +65,7 @@ AMF_RESULT AMFComputeFactoryOCL::Init()
             m_devices.push_back(new AMFDeviceOCLImpl(platformID, deviceIDs[i], m_pContext, context));
         }
     }
+	return AMF_OK;
 }
 
 amf_int32 AMFComputeFactoryOCL::GetDeviceCount()
@@ -172,12 +173,6 @@ AMF_RESULT AMFComputeKernelOCL::SetArgBuffer(amf_size index, AMFBuffer *pBuffer,
     }
 
     cl_mem mem = (cl_mem)pBuffer->GetNative();
-//    size_t info;
-//    size_t resultsize;
-//    err =  clGetMemObjectInfo (mem, CL_MEM_SIZE, sizeof(size_t), &info, &resultsize);
-//    info /= sizeof(float);
-
-//    mem = clCreateBuffer(m_context, CL_MEM_READ_WRITE, 1024 * sizeof(float), NULL, NULL);
 
     err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), &mem);
     if (err != 0)
@@ -200,7 +195,7 @@ AMF_RESULT AMFComputeKernelOCL::SetArgBufferNative(amf_size index, void *pBuffer
     err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), (cl_mem)pBuffer);
     if (err != 0)
     {
-        printf("Error: Failed to setup arg buffer!\n index = %d", err, index);
+        printf("Error: Failed to setup arg buffer! Code = %d\n index = %d", err, index);
         return AMF_FAIL;
     }
     return AMF_OK;
@@ -221,4 +216,10 @@ AMFComputeKernelOCL::AMFComputeKernelOCL(cl_program program, cl_kernel kernel, c
 {
 
 
+}
+
+AMFComputeKernelOCL::~AMFComputeKernelOCL()
+{
+	clReleaseProgram(m_program);
+	clReleaseKernel(m_kernel);
 }

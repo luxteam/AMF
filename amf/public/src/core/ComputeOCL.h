@@ -16,7 +16,7 @@ class AMFComputeKernelOCL : public AMFInterfaceImpl<AMFComputeKernel>
 {
 public:
     AMFComputeKernelOCL(cl_program program, cl_kernel kernel, cl_command_queue command_queue, AMF_KERNEL_ID kernelID, cl_device_id deviceID, cl_context context);
-
+	~AMFComputeKernelOCL();
     virtual void*               AMF_STD_CALL GetNative();
     virtual const wchar_t*      AMF_STD_CALL GetIDName();
 
@@ -47,6 +47,7 @@ class AMFComputeFactoryOCL : public AMFInterfaceImpl<AMFComputeFactory>
 {
 public:
     AMFComputeFactoryOCL(AMFContextImpl* pContext):m_pContext(pContext){}
+	~AMFComputeFactoryOCL();
     AMF_RESULT Init();
     virtual amf_int32           AMF_STD_CALL GetDeviceCount() override;
     virtual AMF_RESULT          AMF_STD_CALL GetDeviceAt(amf_int32 index, AMFComputeDevice **ppDevice) override;

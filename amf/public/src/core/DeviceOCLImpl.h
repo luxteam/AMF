@@ -13,7 +13,7 @@ class AMFDeviceOCLImpl : public AMFDeviceImpl,
 {
 public:
     AMFDeviceOCLImpl(cl_platform_id platformID, cl_device_id deviceID, AMFContextImpl *pContext, cl_context context, cl_command_queue command_queue = NULL);
-
+	~AMFDeviceOCLImpl();
     // AMFDevice interface
 public:
     virtual AMF_RESULT AllocateBuffer(amf_size size, void **ppHandle) override;

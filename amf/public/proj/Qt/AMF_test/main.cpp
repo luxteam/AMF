@@ -1,13 +1,9 @@
-#include <QCoreApplication>
 #include "../../../include/core/Factory.h"
 #include "../../../common/AMFFactory.h"
 #include "../../../include/core/Buffer.h"
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
-
-
     AMFFactoryHelper helper;
     helper.Init();
     amf::AMFFactory* factory = helper.GetFactory();
@@ -21,11 +17,6 @@ int main(int argc, char *argv[])
     amf::AMFPrograms* pPrograms;
     factory->GetPrograms(&pPrograms);
 
-    //initopencl - создает дефолтный компьют
-
-
-
-    //TODO create real block
     amf::AMF_KERNEL_ID kernel = 0;
     const char* kernel_src = "\n" \
                              "__kernel void square( __global float* input, __global float* output, \n" \
@@ -68,13 +59,6 @@ int main(int argc, char *argv[])
         res = pKernel->SetArgBuffer(1, output, amf::AMF_ARGUMENT_ACCESS_WRITE);
         res = pKernel->SetArgBuffer(0, input, amf::AMF_ARGUMENT_ACCESS_READ);
         res = pKernel->SetArgInt32(2, 1024);
-//        input->Convert(amf::AMF_MEMORY_HOST);
-
-//        inputData = static_cast<float*>(input->GetNative());
-//        for (int k = 0; k < 1024; k++)
-//        {
-//            printf("result[%d] = %f ", k, inputData[k]);
-//        }
 
         amf_size sizeLocal[3] = {1024, 0, 0};
         amf_size sizeGlobal[3] = {1024, 0, 0};
@@ -91,8 +75,7 @@ int main(int argc, char *argv[])
         {
             printf("result[%d] = %f ", k, outputData[k]);
         }
-        return 0;
     }
 
-    return a.exec();
+    return 0;
 }

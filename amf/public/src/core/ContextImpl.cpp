@@ -85,8 +85,15 @@ AMF_RESULT AMFContextImpl::InitOpenCL(void *pCommandQueue)
         err |= clGetCommandQueueInfo(cl_command_queue(pCommandQueue), CL_QUEUE_DEVICE, sizeof(cl_device_id), deviceId, &resultsize);
         err |= clGetDeviceInfo(deviceId, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), platformId, &resultsize);
 
+		if (err != CL_SUCCESS)
+		{
+			printf("Error: Failed to clGetCommandQueueInfo!\n");
+			return AMF_FAIL;
+		}
+
         m_pDeviceOCL = new AMFDeviceOCLImpl(platformId, deviceId, this, context);
     }
+	return AMF_OK;
 }
 
 void *AMFContextImpl::GetOpenCLContext()
