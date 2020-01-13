@@ -47,7 +47,7 @@ class AMFComputeFactoryOCL : public AMFInterfaceImpl<AMFComputeFactory>
 {
 public:
     AMFComputeFactoryOCL(AMFContextImpl* pContext):m_pContext(pContext){}
-	~AMFComputeFactoryOCL();
+	virtual ~AMFComputeFactoryOCL() {}
     AMF_RESULT Init();
     virtual amf_int32           AMF_STD_CALL GetDeviceCount() override;
     virtual AMF_RESULT          AMF_STD_CALL GetDeviceAt(amf_int32 index, AMFComputeDevice **ppDevice) override;

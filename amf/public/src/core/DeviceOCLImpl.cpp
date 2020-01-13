@@ -22,7 +22,14 @@ AMFDeviceOCLImpl::AMFDeviceOCLImpl(cl_platform_id platformID, cl_device_id devic
     if (!command_queue)
     {
         cl_int status = 0;
-        cl_command_queue commandQueue = clCreateCommandQueueWithProperties(m_context, m_deviceID, (cl_command_queue_properties)NULL, &status);
+        cl_command_queue commandQueue = nullptr;
+
+#if CL_TARGET_OPENCL_VERSION >= 200
+        commandQueue = clCreateCommandQueueWithProperties(m_context, m_deviceID, (cl_command_queue_properties)NULL, &status);
+#else
+        commandQueue = clCreateCommandQueue(m_context, m_deviceID, NULL, &status);
+#endif
+
         if (!commandQueue)
         {
             printf("Error: Failed to create a commands Queue!\n");
@@ -262,7 +269,14 @@ AMF_RESULT AMFDeviceOCLImpl::ConvertPlaneToPlane(AMFPlane *pSrcPlane, AMFPlane *
 AMF_RESULT AMFDeviceOCLImpl::CreateCompute(void *reserved, AMFCompute **ppCompute)
 {
     cl_int status = 0;
-    cl_command_queue commandQueue = clCreateCommandQueueWithProperties(m_context, m_deviceID, (cl_command_queue_properties)NULL, &status);
+    cl_command_queue commandQueue = nullptr;
+
+#if CL_TARGET_OPENCL_VERSION >= 200
+        commandQueue = clCreateCommandQueueWithProperties(m_context, m_deviceID, (cl_command_queue_properties)NULL, &status);
+#else
+        commandQueue = clCreateCommandQueue(m_context, m_deviceID, NULL, &status);
+#endif
+
     if (!commandQueue)
     {
         printf("Error: Failed to create a commands Queue!\n");
