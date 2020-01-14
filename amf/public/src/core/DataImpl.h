@@ -29,27 +29,27 @@ public:
     // AMFData interface
 public:
 
-    amf_bool IsReusable()
+	virtual amf_bool AMF_STD_CALL  IsReusable()
     {
         return true;
     }
 
-    void SetPts(amf_pts pts)
+    virtual void AMF_STD_CALL  SetPts(amf_pts pts)
     {
         m_pts = pts;
     }
 
-    amf_pts GetPts()
+    virtual amf_pts AMF_STD_CALL GetPts()
     {
         return m_pts;
     }
 
-    void SetDuration(amf_pts duration)
+    virtual void AMF_STD_CALL  SetDuration(amf_pts duration)
     {
         m_duration = duration;
     }
 
-    amf_pts GetDuration()
+    virtual amf_pts AMF_STD_CALL GetDuration()
     {
         return m_duration;
     }

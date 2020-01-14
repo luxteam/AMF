@@ -26,6 +26,7 @@ public:
 private:
     AMF_MEMORY_TYPE m_type;
     amf_size        m_cacheSize;
+protected:
     AMFContextImpl* m_pContext;
 
     // AMFDevice interface
