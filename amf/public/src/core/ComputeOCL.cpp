@@ -16,33 +16,41 @@ static uint32_t amf_to_cl_format(enum AMF_ARGUMENT_ACCESS_TYPE format)
 
 AMF_RESULT AMFComputeFactoryOCL::Init()
 {
-    cl_platform_id platformID;
+    //cl_platform_id platformID;
+    amf_vector<cl_platform_id> platforms;
 
     cl_uint numPlatforms = 0;
     cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
-    if(0 < numPlatforms)
+    AMF_RETURN_IF_CL_FAILED(status, L"clGetPlatformIDs() failed");
+ß
+    if(numPlatforms > 0)
     {
-        amf_vector<cl_platform_id> platforms;
         platforms.resize(numPlatforms);
+
         status = clGetPlatformIDs(numPlatforms, &platforms[0], NULL);
         AMF_RETURN_IF_CL_FAILED(status, L"clGetPlatformIDs() failed");
 
         for(unsigned i = 0; i < numPlatforms; ++i)
         {
-            char pbuf[1000];
+            char pbuf[1000] = {0};
             status = clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(pbuf), pbuf, NULL);
             AMF_RETURN_IF_CL_FAILED(status, L"clGetPlatformInfo() failed");
-            if(!strcmp(pbuf, "Advanced Micro Devices, Inc."))
+
+            /*if(!strcmp(pbuf, "Advanced Micro Devices, Inc."))
             {
                 platformID = platforms[i];
                 break;
-            }
+            }*/
         }
     }
-    amf_vector<cl_device_id>   deviceIDs;
 
-    if(platformID)
+    amf_vector<cl_device_id> deviceIDs;
+
+    //if(platformID)
+    for(size_t platformIndex(0); platformIndex < platforms.size(); ++platformIndex)
     {
+        auto platformID = platforms[platformIndex];
+
         cl_uint numDevices;
         std::vector<cl_context_properties> cps;
 
