@@ -22,7 +22,7 @@ AMF_RESULT AMFComputeFactoryOCL::Init()
     cl_uint numPlatforms = 0;
     cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
     AMF_RETURN_IF_CL_FAILED(status, L"clGetPlatformIDs() failed");
-ß
+
     if(numPlatforms > 0)
     {
         platforms.resize(numPlatforms);
@@ -44,6 +44,19 @@ AMF_RESULT AMFComputeFactoryOCL::Init()
         }
     }
 
+    //try to load device type property, if it is set
+    amf::AMFVariant contextType;
+    auto result = m_pContext->GetProperty(AMF_CONTEXT_DEVICE_TYPE, &contextType);
+
+    bool contextTypeSet(false);
+    AMF_CONTEXT_DEVICETYPE_ENUM deviceType(AMF_CONTEXT_DEVICE_TYPE_GPU);
+
+    if(AMFSucceeded(result))
+    {
+        deviceType = AMF_CONTEXT_DEVICETYPE_ENUM(int(contextType));
+        contextTypeSet = true;
+    }
+
     amf_vector<cl_device_id> deviceIDs;
 
     //if(platformID)
@@ -54,19 +67,41 @@ AMF_RESULT AMFComputeFactoryOCL::Init()
         cl_uint numDevices;
         std::vector<cl_context_properties> cps;
 
-        cps.push_back(CL_CONTEXT_INTEROP_USER_SYNC);
-        cps.push_back(CL_TRUE);
+        //does not work on mac with OpenCL 1.2
+        //cps.push_back(CL_CONTEXT_INTEROP_USER_SYNC);
+        //cps.push_back(CL_TRUE);
 
         cps.push_back(CL_CONTEXT_PLATFORM);
         cps.push_back((cl_context_properties)platformID);
         cps.push_back(0);
 
-        status = clGetDeviceIDs((cl_platform_id)platformID, CL_DEVICE_TYPE_ALL, 0, nullptr, &numDevices);
+        //status = clGetDeviceIDs((cl_platform_id)platformID, CL_DEVICE_TYPE_ALL, 0, nullptr, &numDevices);
+        //improvement to control what devices types to retrieve:
+        status = clGetDeviceIDs(
+            (cl_platform_id)platformID,
+            contextTypeSet && (AMF_CONTEXT_DEVICE_TYPE_CPU == deviceType)
+                ? CL_DEVICE_TYPE_CPU
+                : CL_DEVICE_TYPE_GPU,
+            0,
+            nullptr,
+            &numDevices
+            );
+
         if(numDevices)
         {
             deviceIDs.resize(numDevices);
-            status = clGetDeviceIDs((cl_platform_id)platformID, CL_DEVICE_TYPE_ALL, numDevices, (cl_device_id*)&deviceIDs[0], nullptr);
+
+            status = clGetDeviceIDs(
+                (cl_platform_id)platformID,
+                contextTypeSet && (AMF_CONTEXT_DEVICE_TYPE_CPU == deviceType)
+                    ? CL_DEVICE_TYPE_CPU
+                    : CL_DEVICE_TYPE_GPU,
+                numDevices,
+                (cl_device_id*)&deviceIDs[0],
+                nullptr
+                );
         }
+
         for (int i = 0; i < numDevices; ++i)
         {
             cl_context context = clCreateContext(&cps[0], 1, &deviceIDs[i], NULL, NULL, &status);
