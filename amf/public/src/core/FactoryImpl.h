@@ -4,6 +4,8 @@
 #include "../../common/TraceAdapter.h"
 #include "../../include/core/Factory.h"
 #include "ProgramsImpl.h"
+#include "DebugImpl.h"
+#include "TraceImpl.h"
 
 class AMFFactoryImpl : public amf::AMFFactory
 {
@@ -22,6 +24,8 @@ public:
 
 private:
     AMFProgramsImpl m_Programs;
+    AMFTraceImpl m_Trace;
+    AMFDebugImpl m_Debug;
 };
 
 #endif // AMFFACTORYIMPL_H

@@ -5,10 +5,12 @@
 
 using namespace amf;
 
-class AMFTraceImpl
+class AMFTraceImpl : public AMFTrace
 {
 public:
     AMFTraceImpl();
+
+	// AMFTrace interface
 public:
     virtual  void               AMF_STD_CALL TraceW(const wchar_t* src_path, amf_int32 line, amf_int32 level, const wchar_t* scope,amf_int32 countArgs, const wchar_t* format, ...);
     virtual  void               AMF_STD_CALL Trace(const wchar_t* src_path, amf_int32 line, amf_int32 level, const wchar_t* scope, const wchar_t* message, va_list* pArglist);

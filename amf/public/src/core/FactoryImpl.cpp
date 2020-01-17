@@ -49,12 +49,16 @@ const wchar_t *AMFFactoryImpl::GetCacheFolder()
 
 AMF_RESULT AMFFactoryImpl::GetDebug(amf::AMFDebug **ppDebug)
 {
-    return AMF_NOT_IMPLEMENTED;
+    AMF_RETURN_IF_INVALID_POINTER(ppDebug);
+    *ppDebug = &m_Debug;
+    return AMF_OK;
 }
 
 AMF_RESULT AMFFactoryImpl::GetTrace(amf::AMFTrace **ppTrace)
 {
-    return AMF_NOT_IMPLEMENTED;
+    AMF_RETURN_IF_INVALID_POINTER(ppTrace);
+    *ppTrace = &m_Trace;
+    return AMF_OK;
 }
 
 AMF_RESULT AMFFactoryImpl::GetPrograms(amf::AMFPrograms **ppPrograms)

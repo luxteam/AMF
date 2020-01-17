@@ -2,6 +2,8 @@
 #include "../../../common/AMFFactory.h"
 #include "../../../include/core/Buffer.h"
 
+#define CL_TARGET_OPENCL_VERSION 120
+
 int main(int argc, char *argv[])
 {
     AMFFactoryHelper helper;
@@ -28,6 +30,10 @@ int main(int argc, char *argv[])
     pPrograms->RegisterKernelSource(&kernel, L"kernelIDName", "square", strlen(kernel_src), (amf_uint8*)kernel_src, "option");
 
     int deviceCount = oclComputeFactory->GetDeviceCount();
+	g_AMFFactory.Init();
+    g_AMFFactory.GetDebug()->AssertsEnable(true);
+	g_AMFFactory.GetTrace()->EnableWriter(AMF_TRACE_WRITER_FILE, true);
+	g_AMFFactory.GetTrace()->SetWriterLevel(AMF_TRACE_WRITER_FILE, AMF_TRACE_TEST);
 
     for(int i = 0; i < deviceCount; ++i)
     {
@@ -35,6 +41,9 @@ int main(int argc, char *argv[])
         amf::AMFComputeDevicePtr pComputeDevice;
         oclComputeFactory->GetDeviceAt(i, &pComputeDevice);
         pComputeDevice->GetNativeContext();
+
+		
+
         amf::AMFComputePtr pCompute;
         pComputeDevice->CreateCompute(nullptr, &pCompute);
 
