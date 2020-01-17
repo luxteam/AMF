@@ -96,6 +96,20 @@ AMF_RESULT AMFContextImpl::InitOpenCL(void *pCommandQueue)
 	return AMF_OK;
 }
 
+AMF_RESULT AMFContextImpl::InitOpenCLEx(AMFComputeDevice *pDevice)
+{
+    AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(pDevice);
+
+    if(device)
+    {
+        m_pDeviceOCL = device;
+
+        return AMF_OK;
+    }
+
+    return AMF_INVALID_ARG;
+}
+
 void *AMFContextImpl::GetOpenCLContext()
 {
     return NULL;
@@ -118,11 +132,6 @@ AMF_RESULT AMFContextImpl::GetOpenCLComputeFactory(AMFComputeFactory **ppFactory
     *ppFactory = computeFactoryOCL;
     (*ppFactory)->Acquire();
     return AMF_OK;
-}
-
-AMF_RESULT AMFContextImpl::InitOpenCLEx(AMFComputeDevice *pDevice)
-{
-    return AMF_NOT_IMPLEMENTED;
 }
 
 AMF_RESULT AMFContextImpl::LockOpenCL()

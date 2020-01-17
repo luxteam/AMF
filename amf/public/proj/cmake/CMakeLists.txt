@@ -33,7 +33,7 @@ if(OpenCL_INCLUDE_DIR)
   message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
 else()
   find_package(OpenCL REQUIRED)
-  
+
   if(NOT OpenCL_FOUND)
     message("")
     message(SEND_ERROR "Error: Failed to find OpenCL!")
@@ -51,7 +51,7 @@ else()
 
     include_directories(${OpenCL_INCLUDE_DIR})
     #ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
-  endif()  
+  endif()
 endif()
 
 ADD_DEFINITIONS(-DAMF_CORE_STATIC)
@@ -184,7 +184,7 @@ else()
 
   #shared library must be linked with OpenCL, so, test package
   link_directories(${OpenCL_LIBRARIES})
-  
+
   #declare shared library creation
   add_library(
     ${AMF_NAME}
@@ -202,11 +202,11 @@ if(NOT WIN32)
   target_compile_options(${AMF_NAME} PUBLIC -mavx2)
   target_compile_options(${AMF_NAME} PUBLIC -mfma)
   target_compile_options(${AMF_NAME} PUBLIC -msse4.2)
-  
+
   if(CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
     target_compile_options(${AMF_NAME} PUBLIC -g)
   endif()
-  
+
   if(NOT APPLE)
     target_compile_options(${AMF_NAME} PUBLIC -Wpsabi)
   endif()

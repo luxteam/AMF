@@ -19,6 +19,37 @@ AMFDeviceOCLImpl::AMFDeviceOCLImpl(cl_platform_id platformID, cl_device_id devic
     : AMFDeviceImpl(AMF_MEMORY_OPENCL, 0, pContext),
       m_platformID(platformID), m_deviceID(deviceID), m_context(context), m_command_queue(command_queue)
 {
+    {
+        char name[256] = {0};
+        clGetDeviceInfo(deviceID, CL_DEVICE_NAME, sizeof(name), name, nullptr);
+
+        SetProperty(AMF_DEVICE_NAME, AMFVariant(name));
+
+        fprintf(stdout, "device name: %s\n", name);
+    }
+
+    //todo: support this properties too
+    //(only if device is AMD based)
+    /*{
+        cl_device_topology_amd pciBusInfo = {0};
+        cl_int status = clGetDeviceInfo(deviceID, CL_DEVICE_TOPOLOGY_AMD, sizeof(cl_device_topology_amd), &pciBusInfo, nullptr);
+
+        if(AMFResultIsOK(status))
+        {
+            fprintf(stdout, "PCI bus: %d device: %d function: %d\n", pciBusInfo.pcie.bus, pciBusInfo.pcie.device, pciBusInfo.pcie.function);
+        }
+    }
+
+    {
+        cl_uint max_CUs = 0;
+        cl_int status = clGetDeviceInfo(deviceID, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &max_CUs, nullptr);
+
+        if(AMFResultIsOK(status))
+        {
+            fprintf(stdout, "max compute units: %d\n", max_CUs);
+        }
+    }*/
+
     if (!command_queue)
     {
         cl_int status = 0;
