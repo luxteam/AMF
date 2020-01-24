@@ -24,8 +24,6 @@ AMFDeviceOCLImpl::AMFDeviceOCLImpl(cl_platform_id platformID, cl_device_id devic
         clGetDeviceInfo(deviceID, CL_DEVICE_NAME, sizeof(name), name, nullptr);
 
         SetProperty(AMF_DEVICE_NAME, AMFVariant(name));
-
-        fprintf(stdout, "device name: %s\n", name);
     }
 
     //todo: support this properties too
