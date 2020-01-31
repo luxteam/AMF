@@ -147,7 +147,7 @@ AMF_RESULT AMFDeviceOCLImpl::AllocateBufferEx(amf_size size, void **ppHandle, AM
 {
     AMF_RETURN_IF_FALSE(size != 0, AMF_INVALID_ARG, L"AllocateBufferEx() - size cannot be 0");
     AMF_RETURN_IF_FALSE(ppHandle != 0, AMF_INVALID_ARG, L"AllocateBufferEx() - ppHandle cannot be 0");
-    *ppHandle = clCreateBuffer(m_context, amf_to_cl_format(format), size * sizeof(float), NULL, NULL);
+    *ppHandle = clCreateBuffer(m_context, amf_to_cl_format(format), size, NULL, NULL);
     AMF_RETURN_IF_FALSE(*ppHandle != nullptr, AMF_OUT_OF_MEMORY, L"Error: Failed to allocate device memory!\n");
     return AMF_OK;
 }
