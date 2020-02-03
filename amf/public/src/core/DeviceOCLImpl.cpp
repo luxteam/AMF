@@ -112,7 +112,7 @@ AMF_RESULT AMFDeviceOCLImpl::CopyBuffer(void *pDestHandle, amf_size dstOffset, v
 
 AMF_RESULT AMFDeviceOCLImpl::CopyBufferToHost(void *pDest, void *pSourceHandle, amf_size srcOffset, amf_size size, bool blocking)
 {
-    int err = clEnqueueReadBuffer(m_command_queue, (cl_mem)pSourceHandle, (blocking)?CL_TRUE: CL_FALSE, srcOffset, size * sizeof(float), (float*)pDest, 0, NULL, NULL);
+    int err = clEnqueueReadBuffer(m_command_queue, (cl_mem)pSourceHandle, (blocking)?CL_TRUE: CL_FALSE, srcOffset, size , (float*)pDest, 0, NULL, NULL);
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to clEnqueueReadBuffer! Code = %d\n", err);
@@ -123,7 +123,7 @@ AMF_RESULT AMFDeviceOCLImpl::CopyBufferToHost(void *pDest, void *pSourceHandle, 
 
 AMF_RESULT AMFDeviceOCLImpl::CopyBufferFromHost(void *pDestHandle, amf_size dstOffset, const void *pSource, amf_size size, bool blocking)
 {
-    int err = clEnqueueWriteBuffer(m_command_queue, (cl_mem)pDestHandle, (blocking)?CL_TRUE: CL_FALSE, dstOffset, sizeof(float) * size, (const float*)pSource, 0, NULL, NULL);
+    int err = clEnqueueWriteBuffer(m_command_queue, (cl_mem)pDestHandle, (blocking)?CL_TRUE: CL_FALSE, dstOffset, size, (const float*)pSource, 0, NULL, NULL);
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to clEnqueueWriteBuffer! Code = %d\n", err);
@@ -134,7 +134,7 @@ AMF_RESULT AMFDeviceOCLImpl::CopyBufferFromHost(void *pDestHandle, amf_size dstO
 
 AMF_RESULT AMFDeviceOCLImpl::FillBuffer(void *pDestHandle, amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize)
 {
-    int err = clEnqueueFillBuffer (m_command_queue, (cl_mem)pDestHandle, pSourcePattern, patternSize, dstOffset, sizeof(float) * dstSize, 0, NULL, NULL);
+    int err = clEnqueueFillBuffer (m_command_queue, (cl_mem)pDestHandle, pSourcePattern, patternSize, dstOffset, dstSize, 0, NULL, NULL);
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to clEnqueueFillBuffer! Code = %d\n", err);

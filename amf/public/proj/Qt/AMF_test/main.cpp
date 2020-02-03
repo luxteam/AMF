@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
         amf::AMFBuffer *input = NULL;
         amf::AMFBuffer *output = NULL;
 
-        res = context->AllocBuffer(amf::AMF_MEMORY_HOST, 1024, &input);
+        res = context->AllocBuffer(amf::AMF_MEMORY_HOST, 1024 * sizeof(float), &input);
         float  *inputData = static_cast<float*>(input->GetNative());
         for (int k = 0; k < 1024; k++)
         {
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
         input->Convert(amf::AMF_MEMORY_OPENCL);
 
 
-        res = context->AllocBuffer(amf::AMF_MEMORY_OPENCL, 1024, &output);
+        res = context->AllocBuffer(amf::AMF_MEMORY_OPENCL, 1024 * sizeof(float), &output);
 
         res = pKernel->SetArgBuffer(1, output, amf::AMF_ARGUMENT_ACCESS_WRITE);
         res = pKernel->SetArgBuffer(0, input, amf::AMF_ARGUMENT_ACCESS_READ);
