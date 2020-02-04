@@ -323,10 +323,10 @@ AMF_RESULT AMFContextImpl::GetVulkanDeviceExtensions(amf_size *pCount, const cha
     return AMF_NOT_IMPLEMENTED;
 }
 
-AMFDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
+AMFComputeDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
 {
-    if (type == AMF_MEMORY_HOST)
-        return GetDeviceHost();
+    //if (type == AMF_MEMORY_HOST)
+    //    return GetDeviceHost();
     if (type == AMF_MEMORY_OPENCL)
         return m_pDeviceOCL;
     return nullptr;
@@ -334,10 +334,9 @@ AMFDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
 
 AMFDevice* AMF_STD_CALL AMFContextImpl::GetDeviceHost()
 {
-    if(m_pDeviceHost == NULL)
+    if(!m_pDeviceHost)
     {
         m_pDeviceHost = new AMFDeviceHostImpl(this);
     }
     return m_pDeviceHost;
 }
-

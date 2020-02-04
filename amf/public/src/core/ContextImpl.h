@@ -84,11 +84,11 @@ public:
     virtual AMF_RESULT AMF_STD_CALL GetVulkanDeviceExtensions(amf_size *pCount, const char **ppExtensions) override;
 
 public:
-    AMFDevice* AMF_STD_CALL GetDevice(AMF_MEMORY_TYPE type);
+    AMFComputeDevice* AMF_STD_CALL GetDevice(AMF_MEMORY_TYPE type);
     AMFDevice* AMF_STD_CALL GetDeviceHost();
 private:
     AMFDevicePtr m_pDeviceHost;
-    AMFDevicePtr m_pDeviceOCL;
+    AMFComputeDevicePtr m_pDeviceOCL;
 };
 
 #endif // AMFCONTEXTIMPL_H

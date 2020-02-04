@@ -48,7 +48,7 @@ private:
     amf_size m_size;
     bool m_attached;
 
-    AMFDevicePtr m_pDevice;
+    AMFComputeDevicePtr m_pDevice;
 };
 
 
