@@ -230,7 +230,9 @@ AMF_RESULT AMFContextImpl::AllocAudioBuffer(AMF_MEMORY_TYPE type, AMF_AUDIO_FORM
 
 AMF_RESULT AMFContextImpl::CreateBufferFromHostNative(void *pHostBuffer, amf_size size, AMFBuffer **ppBuffer, AMFBufferObserver *pObserver)
 {
-    return AMF_NOT_IMPLEMENTED;
+	AMF_RETURN_IF_FAILED(AllocBuffer(AMF_MEMORY_HOST, size, ppBuffer));
+	AMF_RETURN_IF_FAILED(GetDeviceHost()->CopyBufferFromHost((*ppBuffer)->GetNative(), 0, pHostBuffer, size, true));
+    return AMF_OK;
 }
 
 AMF_RESULT AMFContextImpl::CreateSurfaceFromHostNative(AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, amf_int32 hPitch, amf_int32 vPitch, void *pData, AMFSurface **ppSurface, AMFSurfaceObserver *pObserver)
