@@ -6,9 +6,7 @@
 
 AMFContextImpl::AMFContextImpl()
 {
-
 }
-
 
 AMF_RESULT AMFContextImpl::Terminate()
 {
@@ -325,7 +323,7 @@ AMF_RESULT AMFContextImpl::GetVulkanDeviceExtensions(amf_size *pCount, const cha
     return AMF_NOT_IMPLEMENTED;
 }
 
-AMFComputeDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
+AMFDevice * AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
 {
     //if (type == AMF_MEMORY_HOST)
     //    return GetDeviceHost();
@@ -334,7 +332,7 @@ AMFComputeDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
     return nullptr;
 }
 
-AMFDevice* AMF_STD_CALL AMFContextImpl::GetDeviceHost()
+AMFDeviceHostImpl * AMF_STD_CALL AMFContextImpl::GetDeviceHost()
 {
     if(!m_pDeviceHost)
     {

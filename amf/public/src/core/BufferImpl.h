@@ -44,12 +44,11 @@ public:
 
     virtual AMF_RESULT AMF_STD_CALL Duplicate(AMF_MEMORY_TYPE type, AMFBufferImpl **ppData);
 private:
-    void* m_pMemory;
-    amf_size m_size;
-    bool m_attached;
+    void *m_pMemory = nullptr;
+    amf_size m_size = 0;
+    bool m_attached = false;
 
-    AMFComputeDevicePtr m_pDevice;
+    AMFDevice *m_pDevice = nullptr;
 };
-
 
 #endif // BUFFERIMPL_H

@@ -1,4 +1,5 @@
 #include "BufferImpl.h"
+#include "DeviceHostImpl.h"
 #include "DeviceOCLImpl.h"
 
 typedef AMFInterfacePtr_T<AMFBufferImpl> AMFBufferImplPtr;
@@ -13,9 +14,7 @@ AMFBufferImpl::AMFBufferImpl(AMFContextImpl *pContext)
 
 AMF_MEMORY_TYPE AMFBufferImpl::GetMemoryType()
 {
-    auto implementation(dynamic_cast<AMFDeviceOCLImpl *>(m_pDevice.GetPtr()));
-
-    return /*m_pDevice*/implementation->GetType();
+    return m_pDevice->GetType();
 }
 
 AMF_RESULT AMFBufferImpl::Duplicate(AMF_MEMORY_TYPE type, AMFData **ppData)
@@ -46,26 +45,20 @@ AMF_RESULT AMFBufferImpl::Duplicate(AMF_MEMORY_TYPE type, AMFBufferImpl **ppData
     if((type == AMF_MEMORY_HOST) && (GetMemoryType() == AMF_MEMORY_HOST))
     {
         //From Host to Host
-        AMFComputeDevicePtr pDevice = GetContext()->GetDevice(type);
-
-        auto deviceImplementation = dynamic_cast<AMFDeviceOCLImpl *>(pDevice.GetPtr());
-        AMF_RETURN_IF_FAILED(/*pDevice*/deviceImplementation->CopyBuffer(pBuffer->m_pMemory, 0, m_pMemory, 0, GetSize()));
+        AMFDevice *pDevice = GetContext()->GetDevice(type);
+        AMF_RETURN_IF_FAILED(pDevice->CopyBuffer(pBuffer->m_pMemory, 0, m_pMemory, 0, GetSize()));
     }
     else
     {
         if(GetMemoryType() == AMF_MEMORY_HOST)
         {
-            AMFComputeDevicePtr pDevice = GetContext()->GetDevice(type);
-
-            auto deviceImplementation = dynamic_cast<AMFDeviceOCLImpl *>(pDevice.GetPtr());
-            AMF_RETURN_IF_FAILED(/*pDevice*/deviceImplementation->CopyBufferFromHost(pBuffer->m_pMemory, 0, m_pMemory, GetSize(), true));
+            AMFDevice *pDevice = GetContext()->GetDevice(type);
+            AMF_RETURN_IF_FAILED(pDevice->CopyBufferFromHost(pBuffer->m_pMemory, 0, m_pMemory, GetSize(), true));
         }
         else
         {
-            AMFComputeDevicePtr pDevice = GetContext()->GetDevice(GetMemoryType());
-
-            auto deviceImplementation = dynamic_cast<AMFDeviceOCLImpl *>(pDevice.GetPtr());
-            AMF_RETURN_IF_FAILED(/*pDevice*/deviceImplementation->CopyBufferToHost(pBuffer->m_pMemory, m_pMemory, 0, GetSize(), true));
+            AMFDevice *pDevice = GetContext()->GetDevice(GetMemoryType());
+            AMF_RETURN_IF_FAILED(pDevice->CopyBufferToHost(pBuffer->m_pMemory, m_pMemory, 0, GetSize(), true));
         }
     }
 
@@ -90,8 +83,7 @@ AMF_RESULT AMFBufferImpl::Convert(AMF_MEMORY_TYPE type)
 
     AMFObservableImpl<AMFBufferObserver>::NotifyObservers<AMFBuffer*>(&AMFBufferObserver::OnBufferDataRelease, this);
 
-    auto implementation(dynamic_cast<AMFDeviceOCLImpl *>(m_pDevice.GetPtr()));
-    /*m_pDevice*/implementation->ReleaseBuffer(m_pMemory, m_attached);
+    m_pDevice->ReleaseBuffer(m_pMemory, m_attached);
     m_attached = false;
     m_pMemory = pTmpBuffer->m_pMemory;
     pTmpBuffer->m_pMemory = nullptr;
@@ -127,16 +119,29 @@ void *AMFBufferImpl::GetNative()
 
 AMF_RESULT AMFBufferImpl::Allocate(AMF_MEMORY_TYPE type, amf_size size)
 {
-    AMFDeviceOCLImpl* pDevice = dynamic_cast<AMFDeviceOCLImpl *>(GetContext()->GetDevice(type));
+    AMFDeviceOCLImpl *p1(type == AMF_MEMORY_TYPE::AMF_MEMORY_OPENCL ? GetContext()->GetDeviceOCL() : nullptr);
+    AMFDeviceHostImpl *p2(type != AMF_MEMORY_TYPE::AMF_MEMORY_OPENCL ? GetContext()->GetDeviceHost() : nullptr);
 
-    AMF_RETURN_IF_FALSE(pDevice != nullptr, AMF_NO_DEVICE);
+    //AMFDevice* pDevice = (AMFDevice *)GetContext()->GetDevice(type);
+    //void* pMemory = nullptr;
+    alignas(32) void* pMemory = nullptr;
+
+    AMF_RETURN_IF_FALSE(p1 != nullptr || p2 != nullptr, AMF_NO_DEVICE);
     AMF_RETURN_IF_FALSE(m_pMemory == nullptr, AMF_ALREADY_INITIALIZED);
     AMF_RETURN_IF_FALSE(size > 0, AMF_INVALID_ARG);
 
-    void* pMemory = nullptr;
-    AMF_RETURN_IF_FAILED(pDevice->AllocateBuffer(size, &pMemory));
+    //auto test(dynamic_cast<AMFDeviceOCLImpl *>(pDevice));
+    //AMF_RETURN_IF_FALSE(test != nullptr, AMF_FAIL);
 
-    m_pDevice = pDevice;
+    auto pointer = &pMemory;
+
+    AMF_RETURN_IF_FAILED(
+        type == AMF_MEMORY_TYPE::AMF_MEMORY_OPENCL
+            ? p1->AllocateBuffer(size, pointer)
+            : p2->AllocateBuffer(size, pointer)
+        );
+
+    m_pDevice = p1 ? (AMFDevice *)p1 : (AMFDevice *)p2;
     m_pMemory = pMemory;
     m_attached = false;
     m_size = size;
@@ -145,9 +150,9 @@ AMF_RESULT AMFBufferImpl::Allocate(AMF_MEMORY_TYPE type, amf_size size)
 
 AMF_RESULT AMFBufferImpl::Attach(AMF_MEMORY_TYPE type, void *pNative, amf_size size)
 {
-    AMFComputeDevice* pDevice = nullptr;
+    AMFDevice* pDevice = (AMFDevice *)GetContext()->GetDevice(type);
 
-    AMF_RETURN_IF_FALSE((pDevice = GetContext()->GetDevice(type)) != nullptr, AMF_NO_DEVICE);
+    AMF_RETURN_IF_FALSE(pDevice != nullptr, AMF_NO_DEVICE);
     AMF_RETURN_IF_FALSE(m_pMemory == nullptr, AMF_ALREADY_INITIALIZED);
     AMF_RETURN_IF_FALSE(size > 0, AMF_INVALID_ARG);
 
