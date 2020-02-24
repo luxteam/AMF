@@ -17,6 +17,7 @@ class AMFContextImpl : public AMFInterfaceImpl<AMFPropertyStorageImpl<AMFContext
 {
 public:
     AMFContextImpl();
+    virtual ~AMFContextImpl();
 
     // AMFContext interface
 public:

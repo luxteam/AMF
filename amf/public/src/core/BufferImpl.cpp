@@ -14,7 +14,7 @@ AMFBufferImpl::AMFBufferImpl(AMFContextImpl *pContext)
 
 AMF_MEMORY_TYPE AMFBufferImpl::GetMemoryType()
 {
-    return m_pDevice->GetType();
+    return ((AMFDevice *)m_pDevice)->GetType();
 }
 
 AMF_RESULT AMFBufferImpl::Duplicate(AMF_MEMORY_TYPE type, AMFData **ppData)
@@ -83,7 +83,7 @@ AMF_RESULT AMFBufferImpl::Convert(AMF_MEMORY_TYPE type)
 
     AMFObservableImpl<AMFBufferObserver>::NotifyObservers<AMFBuffer*>(&AMFBufferObserver::OnBufferDataRelease, this);
 
-    m_pDevice->ReleaseBuffer(m_pMemory, m_attached);
+    ((AMFDevice *)m_pDevice)->ReleaseBuffer(m_pMemory, m_attached);
     m_attached = false;
     m_pMemory = pTmpBuffer->m_pMemory;
     pTmpBuffer->m_pMemory = nullptr;

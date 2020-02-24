@@ -8,6 +8,25 @@ AMFContextImpl::AMFContextImpl()
 {
 }
 
+AMFContextImpl::~AMFContextImpl()
+{
+    if(m_pDeviceOCL)
+    {
+        printf("\n\nCALL RELEASE HERE\n\n");
+
+        //(AMFDeviceImpl *)m_pDeviceOCL->Release();
+        m_pDeviceOCL = nullptr;
+    }
+
+    if(m_pDeviceHost)
+    {
+        printf("\n\nCALL RELEASE HERE\n\n");
+
+        m_pDeviceHost->Release();
+        m_pDeviceHost = nullptr;
+    }
+}
+
 AMF_RESULT AMFContextImpl::Terminate()
 {
     return AMF_NOT_IMPLEMENTED;
@@ -101,6 +120,7 @@ AMF_RESULT AMFContextImpl::InitOpenCLEx(AMFComputeDevice *pDevice)
     if(device)
     {
         m_pDeviceOCL = device;
+        pDevice->Acquire();
 
         return AMF_OK;
     }
