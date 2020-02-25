@@ -102,6 +102,7 @@ namespace amf
         virtual AMF_RESULT          AMF_STD_CALL SetSize(amf_size newSize) = 0;
         virtual amf_size            AMF_STD_CALL GetSize() = 0;
         virtual void*               AMF_STD_CALL GetNative() = 0;
+		virtual AMF_RESULT          AMF_STD_CALL CreateSubBuffer(AMFBuffer** subBuffer) = 0;
 
         // Observer management
         virtual void                AMF_STD_CALL AddObserver(AMFBufferObserver* pObserver) = 0;
@@ -157,6 +158,7 @@ namespace amf
         AMF_RESULT          (AMF_STD_CALL *SetSize)(AMFBuffer* pThis, amf_size newSize);
         amf_size            (AMF_STD_CALL *GetSize)(AMFBuffer* pThis);
         void*               (AMF_STD_CALL *GetNative)(AMFBuffer* pThis);
+		AMF_RESULT          (AMF_STD_CALL *CreateSubBuffer)(AMFBuffer* pThis, AMFBuffer** subBuffer);
 
         // Observer management
         void                (AMF_STD_CALL *AddObserver_Buffer)(AMFBuffer* pThis, AMFBufferObserver* pObserver);

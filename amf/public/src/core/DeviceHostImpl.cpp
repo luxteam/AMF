@@ -35,6 +35,11 @@ AMF_RESULT AMFDeviceHostImpl::ReleaseBuffer(void *pHandle, bool attached)
     return AMF_OK;
 }
 
+AMF_RESULT AMFDeviceHostImpl::CreateSubBuffer(AMFBuffer * pHandle, void ** subBuffer)
+{
+	return AMF_NOT_IMPLEMENTED;
+}
+
 AMF_RESULT AMFDeviceHostImpl::CopyBuffer(void *pDestHandle, amf_size dstOffset, void *pSourceHandle, amf_size srcOffset, amf_size size)
 {
     memcpy(static_cast<amf_uint8*>(pDestHandle) + dstOffset, static_cast<amf_uint8*>(pSourceHandle) + srcOffset, size);

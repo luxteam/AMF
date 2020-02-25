@@ -32,6 +32,7 @@ public:
     virtual amf_size AMF_STD_CALL GetSize() override;
 
     virtual void *AMF_STD_CALL GetNative() override;
+	virtual AMF_RESULT AMF_STD_CALL CreateSubBuffer(AMFBuffer** subBuffer) override;
 
     virtual void AMF_STD_CALL AddObserver(AMFPropertyStorageObserver* pObserver) override { AMFObservableImpl<AMFPropertyStorageObserver>::AddObserver(pObserver); }
     virtual void AMF_STD_CALL RemoveObserver(AMFPropertyStorageObserver* pObserver) override { AMFObservableImpl<AMFPropertyStorageObserver>::RemoveObserver(pObserver); }
