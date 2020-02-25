@@ -115,14 +115,14 @@ void *AMFBufferImpl::GetNative()
     return m_pMemory;
 }
 
-AMF_RESULT AMF_STD_CALL AMFBufferImpl::CreateSubBuffer(AMFBuffer ** subBuffer)
+AMF_RESULT AMF_STD_CALL AMFBufferImpl::CreateSubBuffer(AMFBuffer** subBuffer, amf_size offset, amf_size size)
 {
 	AMFDevice* pDevice = nullptr;
 	void* pMemory = nullptr;
 
 	AMF_RETURN_IF_FALSE((pDevice = GetContext()->GetDevice(GetMemoryType())) != nullptr, AMF_NO_DEVICE);
 
-	AMF_RETURN_IF_FAILED(pDevice->CreateSubBuffer(this, &pMemory));
+	AMF_RETURN_IF_FAILED(pDevice->CreateSubBuffer(this, &pMemory, offset, size));
 
 	*subBuffer = new AMFBufferImpl(GetContext());
 

@@ -28,7 +28,7 @@ AMF_RESULT AMFDeviceImpl::ReleaseBuffer(void *pHandle, bool attached)
     return AMF_NOT_SUPPORTED;
 }
 
-AMF_RESULT AMFDeviceImpl::CreateSubBuffer(AMFBuffer * pHandle, void ** subBuffer)
+AMF_RESULT AMFDeviceImpl::CreateSubBuffer(AMFBuffer * pHandle, void ** subBuffer, amf_size offset, amf_size size)
 {
 	return AMF_NOT_SUPPORTED;
 }
