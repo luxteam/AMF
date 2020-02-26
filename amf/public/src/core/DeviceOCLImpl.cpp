@@ -99,6 +99,28 @@ AMF_RESULT AMFDeviceOCLImpl::ReleaseBuffer(void *pHandle, bool attached)
     return AMF_OK;
 }
 
+AMF_RESULT AMFDeviceOCLImpl::CreateSubBuffer(AMFBuffer * pHandle, void ** subBuffer, amf_size offset, amf_size size)
+{
+	AMF_RETURN_IF_FALSE(subBuffer != 0, AMF_INVALID_ARG, L"AllocateBufferEx() - ppHandle cannot be 0");
+
+	//TODO: check type
+	cl_buffer_region region;
+	region.origin = offset;
+	region.size = size;
+	int err = 0;
+	*subBuffer = clCreateSubBuffer((cl_mem)pHandle->GetNative(),
+		CL_MEM_READ_WRITE,
+		CL_BUFFER_CREATE_TYPE_REGION, &region, &err);
+	
+	if (err != CL_SUCCESS)
+	{
+		printf("Error: clCreateSubBuffer failed!");
+		return AMF_FAIL;
+	}
+
+	return AMF_OK;
+}
+
 AMF_RESULT AMFDeviceOCLImpl::CopyBuffer(void *pDestHandle, amf_size dstOffset, void *pSourceHandle, amf_size srcOffset, amf_size size)
 {
     int err = clEnqueueCopyBuffer(m_command_queue, (cl_mem)pSourceHandle, (cl_mem)pDestHandle, srcOffset, dstOffset, size, 0, NULL, NULL);
