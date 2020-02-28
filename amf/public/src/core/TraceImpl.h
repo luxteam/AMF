@@ -2,8 +2,25 @@
 #define AMFTRACEIMPL_H
 #include "../../include/core/Trace.h"
 #include "../../include/core/Data.h"
+#include "AMFFileTraceWriter.h"
+#include "AMFConsoleTraceWriter.h"
+#include <map>
+#include <functional>
+#include <cstring>
 
-using namespace amf;
+#include <iostream>
+
+
+using namespace amf; 
+
+
+struct WStrCompare : public std::binary_function<const wchar_t*, const wchar_t*, bool> {
+public:
+	bool operator() (const wchar_t* str1, const wchar_t* str2) const
+	{
+		return std::wcscmp(str1, str2) < 0;
+	}
+};
 
 class AMFTraceImpl : public AMFTrace
 {
@@ -44,6 +61,32 @@ public:
 
     virtual const wchar_t* const AMF_STD_CALL GetSampleFormatName(const AMF_AUDIO_FORMAT eFormat);
     virtual AMF_AUDIO_FORMAT    AMF_STD_CALL GetSampleFormatByName(const wchar_t* name);
+private:
+	struct AMFTraceWriterEx
+	{
+		AMFTraceWriter* pWriter;
+		const wchar_t* writerID;
+		int level;
+		bool enable;
+		std::map<const wchar_t*, int, WStrCompare> levels;
+	};
+private:
+	const wchar_t* const GetWriterLevelName(amf_int32 level);
+	wchar_t * FormMessage(amf_int32 level, const wchar_t *src_path, amf_int32 line, const wchar_t *message, va_list *pArglist);
+	bool CheckLevel(int current, int traceLevel);
+	AMFTraceWriterEx * WriterByName(const wchar_t* name);
+private:
+	
+
+	AMFFileTraceWriter m_fileWriter;
+	AMFConsoleTraceWriter m_consoleWriter;
+	AMFTraceWriterEx m_consoleEx;
+
+	
+	std::map<const wchar_t*, AMFTraceWriterEx, WStrCompare> m_writers;
+	
+	amf_int32 m_level;
+	amf_int32 m_indent;
 };
 
 #endif // AMFTRACEIMPL_H

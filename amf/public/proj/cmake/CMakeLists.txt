@@ -86,6 +86,8 @@ set(
   ../../src/core/ProgramsImpl.cpp
   ../../src/core/SurfaceImpl.cpp
   ../../src/core/TraceImpl.cpp
+  ../../src/core/AMFFileTraceWriter.cpp
+  ../../src/core/AMFConsoleTraceWriter.cpp
 )
 
 if(WIN32)
@@ -166,6 +168,8 @@ set(
   ../../src/core/ProgramsImpl.h
   ../../src/core/SurfaceImpl.h
   ../../src/core/TraceImpl.h
+  ../../src/core/AMFFileTraceWriter.h
+  ../../src/core/AMFConsoleTraceWriter.h
   )
 
 if(AMF_CORE_STATIC)

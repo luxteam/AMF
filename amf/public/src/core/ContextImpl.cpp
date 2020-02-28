@@ -267,7 +267,11 @@ AMF_RESULT AMFContextImpl::CreateSurfaceFromOpenCLNative(AMF_SURFACE_FORMAT form
 
 AMF_RESULT AMFContextImpl::CreateBufferFromOpenCLNative(void *pCLBuffer, amf_size size, AMFBuffer **ppBuffer)
 {
-    return AMF_NOT_IMPLEMENTED;
+	AMFBufferImpl * impl = new AMFBufferImpl(this);
+	AMF_RESULT res = impl->Attach(AMF_MEMORY_OPENCL, pCLBuffer, size);
+	*ppBuffer = impl;
+	(*ppBuffer)->Acquire();
+	return res;
 }
 
 AMF_RESULT AMFContextImpl::GetCompute(AMF_MEMORY_TYPE eMemType, AMFCompute **ppCompute)
