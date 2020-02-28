@@ -111,7 +111,7 @@ AMF_RESULT AMFDeviceOCLImpl::CreateSubBuffer(AMFBuffer * pHandle, void ** subBuf
 	*subBuffer = clCreateSubBuffer((cl_mem)pHandle->GetNative(),
 		CL_MEM_READ_WRITE,
 		CL_BUFFER_CREATE_TYPE_REGION, &region, &err);
-	
+
 	if (err != CL_SUCCESS)
 	{
 		printf("Error: clCreateSubBuffer failed!");
@@ -281,8 +281,13 @@ AMF_RESULT AMFDeviceOCLImpl::ConvertPlaneToBuffer(AMFPlane *pSrcPlane, AMFBuffer
 
 AMF_RESULT AMFDeviceOCLImpl::CopyBuffer(AMFBuffer *pSrcBuffer, amf_size srcOffset, amf_size size, AMFBuffer *pDstBuffer, amf_size dstOffset)
 {
+    printf("\n\nsrc: %llx dst: %llx\n\n", pSrcBuffer, pDstBuffer);
+
+    auto source(pSrcBuffer->GetNative());
+    auto dest(pDstBuffer->GetNative());
+
     //TODO: memory type
-    return CopyBuffer(pDstBuffer->GetNative(), dstOffset, pSrcBuffer->GetNative(), srcOffset, size);
+    return CopyBuffer(dest, dstOffset, source, srcOffset, size);
 }
 
 AMF_RESULT AMFDeviceOCLImpl::CopyPlane(AMFPlane *pSrcPlane, const amf_size srcOrigin[], const amf_size region[], AMFPlane *pDstPlane, const amf_size dstOrigin[])
