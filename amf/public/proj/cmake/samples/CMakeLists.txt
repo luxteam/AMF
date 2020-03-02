@@ -54,7 +54,7 @@ SET(HEADERS
 
 # Local source files here
 SET(SOURCES
-    ../../Qt/AMF_test/main.cpp
+    ../../Qt/AMF_test/main_metal.cpp
     )
 
 include_directories(..)

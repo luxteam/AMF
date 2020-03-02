@@ -3,6 +3,7 @@
 #include "DeviceOCLImpl.h"
 #include "ComputeOCL.h"
 #include "BufferImpl.h"
+#include "Metal/AMFDeviceMetal.h"
 
 AMFContextImpl::AMFContextImpl()
 {
@@ -53,6 +54,14 @@ AMF_RESULT AMFContextImpl::LockDX11()
 AMF_RESULT AMFContextImpl::UnlockDX11()
 {
     return AMF_NOT_IMPLEMENTED;
+}
+
+AMF_RESULT AMFContextImpl::InitMetal()
+{
+    AMFDeviceMetalImpl * impl = new AMFDeviceMetalImpl(this, nullptr);
+    m_pDeviceMetal = impl;
+    m_pComputeDeviceMetal = impl;
+    return AMF_OK;
 }
 
 AMF_RESULT AMFContextImpl::InitOpenCL(void *pCommandQueue)
@@ -276,6 +285,10 @@ AMF_RESULT AMFContextImpl::CreateBufferFromOpenCLNative(void *pCLBuffer, amf_siz
 
 AMF_RESULT AMFContextImpl::GetCompute(AMF_MEMORY_TYPE eMemType, AMFCompute **ppCompute)
 {
+    if (eMemType == AMF_MEMORY_METAL)
+    {
+        return m_pComputeDeviceMetal->CreateCompute(nullptr, ppCompute);
+    }
     return AMF_NOT_IMPLEMENTED;
 }
 
@@ -335,6 +348,9 @@ AMFDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
         return GetDeviceHost();
     if (type == AMF_MEMORY_OPENCL)
         return m_pDeviceOCL;
+    if (type == AMF_MEMORY_METAL)
+        return m_pDeviceMetal;
+
     return nullptr;
 }
 

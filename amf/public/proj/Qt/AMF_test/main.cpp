@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 
     amf::AMFContextPtr context1;
     factory->CreateContext(&context1);
-    
+
 	context1->SetProperty(AMF_CONTEXT_DEVICE_TYPE, AMF_CONTEXT_DEVICE_TYPE_GPU);
     amf::AMFComputeFactoryPtr oclComputeFactory;
     context1->GetOpenCLComputeFactory(&oclComputeFactory);
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
         oclComputeFactory->GetDeviceAt(i, &pComputeDevice);
         pComputeDevice->GetNativeContext();
 
-		
+
 
         amf::AMFComputePtr pCompute;
         pComputeDevice->CreateCompute(nullptr, &pCompute);
@@ -72,9 +72,9 @@ int main(int argc, char *argv[])
 		amf::AMFContextPtr context;
 		factory->CreateContext(&context);
 		context->InitOpenCLEx(pComputeDevice.GetPtr());
-		
-		res = context->AllocBuffer(amf::AMF_MEMORY_HOST, 1024 * sizeof(float), &input); 
-		res = context->AllocBuffer(amf::AMF_MEMORY_OPENCL, 1024 * sizeof(float), &output); 
+
+		res = context->AllocBuffer(amf::AMF_MEMORY_HOST, 1024 * sizeof(float), &input);
+		res = context->AllocBuffer(amf::AMF_MEMORY_OPENCL, 1024 * sizeof(float), &output);
 
         float  *inputData = static_cast<float*>(input->GetNative());
         for (int k = 0; k < 1024; k++)

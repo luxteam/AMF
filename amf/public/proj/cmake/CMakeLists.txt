@@ -50,7 +50,7 @@ else()
     message("OpenCL_LIBRARY: ${OpenCL_LIBRARY}")
 
     include_directories(${OpenCL_INCLUDE_DIR})
-    #ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
+    ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
   endif()
 endif()
 
@@ -172,6 +172,9 @@ set(
   ../../src/core/AMFConsoleTraceWriter.h
   )
 
+include_directories(../../src/core/Metal)
+add_subdirectory(../../src/core/Metal metal)
+
 if(AMF_CORE_STATIC)
   message("Open AMF will be build as static library")
 
@@ -199,6 +202,10 @@ else()
     TARGET_LINK_LIBRARIES(${AMF_NAME} ${OpenCL_LIBRARIES})
     set_property(TARGET ${AMF_NAME} PROPERTY IMPORTED_LOCATION ${OpenCL_LIBRARIES})
 endif()
+
+#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" "-lstdc++")
+
+target_link_libraries(${AMF_NAME} AMF_Metal)
 
 set_property(TARGET ${AMF_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 

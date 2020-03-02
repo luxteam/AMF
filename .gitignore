@@ -6,3 +6,6 @@ amf/public/proj/Qt/build*
 amf/public/proj/cmake/.vscode/
 amf/public/proj/cmake/build*
 amf/public/proj/cmake/vs2017/
+amf/public/src/core/metal/_build/
+amf/public/proj/cmake/samples/build/
+amf/public/proj/cmake/mac-gnumake/

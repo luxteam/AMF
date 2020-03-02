@@ -26,6 +26,8 @@ public:
     virtual AMF_RESULT AMF_STD_CALL LockDX11() override;
     virtual AMF_RESULT AMF_STD_CALL UnlockDX11() override;
 
+    virtual AMF_RESULT AMF_STD_CALL InitMetal() override;
+
     virtual AMF_RESULT AMF_STD_CALL InitOpenCL(void *pCommandQueue) override;
     virtual void * AMF_STD_CALL GetOpenCLContext() override;
     virtual void * AMF_STD_CALL GetOpenCLCommandQueue() override;
@@ -89,6 +91,8 @@ public:
 private:
     AMFDevicePtr m_pDeviceHost;
     AMFDevicePtr m_pDeviceOCL;
+    AMFDevicePtr m_pDeviceMetal;
+    AMFComputeDevicePtr m_pComputeDeviceMetal;
 };
 
 #endif // AMFCONTEXTIMPL_H
