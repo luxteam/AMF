@@ -21,7 +21,7 @@ endif()
 
 # library name
 project(${AMF_NAME})
-include_directories(../../..)
+#include_directories(../../..)
 
 if(OpenCL_INCLUDE_DIR)
   get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
@@ -172,8 +172,8 @@ set(
   ../../src/core/AMFConsoleTraceWriter.h
   )
 
-include_directories(../../src/core/Metal)
-add_subdirectory(../../src/core/Metal metal)
+#include_directories(../../src/core/Metal)
+add_subdirectory(../../src/core/Metal AMF_Metal)
 
 if(AMF_CORE_STATIC)
   message("Open AMF will be build as static library")

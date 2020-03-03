@@ -9,3 +9,7 @@ amf/public/proj/cmake/vs2017/
 amf/public/src/core/metal/_build/
 amf/public/proj/cmake/samples/build/
 amf/public/proj/cmake/mac-gnumake/
+amf/public/src/core/metal/testWrapper/_build/
+amf/public/proj/samples/_build/
+amf/public/proj/samples/vs2017/
+*.DS_Store

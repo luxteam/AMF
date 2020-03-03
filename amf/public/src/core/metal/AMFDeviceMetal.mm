@@ -8,7 +8,11 @@ AMFDeviceMetalImpl::AMFDeviceMetalImpl(AMFContextImpl *pContext, void * native)
 : AMFDeviceImpl(AMF_MEMORY_METAL, 0, pContext),
     m_compute(NULL)
 {
-    m_device = new MetalDevice((id<MTLDevice>)native);
+    if (!!native)
+        m_device = new MetalDevice((id<MTLDevice>)native);
+    else
+        m_device = new MetalDevice();
+
     AMF_RESULT res = m_device->CreateCompute(&m_compute);
     assert(m_compute != nil);
 }

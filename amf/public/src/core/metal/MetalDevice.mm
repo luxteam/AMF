@@ -1,12 +1,19 @@
 #include "MetalDevice.h"
+#import <Metal/Metal.h>
 
 MetalDevice::MetalDevice(id<MTLDevice> device)
 : m_device(device)
 {
-    if (!m_device)
-    {
-        m_device = MTLCreateSystemDefaultDevice();
-    }
+    m_defaultCommandQueue = [m_device newCommandQueue];
+}
+
+MetalDevice::MetalDevice()
+{
+    // @autoreleasepool{
+    //     auto devices = [MTLCopyAllDevices() autorelease];
+    //     m_device = [devices[0] retain];
+    // }
+    //m_device = MTLCreateSystemDefaultDevice();
     m_defaultCommandQueue = [m_device newCommandQueue];
 }
 

@@ -30,4 +30,5 @@ AMF_RESULT MetalComputeKernel::Enqueue(MTLSize workgroupSize, MTLSize sizeInWork
     [m_encoder dispatchThreads:workgroupSize
             threadsPerThreadgroup:sizeInWorkgroup];
     [m_encoder endEncoding];
+    return AMF_OK;
 }

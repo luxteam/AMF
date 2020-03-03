@@ -10,6 +10,7 @@ class MetalDevice
 public:
 
     MetalDevice(id<MTLDevice> device);
+    MetalDevice();
 
     id<MTLBuffer> AllocateBuffer(size_t size);
     AMF_RESULT ReleaseBuffer(id<MTLBuffer>  buffer);
