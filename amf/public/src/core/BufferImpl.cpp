@@ -10,12 +10,12 @@ AMFBufferImpl::AMFBufferImpl(AMFContextImpl *pContext)
         m_size(0),
         m_attached(false)
 {
-    printf("\n\ncreate buffer: %llx\n\n", this);
+    //printf("\ncreate buffer: %llx\n", this);
 }
 
 AMFBufferImpl::~AMFBufferImpl()
 {
-    printf("\n\ndestroy buffer %llx\n\n", this);
+    //printf("\ndestroy buffer %llx\n", this);
 }
 
 AMF_MEMORY_TYPE AMFBufferImpl::GetMemoryType()
@@ -120,8 +120,6 @@ amf_size AMFBufferImpl::GetSize()
 
 void *AMFBufferImpl::GetNative()
 {
-    printf("\n\nGetNative: %llx %llx\n\n", this, m_pMemory);
-
     return m_pMemory;
 }
 

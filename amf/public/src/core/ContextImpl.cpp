@@ -130,7 +130,7 @@ AMF_RESULT AMFContextImpl::InitOpenCLEx(AMFComputeDevice *pDevice)
 
 void *AMFContextImpl::GetOpenCLContext()
 {
-    return NULL;
+    return m_pDeviceOCL ? m_pDeviceOCL->GetNativeContext() : nullptr;
 }
 
 void *AMFContextImpl::GetOpenCLCommandQueue()
