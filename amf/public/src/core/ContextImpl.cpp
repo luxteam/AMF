@@ -133,16 +133,14 @@ void *AMFContextImpl::GetOpenCLContext()
     return m_pDeviceOCL ? m_pDeviceOCL->GetNativeContext() : nullptr;
 }
 
-void *AMFContextImpl::GetOpenCLCommandQueue()
+void * AMFContextImpl::GetOpenCLCommandQueue()
 {
-	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
-	return device->GetNativeCommandQueue();
+	return m_pDeviceOCL ? m_pDeviceOCL->GetNativeCommandQueue() : nullptr;
 }
 
 void *AMFContextImpl::GetOpenCLDeviceID()
 {
-	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
-	return device->GetNativeDeviceID();
+	return m_pDeviceOCL ? m_pDeviceOCL->GetNativeDeviceID() : nullptr;
 }
 
 AMF_RESULT AMFContextImpl::GetOpenCLComputeFactory(AMFComputeFactory **ppFactory)

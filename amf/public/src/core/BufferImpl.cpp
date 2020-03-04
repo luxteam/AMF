@@ -16,12 +16,11 @@ AMFBufferImpl::AMFBufferImpl(AMFContextImpl *pContext)
 AMFBufferImpl::~AMFBufferImpl()
 {
     //printf("\ndestroy buffer %llx\n", this);
-}
 
-inline AMFBufferImpl::~AMFBufferImpl()
-{
-	if (m_pDevice && m_pMemory)
-		m_pDevice->ReleaseBuffer(m_pMemory, m_attached);
+    if (m_pDevice && m_pMemory)
+	{
+        m_pDevice->ReleaseBuffer(m_pMemory, m_attached);
+    }
 }
 
 AMF_MEMORY_TYPE AMFBufferImpl::GetMemoryType()
