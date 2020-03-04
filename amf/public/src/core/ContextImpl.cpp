@@ -135,12 +135,14 @@ void *AMFContextImpl::GetOpenCLContext()
 
 void *AMFContextImpl::GetOpenCLCommandQueue()
 {
-    return NULL;
+	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+	return device->GetNativeCommandQueue();
 }
 
 void *AMFContextImpl::GetOpenCLDeviceID()
 {
-    return NULL;
+	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+	return device->GetNativeDeviceID();
 }
 
 AMF_RESULT AMFContextImpl::GetOpenCLComputeFactory(AMFComputeFactory **ppFactory)
@@ -285,7 +287,11 @@ AMF_RESULT AMFContextImpl::CreateSurfaceFromOpenCLNative(AMF_SURFACE_FORMAT form
 
 AMF_RESULT AMFContextImpl::CreateBufferFromOpenCLNative(void *pCLBuffer, amf_size size, AMFBuffer **ppBuffer)
 {
-    return AMF_NOT_IMPLEMENTED;
+	AMFBufferImpl * impl = new AMFBufferImpl(this);
+	AMF_RESULT res = impl->Attach(AMF_MEMORY_OPENCL, pCLBuffer, size);
+	*ppBuffer = impl;
+	(*ppBuffer)->Acquire();
+	return res;
 }
 
 AMF_RESULT AMFContextImpl::GetCompute(AMF_MEMORY_TYPE eMemType, AMFCompute **ppCompute)

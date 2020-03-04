@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8) 
+cmake_minimum_required(VERSION 2.8)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -14,16 +14,17 @@ if(NOT AMF_NAME)
 endif()
 
 if(OpenCL_INCLUDE_DIR)
-  get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
-  message(WARNING "OpenCL location was set manually")
-  include_directories(${Path_To_OpenCL})
+  get_filename_component(Path_To_OpenCL ../${OpenCL_INCLUDE_DIR} ABSOLUTE)
+  message(WARNING "OpenCL location was set manually(sample)")
+  include_directories(${Path_To_OpenCL}/include)
   set_property(GLOBAL PROPERTY OpenCL_LIBRARIES ${Path_To_OpenCL}/lib/x86_64/opencl.lib)
   get_property(OpenCL_LIBRARIES GLOBAL PROPERTY OpenCL_LIBRARIES)
-  message("OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL})
+  message("OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL}/include)
   message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
+  ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
 else()
   find_package(OpenCL REQUIRED)
-  
+
   if(NOT OpenCL_FOUND)
     message("")
     message(SEND_ERROR "Error: Failed to find OpenCL!")
@@ -40,21 +41,29 @@ else()
     message("OpenCL_LIBRARY: ${OpenCL_LIBRARY}")
 
     include_directories(${OpenCL_INCLUDE_DIR})
-    #ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
-  endif()  
+    ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
+  endif()
 endif()
 
-project(open_amf_test1)	
+project(open_amf_test1)
 
-set(SOURCE_EXE ../../Qt/AMF_test/main.cpp)
+# Local header files here ONLY
+SET(HEADERS
 
-include_directories(..)	
+   )
+
+# Local source files here
+SET(SOURCES
+    ../../Qt/AMF_test/main.cpp
+    )
+
+include_directories(..)
 add_subdirectory(.. ${AMF_NAME})
 
-add_executable(test1 ${SOURCE_EXE})
+add_executable(${PROJECT_NAME} ${SOURCES})
 
 if(AMF_CORE_STATIC)
-  target_link_libraries(test1 ${AMF_NAME} ${OpenCL_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME} ${AMF_NAME} ${OpenCL_LIBRARIES})
 else()
-  #target_link_libraries(test1 ${AMF_NAME}) 
+  #target_link_libraries(${PROJECT_NAME} ${AMF_NAME})
 endif()

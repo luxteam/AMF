@@ -6,8 +6,8 @@
 
 using namespace amf;
 
-class AMFDeviceOCLImpl : public AMFDeviceImpl,
-        public AMFInterfaceImpl<AMFCompute>,
+class AMFDeviceOCLImpl : public virtual AMFDeviceImpl,
+        public virtual AMFInterfaceImpl<AMFCompute>,
         public AMFInterfaceImpl<AMFPropertyStorageImpl<AMFComputeDevice>>
 
 {
