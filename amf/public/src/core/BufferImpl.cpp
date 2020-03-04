@@ -10,6 +10,12 @@ AMFBufferImpl::AMFBufferImpl(AMFContextImpl *pContext)
 {
 }
 
+inline AMFBufferImpl::~AMFBufferImpl()
+{
+	if (m_pDevice && m_pMemory)
+		m_pDevice->ReleaseBuffer(m_pMemory, m_attached);
+}
+
 AMF_MEMORY_TYPE AMFBufferImpl::GetMemoryType()
 {
     return m_pDevice->GetType();

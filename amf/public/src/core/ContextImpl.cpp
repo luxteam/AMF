@@ -112,17 +112,20 @@ AMF_RESULT AMFContextImpl::InitOpenCLEx(AMFComputeDevice *pDevice)
 
 void *AMFContextImpl::GetOpenCLContext()
 {
-    return NULL;
+	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+    return device->GetNativeContext();
 }
 
 void *AMFContextImpl::GetOpenCLCommandQueue()
 {
-    return NULL;
+	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+	return device->GetNativeCommandQueue();
 }
 
 void *AMFContextImpl::GetOpenCLDeviceID()
 {
-    return NULL;
+	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+	return device->GetNativeDeviceID();
 }
 
 AMF_RESULT AMFContextImpl::GetOpenCLComputeFactory(AMFComputeFactory **ppFactory)

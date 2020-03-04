@@ -12,6 +12,7 @@ class AMFBufferImpl : public AMFDataImpl< AMFInterfaceImpl<AMFBuffer> >, public 
 {
 public:
     AMFBufferImpl(AMFContextImpl* pContext);
+	~AMFBufferImpl();
 
     AMF_BEGIN_INTERFACE_MAP
         AMF_INTERFACE_CHAIN_ENTRY(AMFInterfaceImpl)
