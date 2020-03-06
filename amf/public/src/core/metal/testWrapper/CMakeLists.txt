@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.0)
 project(Test)
 set(NAME Test)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -x objective-c")
@@ -18,18 +18,29 @@ set(SOURCE_FILES
 )
 add_subdirectory(.. AMF_Metal)
 
+add_custom_command(OUTPUT default.air
+    COMMAND xcrun -sdk macosx metal -c ../process.metal -o default.air
+)
+add_custom_command(OUTPUT default.metallib
+    COMMAND xcrun -sdk macosx metallib default.air -o default.metallib
+    DEPENDS default.air
+)
+
+
 add_executable(
     ${NAME}
     MACOSX_BUNDLE
     ${SOURCE_FILES}
     ${HEADER_FILES}
-    ../process.metal
+    process.metal
+    default.metallib
 )
+
 
 target_link_libraries(${NAME} AMF_Metal)
 
 set_source_files_properties(
-    ../process.metal
+    default.metallib
     PROPERTIES
     MACOSX_PACKAGE_LOCATION
     Resources

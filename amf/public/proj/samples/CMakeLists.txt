@@ -25,6 +25,13 @@ SET(SOURCES
 add_subdirectory(../cmake ${AMF_NAME})
 
 #add_executable(${PROJECT_NAME} ${SOURCES})
+add_custom_command(OUTPUT default.air
+    COMMAND xcrun -sdk macosx metal -c ../process.metal -o default.air
+)
+add_custom_command(OUTPUT default.metallib
+    COMMAND xcrun -sdk macosx metallib default.air -o default.metallib
+    DEPENDS default.air
+)
 
 add_executable(
     ${PROJECT_NAME}
@@ -32,10 +39,11 @@ add_executable(
     ${SOURCES}
 #    ${HEADER_FILES}
     process.metal
+    default.metallib
 )
 
 set_source_files_properties(
-    process.metal
+    default.metallib
     PROPERTIES
     MACOSX_PACKAGE_LOCATION
     Resources
