@@ -1,20 +1,20 @@
 #ifndef AMFCOMPUTEKERNELMETAL_H
 #define AMFCOMPUTEKERNELMETAL_H
 
-#include "../../../include/core/Compute.h"
-#include "../../../include/core/ComputeFactory.h"
-#include "../../../common/InterfaceImpl.h"
-#include "../../../common/AMFSTL.h"
-#include "../../../common/TraceAdapter.h"
-#include "../../../common/PropertyStorageImpl.h"
+#include "../../include/core/Compute.h"
+#include "../../include/core/ComputeFactory.h"
+#include "../../common/InterfaceImpl.h"
+#include "../../common/AMFSTL.h"
+#include "../../common/TraceAdapter.h"
+#include "../../common/PropertyStorageImpl.h"
+#include "metal/MetalComputeKernelWrapper.h"
 
 using namespace amf;
-class MetalComputeKernel;
 
 class AMFComputeKernelMetal : public AMFInterfaceImpl<AMFComputeKernel>
 {
 public:
-    AMFComputeKernelMetal(AMF_KERNEL_ID kernelID, void * kernel);
+    AMFComputeKernelMetal(AMF_KERNEL_ID kernelID, MetalComputeKernelWrapper * kernel);
 	~AMFComputeKernelMetal();
     virtual void*               AMF_STD_CALL GetNative();
     virtual const wchar_t*      AMF_STD_CALL GetIDName();
@@ -35,7 +35,7 @@ public:
     virtual AMF_RESULT          AMF_STD_CALL Enqueue(amf_size dimension, amf_size globalOffset[3], amf_size globalSize[3], amf_size localSize[3]);
 private:
     AMF_KERNEL_ID m_kernelID;
-    MetalComputeKernel *m_kernel;
+    MetalComputeKernelWrapper *m_kernel;
 };
 
 #endif // AMFCOMPUTEKERNELMETAL_H

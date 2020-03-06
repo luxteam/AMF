@@ -1,9 +1,9 @@
 #include "AMFComputeKernelMetal.h"
-#include "MetalComputeKernel.h"
 
-AMFComputeKernelMetal::AMFComputeKernelMetal(AMF_KERNEL_ID kernelID, void * kernel)
+AMFComputeKernelMetal::AMFComputeKernelMetal(AMF_KERNEL_ID kernelID, MetalComputeKernelWrapper * kernel)
+  : m_kernelID(kernelID), m_kernel(kernel)
 {
-    m_kernel = static_cast<MetalComputeKernel*>(kernel);
+
 }
 
 AMFComputeKernelMetal::~AMFComputeKernelMetal()
@@ -38,8 +38,7 @@ AMF_RESULT    AMFComputeKernelMetal::SetArgPlane(amf_size index, AMFPlane* pPlan
 
 AMF_RESULT    AMFComputeKernelMetal::SetArgBuffer(amf_size index, AMFBuffer* pBuffer, AMF_ARGUMENT_ACCESS_TYPE eAccess)
 {
-    id<MTLBuffer> native = (id<MTLBuffer>)pBuffer->GetNative();
-    return m_kernel->SetArgBuffer(native, index);
+    return m_kernel->SetArgBuffer(pBuffer->GetNative(), index);
 }
 
 AMF_RESULT    AMFComputeKernelMetal::SetArgInt32(amf_size index, amf_int32 data)
@@ -64,18 +63,10 @@ AMF_RESULT    AMFComputeKernelMetal::SetArgBlob(amf_size index, amf_size dataSiz
 
 AMF_RESULT    AMFComputeKernelMetal::GetCompileWorkgroupSize(amf_size workgroupSize[3])
 {
-    MTLSize size = m_kernel->GetCompileWorkgroupSize(workgroupSize[0]);
-    workgroupSize[0] = size.width;
-    workgroupSize[1] = size.height;
-    workgroupSize[2] = size.depth;
-
-    return AMF_OK;
+    return m_kernel->GetCompileWorkgroupSize(workgroupSize);
 }
 
 AMF_RESULT    AMFComputeKernelMetal::Enqueue(amf_size dimension, amf_size globalOffset[3], amf_size globalSize[3], amf_size localSize[3])
 {
-    MTLSize workgroupSize = MTLSizeMake(globalSize[0], globalSize[1], globalSize[2]);
-    MTLSize sizeInWorkgroup = MTLSizeMake(localSize[0], localSize[1], localSize[2]);
-
-    return m_kernel->Enqueue(workgroupSize, sizeInWorkgroup);
+    return m_kernel->Enqueue(globalSize, localSize);
 }

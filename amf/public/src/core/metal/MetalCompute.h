@@ -13,8 +13,8 @@ public:
     AMF_RESULT FinishQueue();
 
 private:
-    id<MTLCommandQueue> m_commandQueue;
     id<MTLDevice> m_device;
+    id<MTLCommandQueue> m_commandQueue;
     id<MTLLibrary> m_library;
     id<MTLCommandBuffer> m_commandBuffer;
 };

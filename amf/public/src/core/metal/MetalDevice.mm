@@ -13,7 +13,7 @@ MetalDevice::MetalDevice()
     //     auto devices = [MTLCopyAllDevices() autorelease];
     //     m_device = [devices[0] retain];
     // }
-    //m_device = MTLCreateSystemDefaultDevice();
+    m_device = MTLCreateSystemDefaultDevice();
     m_defaultCommandQueue = [m_device newCommandQueue];
 }
 
@@ -135,6 +135,11 @@ AMF_RESULT MetalDevice::CreateCompute(MetalCompute ** compute)
     }
     (*compute) = new MetalCompute(m_device, commandQueue);
     return AMF_OK;
+}
+
+id<MTLCommandQueue> MetalDevice::GetNativeCommandQueue()
+{
+    return m_defaultCommandQueue;
 }
 
 id<MTLDevice> MetalDevice::GetNativeDevice()

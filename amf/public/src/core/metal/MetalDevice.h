@@ -22,6 +22,7 @@ public:
     AMF_RESULT CreateCompute(MetalCompute ** compute);
 
     id<MTLDevice> GetNativeDevice();
+    id<MTLCommandQueue> GetNativeCommandQueue();
 private:
     id<MTLDevice> m_device;
     id<MTLCommandQueue> m_defaultCommandQueue;

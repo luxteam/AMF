@@ -41,3 +41,13 @@ set_source_files_properties(
 #     MACOSX_BUNDLE_INFO_PLIST
 #     ${CMAKE_CURRENT_LIST_DIR}/plist.in
 # )
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+    -framework AppKit \
+    -framework Metal \
+    -framework MetalKit \
+    -framework ModelIO \
+    -framework IOSurface \
+    -framework QuartzCore \
+    -framework CoreGraphics"
+    )

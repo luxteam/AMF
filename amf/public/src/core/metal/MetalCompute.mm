@@ -37,6 +37,7 @@ AMF_RESULT MetalCompute::GetKernel(NSString * name, MetalComputeKernel ** kernel
     }
 
     (*kernel) = new MetalComputeKernel(computeEncoder, processFunction, processFunctionPSO);
+    return AMF_OK;
 }
 
 AMF_RESULT MetalCompute::FlushQueue()
