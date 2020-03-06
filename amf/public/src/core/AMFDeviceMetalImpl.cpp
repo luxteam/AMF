@@ -94,7 +94,7 @@ AMF_RESULT AMFDeviceMetalImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKerne
 
     MetalComputeKernelWrapper *pKernel = NULL;
     AMF_RESULT res = m_compute->GetKernel(source, &pKernel);
-    AMF_RETURN_IF_FALSE(res != AMF_OK, AMF_INVALID_ARG, L"GetKernel");
+    AMF_RETURN_IF_FALSE(res == AMF_OK, AMF_INVALID_ARG, L"GetKernel");
 
     AMFComputeKernelMetal * computeKernel = new AMFComputeKernelMetal(kernelID, pKernel);
     *kernel = computeKernel;
