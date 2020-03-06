@@ -25,5 +25,5 @@ AMF_RESULT MetalComputeWrapper::FlushQueue()
 
 AMF_RESULT MetalComputeWrapper::FinishQueue()
 {
-    return m_compute->FlushQueue();
+    return m_compute->FinishQueue();
 }

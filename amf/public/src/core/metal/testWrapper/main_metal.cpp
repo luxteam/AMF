@@ -1,4 +1,5 @@
 #include "../MetalDeviceWrapper.h"
+#include "iostream"
 
 const unsigned int arrayLength = 1 << 12;
 const unsigned int bufferSize = arrayLength * sizeof(float);
@@ -27,26 +28,26 @@ int main(int argc, char *argv[])
     }
 
     res = device->CopyBufferFromHost(input, 0, &data[0], bufferSize, true);
-printf("Hello");
+
     res = kernel->SetArgBuffer(input, 0);
     res = kernel->SetArgBuffer(output, 1);
-printf("Hello");
+
     amf_size globalSize[3] = {arrayLength, 1, 1};
     amf_size localSize[3] = {arrayLength, 1, 1};
 
     res = kernel->GetCompileWorkgroupSize(localSize);
     res = kernel->Enqueue(globalSize, localSize);
 
-printf("Hello");
     res = compute->FlushQueue();
-printf("Hello");
+
     res = compute->FinishQueue();
-printf("Hello");
+
     res = device->CopyBufferToHost(&result[0], output, 0, bufferSize, true);
 
     for (unsigned long index = 0; index < 10; index++)
     {
-        printf("result[%d] = %f", index, result[index]);
+        std::cout<<"result["<< index << "] = "<<result[index]<<"\n";
+        // printf("result[%d] = %f", index, result[index]);
     }
 
     return 0;
