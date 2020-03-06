@@ -3,7 +3,7 @@
 #include "DeviceOCLImpl.h"
 #include "ComputeOCL.h"
 #include "BufferImpl.h"
-#include "Metal/AMFDeviceMetal.h"
+#include "AMFDeviceMetalImpl.h"
 
 AMFContextImpl::AMFContextImpl()
 {

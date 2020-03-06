@@ -10,7 +10,7 @@ AMFDeviceMetalImpl::AMFDeviceMetalImpl(AMFContextImpl *pContext, void * native)
     m_device = new MetalDeviceWrapper(native);
 
     AMF_RESULT res = m_device->CreateCompute(&m_compute);
-    assert(res = AMF_OK);
+    assert(res == AMF_OK);
 }
 
 AMFDeviceMetalImpl::~AMFDeviceMetalImpl()

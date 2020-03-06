@@ -45,9 +45,5 @@ set_source_files_properties(
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
     -framework AppKit \
     -framework Metal \
-    -framework MetalKit \
-    -framework ModelIO \
-    -framework IOSurface \
-    -framework QuartzCore \
-    -framework CoreGraphics"
+    -framework MetalKit"
     )

@@ -21,7 +21,7 @@ endif()
 
 # library name
 project(${AMF_NAME})
-#include_directories(../../..)
+include_directories(../../..)
 
 if(OpenCL_INCLUDE_DIR)
   get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
@@ -31,6 +31,7 @@ if(OpenCL_INCLUDE_DIR)
   get_property(OpenCL_LIBRARIES GLOBAL PROPERTY OpenCL_LIBRARIES)
   message("OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL}/include)
   message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
+  ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
 else()
   find_package(OpenCL REQUIRED)
 
@@ -54,7 +55,7 @@ else()
   endif()
 endif()
 
-ADD_DEFINITIONS(-DAMF_CORE_STATIC)
+#ADD_DEFINITIONS(-DAMF_CORE_STATIC)
 
 # sources
 set(
@@ -89,6 +90,11 @@ set(
   ../../src/core/AMFFileTraceWriter.cpp
   ../../src/core/AMFConsoleTraceWriter.cpp
 )
+
+if (APPLE)
+  list(APPEND SOURCE_LIB ../../src/core/AMFDeviceMetalImpl.cpp)
+  list(APPEND SOURCE_LIB ../../src/core/AMFComputeKernelMetal.cpp)
+endif()
 
 if(WIN32)
   list(APPEND SOURCE_LIB ../../common/Windows/ThreadWindows.cpp)
@@ -172,8 +178,12 @@ set(
   ../../src/core/AMFConsoleTraceWriter.h
   )
 
-#include_directories(../../src/core/Metal)
-add_subdirectory(../../src/core/Metal AMF_Metal)
+if (APPLE)
+  list(APPEND HEADER_LIB ../../src/core/AMFDeviceMetalImpl.h)
+  list(APPEND HEADER_LIB ../../src/core/AMFComputeKernelMetal.h)
+
+  add_subdirectory(../../src/core/Metal AMF_Metal)
+endif()
 
 if(AMF_CORE_STATIC)
   message("Open AMF will be build as static library")
@@ -203,9 +213,10 @@ else()
     set_property(TARGET ${AMF_NAME} PROPERTY IMPORTED_LOCATION ${OpenCL_LIBRARIES})
 endif()
 
-#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" "-lstdc++")
-
-target_link_libraries(${AMF_NAME} AMF_Metal)
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" "-lstdc++")
+if (APPLE)
+  target_link_libraries(${AMF_NAME} AMF_Metal)
+endif()
 
 set_property(TARGET ${AMF_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
@@ -216,6 +227,14 @@ if(NOT WIN32)
 
   if(CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
     target_compile_options(${AMF_NAME} PUBLIC -g)
+  endif()
+
+  if (APPLE)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+    -framework AppKit \
+    -framework Metal \
+    -framework MetalKit"
+    )
   endif()
 
   if(NOT APPLE)

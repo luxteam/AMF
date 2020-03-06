@@ -1,5 +1,7 @@
+#pragma once
 #include "../../../include/core/Result.h"
 #include "MetalComputeWrapper.h"
+
 class MetalDevice;
 
 class MetalDeviceWrapper

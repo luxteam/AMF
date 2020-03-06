@@ -1,5 +1,5 @@
 #/bin/sh
 
-cd build
+cd build;
 make VERBOSE=1
 cd ..

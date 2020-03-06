@@ -7,5 +7,5 @@ mkdir mac-gnumake
 
 cd mac-gnumake
 #-DAMF_CORE_STATIC=1
-cmake .. -DOpenCL_INCLUDE_DIR="../../../../../CL_Headers"
+cmake .. -DOpenCL_INCLUDE_DIR="../../../../../../CL_Headers" -DAMF_CORE_STATIC=1
 cd ..

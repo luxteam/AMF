@@ -32,14 +32,6 @@ add_library(
     #SHARED
     ${SOURCE_FILES}
     ${HEADER_FILES}
-    process.metal
-)
-
-set_source_files_properties(
-    process.metal
-    PROPERTIES
-    MACOSX_PACKAGE_LOCATION
-    Resources
 )
 
 # set_target_properties(
@@ -52,9 +44,5 @@ set_source_files_properties(
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
     -framework AppKit \
     -framework Metal \
-    -framework MetalKit \
-    -framework ModelIO \
-    -framework IOSurface \
-    -framework QuartzCore \
-    -framework CoreGraphics"
+    -framework MetalKit"
     )
