@@ -93,11 +93,11 @@ AMF_RESULT AMFContextImpl::InitOpenCL(void *pCommandQueue)
     }
     else
     {
-        cl_context context;
-        cl_device_id deviceId;
-        cl_platform_id platformId;
+        cl_context context(nullptr);
+        cl_device_id deviceId(0);
+        cl_platform_id platformId(0);
 
-        size_t resultsize;
+        size_t resultsize(0);
         int err = clGetCommandQueueInfo(cl_command_queue(pCommandQueue), CL_QUEUE_CONTEXT, sizeof(cl_context), context, &resultsize);
         err |= clGetCommandQueueInfo(cl_command_queue(pCommandQueue), CL_QUEUE_DEVICE, sizeof(cl_device_id), deviceId, &resultsize);
         err |= clGetDeviceInfo(deviceId, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), platformId, &resultsize);
