@@ -44,6 +44,10 @@ AMF_RESULT MetalDeviceWrapper::CreateCompute(MetalComputeWrapper ** compute)
     (*compute) = new MetalComputeWrapper((void*)computeImpl);
     return AMF_OK;
 }
+AMF_RESULT MetalDeviceWrapper::CreateSubBuffer(void* pHandle, void ** subBuffer, amf_size offset, amf_size size)
+{
+    return m_device->CreateSubBuffer((id<MTLBuffer>)pHandle, subBuffer, offset, size);
+}
 
 void * MetalDeviceWrapper::GetNativeDevice()
 {

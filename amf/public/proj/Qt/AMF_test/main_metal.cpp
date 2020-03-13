@@ -65,12 +65,16 @@ int main(int argc, char *argv[])
     pCompute->FlushQueue();
     pCompute->FinishQueue();
 
-    output->Convert(amf::AMF_MEMORY_HOST);
-    float  *outputData = static_cast<float*>(output->GetNative());
+    //output->Convert(amf::AMF_MEMORY_HOST);
+    amf::AMFBuffer *subBuffer = NULL;
+    output->CreateSubBuffer(&subBuffer, 0, 1024 * sizeof(float));
+    subBuffer->Convert(amf::AMF_MEMORY_HOST);
 
-    for (int k = 0; k < 1024; k++ )
+    float  *outputData = static_cast<float*>(subBuffer->GetNative());
+
+    for (int k = 0; k < 10; k++ )
     {
-        printf("result[%d] = %f ", k, outputData[k]);
+        printf("result[%d] = %f \n", k, outputData[k]);
     }
 
     return 0;

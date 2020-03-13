@@ -4,6 +4,7 @@
 MetalDevice::MetalDevice(id<MTLDevice> device)
 : m_device(device)
 {
+    m_pageSize = getpagesize();
     m_defaultCommandQueue = [m_device newCommandQueue];
 }
 
@@ -14,12 +15,13 @@ MetalDevice::MetalDevice()
     //     m_device = [devices[0] retain];
     // }
     m_device = MTLCreateSystemDefaultDevice();
+    m_pageSize = getpagesize();
     m_defaultCommandQueue = [m_device newCommandQueue];
 }
 
 id<MTLBuffer> MetalDevice::AllocateBuffer(size_t size)
 {
-    return [m_device newBufferWithLength:size options:MTLResourceStorageModePrivate];
+    return [m_device newBufferWithLength:size options:MTLResourceStorageModeShared];
 }
 
 AMF_RESULT MetalDevice::ReleaseBuffer(id<MTLBuffer>  buffer)
@@ -137,6 +139,22 @@ AMF_RESULT MetalDevice::CreateCompute(MetalCompute ** compute)
     return AMF_OK;
 }
 
+AMF_RESULT MetalDevice::CreateSubBuffer(id<MTLBuffer> pSourceHandle, void ** subBuffer, amf_size offset, amf_size size)
+{
+    NSUInteger alignedOffset = AlignedValue(offset, true);
+    NSUInteger alignedSize = AlignedValue(size, false);
+    if (alignedOffset != offset)
+    {
+        NSLog(@"CreateSubBuffer: aligned offset != offset");
+    }
+    float * dataPtr = static_cast<float*>(pSourceHandle.contents);
+    (*subBuffer) = (void*) [m_device newBufferWithBytesNoCopy:(dataPtr + alignedOffset)
+                                            length: alignedSize
+                                            options: MTLResourceStorageModeShared
+                                            deallocator: nil];
+    return AMF_OK;
+}
+
 id<MTLCommandQueue> MetalDevice::GetNativeCommandQueue()
 {
     return m_defaultCommandQueue;
@@ -145,4 +163,12 @@ id<MTLCommandQueue> MetalDevice::GetNativeCommandQueue()
 id<MTLDevice> MetalDevice::GetNativeDevice()
 {
     return m_device;
+}
+
+NSUInteger MetalDevice::AlignedValue(NSUInteger value, bool toLower)
+{
+    NSUInteger result = (value % m_pageSize) * m_pageSize;
+    if (!toLower || result != value)
+        result += m_pageSize;
+    return result;
 }

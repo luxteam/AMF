@@ -20,10 +20,14 @@ public:
     AMF_RESULT CopyBufferFromHost(id<MTLBuffer> pDestHandle, size_t dstOffset, const void *pSource, size_t size, bool blocking);
 
     AMF_RESULT CreateCompute(MetalCompute ** compute);
+    AMF_RESULT CreateSubBuffer(id<MTLBuffer> pSourceHandle, void ** subBuffer, amf_size offset, amf_size size);
 
     id<MTLDevice> GetNativeDevice();
     id<MTLCommandQueue> GetNativeCommandQueue();
 private:
+    NSUInteger AlignedValue(NSUInteger value, bool toLower = false);
+private:
     id<MTLDevice> m_device;
     id<MTLCommandQueue> m_defaultCommandQueue;
+    NSUInteger m_pageSize;
 };

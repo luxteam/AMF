@@ -18,6 +18,7 @@ public:
     AMF_RESULT CopyBufferFromHost(void * pDestHandle, size_t dstOffset, const void *pSource, size_t size, bool blocking);
 
     AMF_RESULT CreateCompute(MetalComputeWrapper ** compute);
+    AMF_RESULT CreateSubBuffer(void* pHandle, void ** subBuffer, amf_size offset, amf_size size);
 
     void * GetNativeDevice();
 private:

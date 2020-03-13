@@ -45,7 +45,7 @@ AMF_RESULT AMFDeviceMetalImpl::ReleaseBuffer(void *pHandle, bool attached)
 
 AMF_RESULT AMFDeviceMetalImpl::CreateSubBuffer(AMFBuffer* pHandle, void ** subBuffer, amf_size offset, amf_size size)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_device->CreateSubBuffer(pHandle->GetNative(), subBuffer, offset, size);
 }
 
 AMF_RESULT AMFDeviceMetalImpl::CopyBuffer(void *pDestHandle, amf_size dstOffset, void *pSourceHandle, amf_size srcOffset, amf_size size)
