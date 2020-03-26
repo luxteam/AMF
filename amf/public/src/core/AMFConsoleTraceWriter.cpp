@@ -64,9 +64,9 @@ amf::AMFCriticalSection      s_std_out_cs;
 
 void AMFConsoleTraceWriter::Write(const wchar_t * scope, const wchar_t * message)
 {
-	/*amf::AMFLock lock(&s_std_out_cs);
+	amf::AMFLock lock(&s_std_out_cs);
 	wprintf(message);
-	wprintf(L"\n");*/
+	wprintf(L"\n");
 }
 
 void AMFConsoleTraceWriter::Write(const wchar_t * scope, const wchar_t * message, amf_int32 level)

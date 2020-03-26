@@ -7,7 +7,7 @@ AMFTraceImpl::AMFTraceImpl()
 {
 	m_level = AMF_TRACE_INFO;
 	RegisterWriter(AMF_TRACE_WRITER_FILE, &m_fileWriter, true);
-	RegisterWriter(AMF_TRACE_WRITER_CONSOLE, &m_consoleWriter, true);
+	m_consoleEx = AMFTraceWriterEx { &m_consoleWriter, AMF_TRACE_WRITER_CONSOLE, AMF_TRACE_INFO, true };
 }
 
 AMF_AUDIO_FORMAT AMFTraceImpl::GetSampleFormatByName(const wchar_t *name)
@@ -326,33 +326,24 @@ amf_int32 AMFTraceImpl::SetWriterLevelForScope(const wchar_t *writerID, const wc
 
 amf_int32 AMFTraceImpl::GetWriterLevel(const wchar_t *writerID)
 {
-	std::map <const wchar_t *, AMFTraceWriterEx> ::iterator it;
+	AMFTraceWriterEx * writer = WriterByName(writerID);
+	bool result = false;
+	if (!!writer)
+		return writer->level;
 
-	it = m_writers.find(writerID);
-
-	if (it == m_writers.end()) {
-		return 0;
-	}
-
-    return it->second.level;
+	return 0;
 }
 
 amf_int32 AMFTraceImpl::SetWriterLevel(const wchar_t *writerID, amf_int32 level)
 {
-	amf_int32 prev = 0;
-
-	std::map <const wchar_t *, AMFTraceWriterEx> ::iterator it;
-
-	it = m_writers.find(writerID);
-
-	if (it == m_writers.end()) {
-		return 0;
+	AMFTraceWriterEx * writer = WriterByName(writerID);
+	amf_int32 result = 0;
+	if (!!writer)
+	{
+		result = writer->level;
+		writer->level = level;
 	}
-
-	prev = it->second.level;
-	it->second.level = level;
-
-    return prev;
+	return result;
 }
 
 AMF_RESULT AMFTraceImpl::GetPath(wchar_t *path, amf_size *pSize)
@@ -367,6 +358,9 @@ AMF_RESULT AMFTraceImpl::SetPath(const wchar_t *path)
 
 AMF_RESULT AMFTraceImpl::TraceFlush()
 {
+	if (m_consoleEx.enable)
+		m_consoleEx.pWriter->Flush();
+
 	std::map<const wchar_t*, AMFTraceWriterEx>::iterator iter;
 
 	for (iter = m_writers.begin(); iter != m_writers.end(); ++iter) {
@@ -385,20 +379,24 @@ AMF_RESULT AMFTraceImpl::TraceEnableAsync(amf_bool enable)
 
 amf_bool AMFTraceImpl::WriterEnabled(const wchar_t *writerID)
 {
-	std::map <const wchar_t *, AMFTraceWriterEx> ::iterator it;
+	AMFTraceWriterEx * writer = WriterByName(writerID);
+	bool result = false;
+	if (!!writer)
+		return writer->enable;
 
-	it = m_writers.find(writerID);
-
-	if (it == m_writers.end()) {
-		return 0;
-	}
-
-	return it->second.enable;
+	return false;
 }
 
 amf_bool AMFTraceImpl::EnableWriter(const wchar_t *writerID, bool enable)
 {
-    return false;
+	AMFTraceWriterEx * writer = WriterByName(writerID);
+	bool result = false;
+	if (!!writer)
+	{
+		result = writer->enable;
+		writer->enable = enable;
+	}
+    return result;
 }
 
 AMFTraceImpl::AMFTraceWriterEx * AMFTraceImpl::WriterByName(const wchar_t* name)
@@ -505,9 +503,14 @@ void AMFTraceImpl::Trace(const wchar_t *src_path, amf_int32 line, amf_int32 leve
 		return;
 
 
-	std::map<const wchar_t*, AMFTraceWriterEx>::iterator iter;
 	wchar_t * result_message = FormMessage(level, src_path, line, message, pArglist);
 
+	if (m_consoleEx.enable && CheckLevel(m_consoleEx.level, level))
+	{
+		m_consoleWriter.Write(scope, message, level);
+	}
+
+	std::map<const wchar_t*, AMFTraceWriterEx>::iterator iter;
 	for (iter = m_writers.begin(); iter != m_writers.end(); ++iter) {
 		if (!iter->second.enable)
 			continue;
