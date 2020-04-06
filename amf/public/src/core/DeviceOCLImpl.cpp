@@ -123,6 +123,19 @@ AMF_RESULT AMFDeviceOCLImpl::CreateSubBuffer(AMFBuffer * pHandle, void ** subBuf
 	return AMF_OK;
 }
 
+AMF_RESULT AMFDeviceOCLImpl::MapToHost(AMFBuffer * pHandle, void ** memory, amf_size offset, amf_size size, bool blocking)
+{
+	//TODO:: check type
+	int err = CL_SUCCESS;
+	(*memory) = clEnqueueMapBuffer(m_command_queue, (cl_mem)pHandle->GetNative(), blocking, CL_MAP_READ, offset, size, 0, NULL, NULL, &err);
+	if (err != CL_SUCCESS)
+	{
+		printf("Error: Failed to clEnqueueMapBuffer! Code = %d\n", err);
+		return AMF_FAIL;
+	}
+	return AMF_OK;
+}
+
 AMF_RESULT AMFDeviceOCLImpl::CopyBuffer(void *pDestHandle, amf_size dstOffset, void *pSourceHandle, amf_size srcOffset, amf_size size)
 {
     int err = clEnqueueCopyBuffer(m_command_queue, (cl_mem)pSourceHandle, (cl_mem)pDestHandle, srcOffset, dstOffset, size, 0, NULL, NULL);

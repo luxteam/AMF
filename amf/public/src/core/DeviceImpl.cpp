@@ -33,6 +33,11 @@ AMF_RESULT AMFDeviceImpl::CreateSubBuffer(AMFBuffer * pHandle, void ** subBuffer
 	return AMF_NOT_SUPPORTED;
 }
 
+AMF_RESULT AMFDeviceImpl::MapToHost(AMFBuffer * pHandle, void ** memory, amf_size offset, amf_size size, bool blocking)
+{
+	return AMF_NOT_SUPPORTED;
+}
+
 AMF_RESULT AMFDeviceImpl::CopyBuffer(void *pDestHandle, amf_size dstOffset, void *pSourceHandle, amf_size srcOffset, amf_size size)
 {
     return AMF_NOT_SUPPORTED;

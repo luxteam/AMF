@@ -103,6 +103,7 @@ namespace amf
         virtual amf_size            AMF_STD_CALL GetSize() = 0;
         virtual void*               AMF_STD_CALL GetNative() = 0;
 		virtual AMF_RESULT          AMF_STD_CALL CreateSubBuffer(AMFBuffer** subBuffer, amf_size offset, amf_size size) = 0;
+		virtual AMF_RESULT			AMF_STD_CALL MapToHost(void ** memory, amf_size offset, amf_size size, bool blocking) = 0;
 
         // Observer management
         virtual void                AMF_STD_CALL AddObserver(AMFBufferObserver* pObserver) = 0;

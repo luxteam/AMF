@@ -140,6 +140,14 @@ AMF_RESULT AMF_STD_CALL AMFBufferImpl::CreateSubBuffer(AMFBuffer** subBuffer, am
 	return AMF_OK;
 }
 
+AMF_RESULT AMF_STD_CALL AMFBufferImpl::MapToHost(void ** pMemory, amf_size offset, amf_size size, bool blocking)
+{
+	AMFDevice* pDevice = nullptr;
+	AMF_RETURN_IF_FALSE((pDevice = GetContext()->GetDevice(GetMemoryType())) != nullptr, AMF_NO_DEVICE);
+
+	return pDevice->MapToHost(this, pMemory, offset, size, blocking);
+}
+
 AMF_RESULT AMFBufferImpl::Allocate(AMF_MEMORY_TYPE type, amf_size size)
 {
     AMFDevice* pDevice = nullptr;

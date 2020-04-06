@@ -40,6 +40,11 @@ AMF_RESULT AMFDeviceHostImpl::CreateSubBuffer(AMFBuffer * pHandle, void ** subBu
 	return AMF_NOT_IMPLEMENTED;
 }
 
+AMF_RESULT AMFDeviceHostImpl::MapToHost(AMFBuffer * pHandle, void ** memory, amf_size offset, amf_size size, bool blocking)
+{
+	return AMF_NOT_IMPLEMENTED;
+}
+
 AMF_RESULT AMFDeviceHostImpl::CopyBuffer(void *pDestHandle, amf_size dstOffset, void *pSourceHandle, amf_size srcOffset, amf_size size)
 {
     memcpy(static_cast<amf_uint8*>(pDestHandle) + dstOffset, static_cast<amf_uint8*>(pSourceHandle) + srcOffset, size);

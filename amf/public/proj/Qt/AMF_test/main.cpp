@@ -97,12 +97,17 @@ int main(int argc, char *argv[])
         pKernel->Enqueue(1, offset, sizeGlobal, sizeLocal);
         pCompute->FlushQueue();
         pCompute->FinishQueue();
-        output->Convert(amf::AMF_MEMORY_HOST);
-        float  *outputData = static_cast<float*>(output->GetNative());
+		float  *outputData2 = NULL;
+		res = output->MapToHost((void**)&outputData2, 0, 1024, true);
+
+       
         for (int k = 0; k < 1024; k++ )
         {
-            printf("result[%d] = %f ", k, outputData[k]);
+            printf("result[%d] = %f ", k, outputData2[k]);
         }
+
+		output->Convert(amf::AMF_MEMORY_HOST);
+		float  *outputData = static_cast<float*>(output->GetNative());
     }
 
     return 0;
