@@ -16,6 +16,7 @@ namespace amf
         virtual AMF_RESULT AttachBuffer(amf_size size, void* pHandle) = 0;
         virtual AMF_RESULT ReleaseBuffer(void* pHandle, bool attached) = 0;
 		virtual AMF_RESULT CreateSubBuffer(AMFBuffer* pHandle, void ** subBuffer, amf_size offset, amf_size size) = 0;
+		virtual AMF_RESULT MapToHost(AMFBuffer* pHandle, void ** memory, amf_size offset, amf_size size, bool blocking) = 0;
 
         virtual AMF_RESULT CopyBuffer(void* pDestHandle, amf_size dstOffset, void* pSourceHandle, amf_size srcOffset, amf_size size) = 0;
         virtual AMF_RESULT CopyBufferToHost(void* pDest, void* pSourceHandle, amf_size srcOffset, amf_size size, bool blocking) = 0;
