@@ -294,7 +294,21 @@ AMF_RESULT AMFContextImpl::CreateBufferFromOpenCLNative(void *pCLBuffer, amf_siz
 
 AMF_RESULT AMFContextImpl::GetCompute(AMF_MEMORY_TYPE eMemType, AMFCompute **ppCompute)
 {
-    return AMF_NOT_IMPLEMENTED;
+    if(eMemType == AMF_MEMORY_TYPE::AMF_MEMORY_OPENCL)
+    {
+        *ppCompute = m_pDeviceOCL;
+
+        return AMF_OK;
+    }
+
+    /*else if(eMemType == AMF_MEMORY_TYPE::AMF_MEMORY_HOST)
+    {
+        *ppCompute = m_pDeviceHost;
+
+        return AMF_OK;
+    }*/
+
+    return AMF_NOT_SUPPORTED;
 }
 
 AMF_RESULT AMFContextImpl::CreateBufferFromDX11Native(void *pHostBuffer, AMFBuffer **ppBuffer, AMFBufferObserver *pObserver)
