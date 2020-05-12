@@ -68,7 +68,7 @@ private:
 		const wchar_t* writerID;
 		int level;
 		bool enable;
-		std::map<const wchar_t*, int, WStrCompare> levels;
+		std::map<const wchar_t*, amf_int32, WStrCompare> levels;
 	};
 private:
 	const wchar_t* const GetWriterLevelName(amf_int32 level);

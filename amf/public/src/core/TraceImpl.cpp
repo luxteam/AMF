@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <wchar.h>
+amf::AMFCriticalSection      s_writer_cs;
 
 AMFTraceImpl::AMFTraceImpl()
 {
@@ -293,7 +294,8 @@ const wchar_t *AMFTraceImpl::GetResultText(AMF_RESULT res)
 
 void AMFTraceImpl::UnregisterWriter(const wchar_t *writerID)
 {
-
+	amf::AMFLock lock(&s_writer_cs);
+	m_writers.erase(writerID);
 }
 
 void AMFTraceImpl::RegisterWriter(const wchar_t *writerID, AMFTraceWriter *pWriter, amf_bool enable)
@@ -316,12 +318,45 @@ amf_int32 AMFTraceImpl::GetIndentation()
 
 amf_int32 AMFTraceImpl::GetWriterLevelForScope(const wchar_t *writerID, const wchar_t *scope)
 {
-    return 0;
+	AMFTraceWriterEx * writer = WriterByName(writerID);
+	bool result = false;
+
+	if (!!writer)
+	{
+		std::map <const wchar_t *, amf_int32> ::iterator it;
+
+		it = writer->levels.find(scope);
+
+		if (it == writer->levels.end())
+			return 0;
+
+		return it->second;
+	}
+
+	return 0;
 }
 
 amf_int32 AMFTraceImpl::SetWriterLevelForScope(const wchar_t *writerID, const wchar_t *scope, amf_int32 level)
 {
-    return 0;
+	AMFTraceWriterEx * writer = WriterByName(writerID);
+	amf_int32 result = 0;
+	if (!!writer)
+	{
+		std::map <const wchar_t *, amf_int32> ::iterator it;
+
+		it = writer->levels.find(scope);
+
+		if (it == writer->levels.end())
+		{
+			writer->levels.insert({ scope, level });
+			return result;
+		}
+
+		result = it->second;
+		it->second = level;
+	}
+
+	return result;
 }
 
 amf_int32 AMFTraceImpl::GetWriterLevel(const wchar_t *writerID)
@@ -401,6 +436,9 @@ amf_bool AMFTraceImpl::EnableWriter(const wchar_t *writerID, bool enable)
 
 AMFTraceImpl::AMFTraceWriterEx * AMFTraceImpl::WriterByName(const wchar_t* name)
 {
+	if (0 == wcscmp(name, AMF_TRACE_WRITER_CONSOLE))
+		return &m_consoleEx;
+
 	std::map <const wchar_t *, AMFTraceWriterEx> ::iterator it;
 
 	it = m_writers.find(name);
@@ -507,7 +545,12 @@ void AMFTraceImpl::Trace(const wchar_t *src_path, amf_int32 line, amf_int32 leve
 
 	if (m_consoleEx.enable && CheckLevel(m_consoleEx.level, level))
 	{
-		m_consoleWriter.Write(scope, message, level);
+		std::map <const wchar_t *, amf_int32> ::iterator it_scope;
+		it_scope = m_consoleEx.levels.find(scope);
+		if (it_scope == m_consoleEx.levels.end() || CheckLevel(it_scope->second, level))
+		{
+			m_consoleWriter.Write(scope, message, level);
+		}
 	}
 
 	std::map<const wchar_t*, AMFTraceWriterEx>::iterator iter;
@@ -516,6 +559,14 @@ void AMFTraceImpl::Trace(const wchar_t *src_path, amf_int32 line, amf_int32 leve
 			continue;
 		if (!CheckLevel(iter->second.level, level))
 			continue;
+
+		std::map <const wchar_t *, amf_int32> ::iterator it_scope;
+		it_scope = iter->second.levels.find(scope);
+		if (it_scope != iter->second.levels.end())
+		{
+			if (!CheckLevel(it_scope->second, level))
+				continue;
+		}
 
 		iter->second.pWriter->Write(scope, result_message);
 	}
