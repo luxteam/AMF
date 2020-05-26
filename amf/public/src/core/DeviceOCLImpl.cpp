@@ -15,15 +15,38 @@ static uint32_t amf_to_cl_format(enum AMF_ARGUMENT_ACCESS_TYPE format)
     return CL_MEM_READ_ONLY;
 }
 
-AMFDeviceOCLImpl::AMFDeviceOCLImpl(cl_platform_id platformID, cl_device_id deviceID, AMFContextImpl *pContext, cl_context context, cl_command_queue command_queue)
-    : AMFDeviceImpl(AMF_MEMORY_OPENCL, 0, pContext),
-      m_platformID(platformID), m_deviceID(deviceID), m_context(context), m_command_queue(command_queue)
+AMFDeviceOCLImpl::AMFDeviceOCLImpl(
+    cl_platform_id      platformID,
+    cl_device_id        deviceID,
+    AMFContextImpl      *pContext,
+    cl_context          context,
+    cl_command_queue    command_queue
+    ):
+    AMFDeviceImpl(AMF_MEMORY_OPENCL, 0, pContext),
+    m_platformID(platformID),
+    m_deviceID(deviceID),
+    m_context(context),
+    m_command_queue(command_queue)
 {
     {
         char name[256] = {0};
-        clGetDeviceInfo(deviceID, CL_DEVICE_NAME, sizeof(name), name, nullptr);
+        if(CL_SUCCESS == clGetDeviceInfo(deviceID, CL_DEVICE_NAME, sizeof(name), name, nullptr))
+        {
+            SetProperty(AMF_DEVICE_NAME, AMFVariant(name));
+        }
 
-        SetProperty(AMF_DEVICE_NAME, AMFVariant(name));
+    }
+
+    {
+        cl_uint align = 0;
+
+        if(CL_SUCCESS == clGetDeviceInfo(m_deviceID, CL_DEVICE_MEM_BASE_ADDR_ALIGN, sizeof(align), &align, NULL))
+        {
+            if(align > 0)
+            {
+                SetProperty(AMF_DEVICE_BASEMEMORY_ALIGN, AMFVariant(align));
+            }
+        }
     }
 
     //todo: support this properties too
