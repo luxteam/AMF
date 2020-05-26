@@ -18,8 +18,17 @@ public:
         m_duration(-1LL),
         m_pContext(pContext)
     {
-
+        m_pContext->Acquire();
     }
+
+    virtual ~AMFDataImpl()
+    {
+        if(m_pContext)
+        {
+            m_pContext->Release();
+        }
+    }
+
     // interface access
     AMF_BEGIN_INTERFACE_MAP
     AMF_INTERFACE_ENTRY(AMFData)

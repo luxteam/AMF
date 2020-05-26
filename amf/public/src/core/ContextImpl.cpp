@@ -6,9 +6,26 @@
 
 AMFContextImpl::AMFContextImpl()
 {
-
 }
 
+AMFContextImpl::~AMFContextImpl()
+{
+    if(m_pDeviceOCL)
+    {
+        printf("\n\nCALL RELEASE HERE\n\n");
+
+        //(AMFDeviceImpl *)m_pDeviceOCL->Release();
+        m_pDeviceOCL = nullptr;
+    }
+
+    if(m_pDeviceHost)
+    {
+        printf("\n\nCALL RELEASE HERE\n\n");
+
+        m_pDeviceHost->Release();
+        m_pDeviceHost = nullptr;
+    }
+}
 
 AMF_RESULT AMFContextImpl::Terminate()
 {
@@ -76,14 +93,14 @@ AMF_RESULT AMFContextImpl::InitOpenCL(void *pCommandQueue)
     }
     else
     {
-        cl_context context;
-        cl_device_id deviceId;
-        cl_platform_id platformId;
+        cl_context context(nullptr);
+        cl_device_id deviceId(0);
+        cl_platform_id platformId(0);
 
-        size_t resultsize;
-        int err = clGetCommandQueueInfo(cl_command_queue(pCommandQueue), CL_QUEUE_CONTEXT, sizeof(cl_context), context, &resultsize);
-        err |= clGetCommandQueueInfo(cl_command_queue(pCommandQueue), CL_QUEUE_DEVICE, sizeof(cl_device_id), deviceId, &resultsize);
-        err |= clGetDeviceInfo(deviceId, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), platformId, &resultsize);
+        size_t resultsize(0);
+        int err = clGetCommandQueueInfo(cl_command_queue(pCommandQueue), CL_QUEUE_CONTEXT, sizeof(cl_context), &context, &resultsize);
+        err |= clGetCommandQueueInfo(cl_command_queue(pCommandQueue), CL_QUEUE_DEVICE, sizeof(cl_device_id), &deviceId, &resultsize);
+        err |= clGetDeviceInfo(deviceId, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &platformId, &resultsize);
 
 		if (err != CL_SUCCESS)
 		{
@@ -103,6 +120,7 @@ AMF_RESULT AMFContextImpl::InitOpenCLEx(AMFComputeDevice *pDevice)
     if(device)
     {
         m_pDeviceOCL = device;
+        pDevice->Acquire();
 
         return AMF_OK;
     }
@@ -112,20 +130,17 @@ AMF_RESULT AMFContextImpl::InitOpenCLEx(AMFComputeDevice *pDevice)
 
 void *AMFContextImpl::GetOpenCLContext()
 {
-	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
-    return device->GetNativeContext();
+    return m_pDeviceOCL ? m_pDeviceOCL->GetNativeContext() : nullptr;
 }
 
-void *AMFContextImpl::GetOpenCLCommandQueue()
+void * AMFContextImpl::GetOpenCLCommandQueue()
 {
-	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
-	return device->GetNativeCommandQueue();
+	return m_pDeviceOCL ? m_pDeviceOCL->GetNativeCommandQueue() : nullptr;
 }
 
 void *AMFContextImpl::GetOpenCLDeviceID()
 {
-	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
-	return device->GetNativeDeviceID();
+	return m_pDeviceOCL ? m_pDeviceOCL->GetNativeDeviceID() : nullptr;
 }
 
 AMF_RESULT AMFContextImpl::GetOpenCLComputeFactory(AMFComputeFactory **ppFactory)
@@ -279,7 +294,21 @@ AMF_RESULT AMFContextImpl::CreateBufferFromOpenCLNative(void *pCLBuffer, amf_siz
 
 AMF_RESULT AMFContextImpl::GetCompute(AMF_MEMORY_TYPE eMemType, AMFCompute **ppCompute)
 {
-    return AMF_NOT_IMPLEMENTED;
+    if(eMemType == AMF_MEMORY_TYPE::AMF_MEMORY_OPENCL)
+    {
+        *ppCompute = m_pDeviceOCL;
+
+        return AMF_OK;
+    }
+
+    /*else if(eMemType == AMF_MEMORY_TYPE::AMF_MEMORY_HOST)
+    {
+        *ppCompute = m_pDeviceHost;
+
+        return AMF_OK;
+    }*/
+
+    return AMF_NOT_SUPPORTED;
 }
 
 AMF_RESULT AMFContextImpl::CreateBufferFromDX11Native(void *pHostBuffer, AMFBuffer **ppBuffer, AMFBufferObserver *pObserver)
@@ -332,21 +361,20 @@ AMF_RESULT AMFContextImpl::GetVulkanDeviceExtensions(amf_size *pCount, const cha
     return AMF_NOT_IMPLEMENTED;
 }
 
-AMFDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
+AMFDevice * AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
 {
-    if (type == AMF_MEMORY_HOST)
-        return GetDeviceHost();
+    //if (type == AMF_MEMORY_HOST)
+    //    return GetDeviceHost();
     if (type == AMF_MEMORY_OPENCL)
         return m_pDeviceOCL;
     return nullptr;
 }
 
-AMFDevice* AMF_STD_CALL AMFContextImpl::GetDeviceHost()
+AMFDeviceHostImpl * AMF_STD_CALL AMFContextImpl::GetDeviceHost()
 {
-    if(m_pDeviceHost == NULL)
+    if(!m_pDeviceHost)
     {
         m_pDeviceHost = new AMFDeviceHostImpl(this);
     }
     return m_pDeviceHost;
 }
-
