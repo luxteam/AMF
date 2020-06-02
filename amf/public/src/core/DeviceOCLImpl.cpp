@@ -2,6 +2,7 @@
 #include <CL/cl.h>
 #include "ComputeOCL.h"
 #include "ProgramsImpl.h"
+#include <fstream>
 
 static uint32_t amf_to_cl_format(enum AMF_ARGUMENT_ACCESS_TYPE format)
 {
@@ -209,14 +210,190 @@ void *AMFDeviceOCLImpl::GetNativeCommandQueue()
     return m_command_queue;
 }
 
+char * DeviceName(cl_device_id device)
+{
+	size_t size;
+	clGetDeviceInfo(device, CL_DEVICE_NAME, 0, NULL, &size);
+	char * deviceName = (char *)malloc(size * sizeof(char));
+	clGetDeviceInfo(device, CL_DEVICE_NAME, size, deviceName, 0);
+	return deviceName;
+}
+
+bool SaveProgramBinary(cl_program program, cl_device_id device, const wchar_t* name, const char *kernelName)
+{
+	cl_uint numDevices = 0;
+	cl_int errNum;
+
+	errNum = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES,
+		sizeof(cl_uint),
+		&numDevices, NULL);
+	if (errNum != CL_SUCCESS)
+	{
+		printf("Error querying for number of devices.\n");
+		return false;
+	}
+
+	cl_device_id *devices = new cl_device_id[numDevices];
+	errNum = clGetProgramInfo(program, CL_PROGRAM_DEVICES,
+		sizeof(cl_device_id) * numDevices,
+		devices, NULL);
+	if (errNum != CL_SUCCESS)
+	{
+		printf("Error querying for devices.\n");
+		delete[] devices;
+		return false;
+	}
+
+	size_t *programBinarySizes = new size_t[numDevices];
+	errNum = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES,
+		sizeof(size_t) * numDevices,
+		programBinarySizes, NULL);
+	if (errNum != CL_SUCCESS)
+	{
+		printf("Error querying for program binary sizes.\n");
+		delete[] devices;
+		delete[] programBinarySizes;
+		return false;
+	}
+	unsigned char **programBinaries =
+		new unsigned char*[numDevices];
+	for (cl_uint i = 0; i < numDevices; i++)
+	{
+		programBinaries[i] =
+			new unsigned char[programBinarySizes[i]];
+	}
+	
+	errNum = clGetProgramInfo(program, CL_PROGRAM_BINARIES,
+		sizeof(unsigned char*) * numDevices,
+		programBinaries, NULL);
+	if (errNum != CL_SUCCESS)
+	{
+		printf("Error querying for program binaries\n");
+		delete[] devices;
+		delete[] programBinarySizes;
+		for (cl_uint i = 0; i < numDevices; i++)
+		{
+			delete[] programBinaries[i];
+		}
+		delete[] programBinaries;
+		return false;
+	}
+	char *deviceName = DeviceName(device);
+
+	AMF_RESULT res;
+	for (cl_uint i = 0; i < numDevices; i++)
+	{
+		if (devices[i] == device)
+		{
+			res = AMFKernelStorage::Instance()->SaveProgramBinary(name, kernelName, deviceName, ".cl.bin", programBinaries[i], programBinarySizes[i]);
+			break;
+		}
+	}
+	
+	delete[] devices;
+	delete[] programBinarySizes;
+	for (cl_uint i = 0; i < numDevices; i++)
+	{
+		delete[] programBinaries[i];
+	}
+	delete[] programBinaries;
+	free(deviceName);
+	return res == AMF_OK;;
+}
+
+cl_program CreateProgramFromBinary(cl_context context, cl_device_id device, unsigned char *programBinary, size_t binarySize)
+{
+	cl_int errNum = 0;
+	cl_program program;
+	cl_int binaryStatus;
+	program = clCreateProgramWithBinary(context,
+		1,
+		&device,
+		&binarySize,
+		(const unsigned char**)&programBinary,
+		&binaryStatus,
+		&errNum);
+	delete[] programBinary;
+	if (errNum != CL_SUCCESS)
+	{
+		printf("Error loading program binary.\n");
+		return NULL;
+	}
+	if (binaryStatus != CL_SUCCESS)
+	{
+		printf("Invalid binary for device\n");
+		return NULL;
+	}
+	errNum = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+	if (errNum != CL_SUCCESS)
+	{
+		// Determine the reason for the error
+		char buildLog[16384];
+		clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG,
+			sizeof(buildLog), buildLog, NULL);
+		printf("Error in program: \n");
+		printf(buildLog);
+		clReleaseProgram(program);
+		return NULL;
+	}
+	return program;
+}
+
 AMF_RESULT AMFDeviceOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel **kernel)
 {
-    AMFKernelStorage::KernelData *kernelData;
-    AMFKernelStorage::Instance()->GetKernelData(&kernelData, kernelID);
-    cl_program program;
-    cl_kernel kernel_CL;
-    int err;
+	AMFKernelStorage::KernelData *kernelData;
+	AMF_RESULT res;
+	cl_kernel kernel_CL;
+	int err;
 
+	res = AMFKernelStorage::Instance()->GetKernelData(&kernelData, kernelID);
+	if (res != AMF_OK) {
+		return res;
+	}
+    cl_program program;
+	char * deviceName = DeviceName(m_deviceID);
+	if (kernelData->type == AMFKernelStorage::KernelData::Source)
+	{
+		AMFKernelStorage::KernelData *cacheKernelData;
+		res = AMFKernelStorage::Instance()->GetCacheKernelData(&cacheKernelData, kernelData->kernelid_name, kernelData->kernelName ,deviceName, ".cl.bin");
+		free(deviceName);
+		if (res == AMF_OK)
+			kernelData = cacheKernelData;//now kernelData->type == AMFKernelStorage::KernelData::Binary
+	}
+	if (kernelData->type == AMFKernelStorage::KernelData::Binary)
+	{
+		program = CreateProgramFromBinary(m_context, m_deviceID, (unsigned char*)kernelData->data, kernelData->dataSize);
+		if (program)
+		{
+			kernel_CL = clCreateKernel(program, kernelData->kernelName, &err);
+			if (!kernel_CL || err != CL_SUCCESS)
+			{
+				printf("Error: Failed to create compute kernel!\n");
+				return AMF_FAIL;
+			}
+
+			AMFComputeKernelOCL * computeKernel = new AMFComputeKernelOCL(program, kernel_CL, m_command_queue, kernelID, m_deviceID, m_context);
+			*kernel = computeKernel;
+			(*kernel)->Acquire();
+			return AMF_OK;	
+		}
+		else
+		{
+			printf("Error: Failed to create compute program from binary!\n");
+			amf_int64 sourceKernelId = AMFKernelStorage::Instance()->FindSourceIndex(kernelData->kernelid_name, kernelData->options);
+			if (sourceKernelId < 0)
+			{
+				printf("Error: Failed to find kernel source!\n");
+				return AMF_FAIL;
+			}
+			res = AMFKernelStorage::Instance()->GetKernelData(&kernelData, sourceKernelId);
+			if (res != AMF_OK) {
+				printf("Error: Failed to fetch kernel source!\n");
+				return res;
+			}
+		}
+	}
+    
     const char * source = (const char *)kernelData->data;
     program = clCreateProgramWithSource(m_context, 1, &source, NULL, &err);
     if (!program)
@@ -225,7 +402,7 @@ AMF_RESULT AMFDeviceOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel 
         return AMF_FAIL;
     }
 
-    err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+    err = clBuildProgram(program, 0, NULL, kernelData->options, NULL, NULL);
     if (err != CL_SUCCESS)
     {
         size_t len;
@@ -235,6 +412,7 @@ AMF_RESULT AMFDeviceOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel 
         printf("%s\n", buffer);
         return AMF_FAIL;
     }
+	SaveProgramBinary(program, m_deviceID, kernelData->kernelid_name, kernelData->kernelName);
 
     kernel_CL = clCreateKernel(program, kernelData->kernelName, &err);
     if (!kernel_CL || err != CL_SUCCESS)

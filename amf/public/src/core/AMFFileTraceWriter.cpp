@@ -66,13 +66,12 @@ AMF_RESULT AMFFileTraceWriter::setPath(const wchar_t * path)
 		m_fout.close();
 	}
 
-	size_t size = wcslen(path) + 1;
-
+	
 #if defined(_WIN32)
 	m_fout.open(path);
 #else
-	char      *outputString = (char *)malloc(size);
-	size_t charsConverted = 0;
+	size_t size = wcstombs(nullptr, path, 0);
+	char      *outputString = (char *)malloc(size * sizeof(char));
 	wcstombs(outputString, path, size);
 
 	m_fout.open(outputString);
@@ -83,9 +82,10 @@ AMF_RESULT AMFFileTraceWriter::setPath(const wchar_t * path)
 	{
 		return AMF_FILE_NOT_OPEN;
 	}
+	if (m_path)
+		free(m_path);
 
-	free(m_path);
-	m_path = new wchar_t[size];
+	m_path = new wchar_t[wcslen(path) + 1];
 	wcscpy(m_path, path);
 	return AMF_OK;
 }

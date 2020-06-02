@@ -28,8 +28,16 @@ int main(int argc, char *argv[])
                              " int i = get_global_id(0);              \n" \
                              " if(i < count) \n" \
                              " output[i] = -input[i]; \n" \
-                             "}                     \n";
-    pPrograms->RegisterKernelSource(&kernel, L"kernelIDName", "square", strlen(kernel_src), (amf_uint8*)kernel_src, "option");
+                             "}                     \n"
+		"\n" \
+		"__kernel void square2( __global float* input, __global float* output, \n" \
+		" const unsigned int count) {            \n" \
+		" int i = get_global_id(0);              \n" \
+		" if(i < count) \n" \
+		" output[i] = input[i] * input[i]; \n" \
+		"}                     \n";
+    pPrograms->RegisterKernelSource(&kernel, L"kernelIDName", "square2", strlen(kernel_src), (amf_uint8*)kernel_src, NULL);
+    pPrograms->RegisterKernelSource(&kernel, L"kernelIDName", "square2", strlen(kernel_src), (amf_uint8*)kernel_src, NULL);
 
     int deviceCount = oclComputeFactory->GetDeviceCount();
 	g_AMFFactory.Init();
@@ -39,6 +47,8 @@ int main(int argc, char *argv[])
 	g_AMFFactory.GetTrace()->SetWriterLevel(AMF_TRACE_WRITER_FILE, AMF_TRACE_TRACE);
 	g_AMFFactory.GetTrace()->SetGlobalLevel(AMF_TRACE_TRACE);
 	g_AMFFactory.GetTrace()->SetWriterLevel(AMF_TRACE_WRITER_CONSOLE, AMF_TRACE_TRACE);
+	g_AMFFactory.GetTrace()->SetWriterLevelForScope(AMF_TRACE_WRITER_CONSOLE, L"scope2", AMF_TRACE_TRACE);
+	g_AMFFactory.GetTrace()->SetWriterLevelForScope(AMF_TRACE_WRITER_CONSOLE, L"scope2", AMF_TRACE_ERROR);
 
 	g_AMFFactory.GetTrace()->SetPath(L"E:\\tmp\\openamftest.log");
 	g_AMFFactory.GetTrace()->EnableWriter(AMF_TRACE_WRITER_FILE, true);
@@ -47,8 +57,10 @@ int main(int argc, char *argv[])
 	g_AMFFactory.GetTrace()->TraceW(L"path", 387, AMF_TRACE_INFO, L"scope", 4, L"mesage2");
 	g_AMFFactory.GetTrace()->Indent(-4);
 	g_AMFFactory.GetTrace()->TraceW(L"path", 387, AMF_TRACE_DEBUG, L"scope", 4, L"mesage3(%d)", 4);
+	g_AMFFactory.GetTrace()->TraceW(L"path", 387, AMF_TRACE_DEBUG, L"scope2", 4, L"mesage3(%d)", 4);
 
 	g_AMFFactory.GetTrace()->Trace(L"", 11, AMF_TRACE_WARNING, L"scope", L"message4", nullptr);
+	g_AMFFactory.GetFactory()->SetCacheFolder(L"e:\\tmp\\amf_cache");
 
 
     for(int i = 0; i < deviceCount; ++i)
@@ -57,8 +69,6 @@ int main(int argc, char *argv[])
         amf::AMFComputeDevicePtr pComputeDevice;
         oclComputeFactory->GetDeviceAt(i, &pComputeDevice);
         pComputeDevice->GetNativeContext();
-
-		
 
         amf::AMFComputePtr pCompute;
         pComputeDevice->CreateCompute(nullptr, &pCompute);
@@ -71,7 +81,8 @@ int main(int argc, char *argv[])
 
 		amf::AMFContextPtr context;
 		factory->CreateContext(&context);
-		context->InitOpenCLEx(pComputeDevice.GetPtr());
+		//context->InitOpenCLEx(pComputeDevice.GetPtr());
+		context->InitOpenCL(pCompute->GetNativeCommandQueue());
 		
 		res = context->AllocBuffer(amf::AMF_MEMORY_HOST, 1024 * sizeof(float), &input); 
 		res = context->AllocBuffer(amf::AMF_MEMORY_OPENCL, 1024 * sizeof(float), &output); 
@@ -98,7 +109,7 @@ int main(int argc, char *argv[])
         pCompute->FlushQueue();
         pCompute->FinishQueue();
 		float  *outputData2 = NULL;
-		res = output->MapToHost((void**)&outputData2, 0, 1024, true);
+		res = output->MapToHost((void**)&outputData2, 0, 1024 * sizeof(float), true);
 
        
         for (int k = 0; k < 1024; k++ )

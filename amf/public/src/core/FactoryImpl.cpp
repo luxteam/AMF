@@ -39,12 +39,12 @@ AMF_RESULT AMFFactoryImpl::CreateComponent(amf::AMFContext *pContext, const wcha
 
 AMF_RESULT AMFFactoryImpl::SetCacheFolder(const wchar_t *path)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return AMFKernelStorage::Instance()->SetCacheFolder(path);
 }
 
 const wchar_t *AMFFactoryImpl::GetCacheFolder()
 {
-    return NULL;
+    return AMFKernelStorage::Instance()->GetCacheFolder();
 }
 
 AMF_RESULT AMFFactoryImpl::GetDebug(amf::AMFDebug **ppDebug)
