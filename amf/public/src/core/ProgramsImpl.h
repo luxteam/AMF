@@ -74,6 +74,9 @@ public:
 
 		if (kernelIndex < 0)
 		{
+			if (m_cacheFolder == nullptr)
+				return AMF_FAIL;
+
 			char * resultName = ResultFileName(kernelid_name, deviceName, extension);
 			FILE *fp = fopen(resultName, "rb");
 			if (fp == NULL)

@@ -412,7 +412,8 @@ AMF_RESULT AMFDeviceOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel 
         printf("%s\n", buffer);
         return AMF_FAIL;
     }
-	SaveProgramBinary(program, m_deviceID, kernelData->kernelid_name, kernelData->kernelName);
+	if (AMFKernelStorage::Instance()->GetCacheFolder() != nullptr)
+		SaveProgramBinary(program, m_deviceID, kernelData->kernelid_name, kernelData->kernelName);
 
     kernel_CL = clCreateKernel(program, kernelData->kernelName, &err);
     if (!kernel_CL || err != CL_SUCCESS)
