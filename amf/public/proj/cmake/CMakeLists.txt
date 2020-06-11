@@ -13,15 +13,48 @@ message("Prepare open AMF project")
 get_property(AMF_NAME GLOBAL PROPERTY AMF_NAME)
 
 if(NOT AMF_NAME)
-  #set_property(GLOBAL PROPERTY AMF_NAME open_amf)
-  message(FATAL_ERROR "Error: open AMF project name not set!")
+  set_property(GLOBAL PROPERTY AMF_NAME amf)
+  get_property(AMF_NAME GLOBAL PROPERTY AMF_NAME)
+
+  message(WARNING "Open AMF will be built with the default library name: " ${AMF_NAME})
 endif()
 
 # library name
 project(${AMF_NAME})
 include_directories(../../..)
 
-#ADD_DEFINITIONS(-DAMF_CORE_STATIC)
+if(OpenCL_INCLUDE_DIR)
+  get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
+  message(WARNING "OpenCL location was set manually")
+  include_directories(${Path_To_OpenCL}/include)
+  set_property(GLOBAL PROPERTY OpenCL_LIBRARIES ${Path_To_OpenCL}/lib/x86_64/opencl.lib)
+  get_property(OpenCL_LIBRARIES GLOBAL PROPERTY OpenCL_LIBRARIES)
+  message("OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL}/include)
+  message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
+else()
+  find_package(OpenCL REQUIRED)
+
+  if(NOT OpenCL_FOUND)
+    message("")
+    message(SEND_ERROR "Error: Failed to find OpenCL!")
+    return()
+  else()
+    message("OpenCL found: " ${OpenCL_FOUND})
+    message("OpenCL_INCLUDE_DIRS: " ${OpenCL_INCLUDE_DIRS})
+    message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
+    message("OpenCL_VERSION_STRING: " ${OpenCL_VERSION_STRING})
+    message("OpenCL_VERSION_MAJOR: " ${OpenCL_VERSION_MAJOR})
+    message("OpenCL_VERSION_MINOR: " ${OpenCL_VERSION_MINOR})
+
+    message("OpenCL_INCLUDE_DIR: ${OpenCL_INCLUDE_DIR}")
+    message("OpenCL_LIBRARY: ${OpenCL_LIBRARY}")
+
+    include_directories(${OpenCL_INCLUDE_DIR})
+    #ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
+  endif()
+endif()
+
+ADD_DEFINITIONS(-DAMF_CORE_STATIC)
 
 # sources
 set(
@@ -53,6 +86,8 @@ set(
   ../../src/core/ProgramsImpl.cpp
   ../../src/core/SurfaceImpl.cpp
   ../../src/core/TraceImpl.cpp
+  ../../src/core/AMFFileTraceWriter.cpp
+  ../../src/core/AMFConsoleTraceWriter.cpp
 )
 
 if(WIN32)
@@ -133,16 +168,37 @@ set(
   ../../src/core/ProgramsImpl.h
   ../../src/core/SurfaceImpl.h
   ../../src/core/TraceImpl.h
+  ../../src/core/AMFFileTraceWriter.h
+  ../../src/core/AMFConsoleTraceWriter.h
   )
 
+if(AMF_CORE_STATIC)
+  message("Open AMF will be build as static library")
 
-# declare static library creation
-add_library(
-  ${AMF_NAME}
-  STATIC
-  ${SOURCE_LIB}
-  ${HEADER_LIB}
-  )
+  #declare static library creation
+  add_library(
+    ${AMF_NAME}
+    STATIC
+    ${SOURCE_LIB}
+    ${HEADER_LIB}
+    )
+
+else()
+  message("Open AMF will be build as shared library")
+
+  #shared library must be linked with OpenCL, so, test package
+  link_directories(${OpenCL_LIBRARIES})
+
+  #declare shared library creation
+  add_library(
+    ${AMF_NAME}
+    SHARED
+    ${SOURCE_LIB}
+    ${HEADER_LIB}
+    )
+    TARGET_LINK_LIBRARIES(${AMF_NAME} ${OpenCL_LIBRARIES})
+    set_property(TARGET ${AMF_NAME} PROPERTY IMPORTED_LOCATION ${OpenCL_LIBRARIES})
+endif()
 
 set_property(TARGET ${AMF_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
@@ -150,8 +206,11 @@ if(NOT WIN32)
   target_compile_options(${AMF_NAME} PUBLIC -mavx2)
   target_compile_options(${AMF_NAME} PUBLIC -mfma)
   target_compile_options(${AMF_NAME} PUBLIC -msse4.2)
-  target_compile_options(${AMF_NAME} PUBLIC -g) #todo: to Debug only
-  
+
+  if(CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
+    target_compile_options(${AMF_NAME} PUBLIC -g)
+  endif()
+
   if(NOT APPLE)
     target_compile_options(${AMF_NAME} PUBLIC -Wpsabi)
   endif()

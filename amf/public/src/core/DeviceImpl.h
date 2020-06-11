@@ -18,6 +18,8 @@ public:
     virtual AMF_RESULT AllocateBuffer(amf_size size, void **ppHandle) override;
     virtual AMF_RESULT AttachBuffer(amf_size size, void *pHandle) override;
     virtual AMF_RESULT ReleaseBuffer(void *pHandle, bool attached) override;
+	virtual AMF_RESULT CreateSubBuffer(AMFBuffer* pHandle, void ** subBuffer, amf_size offset, amf_size size) override;
+	virtual AMF_RESULT MapToHost(AMFBuffer* pHandle, void ** memory, amf_size offset, amf_size size, bool blocking) override;
 
     virtual AMF_RESULT CopyBuffer(void *pDestHandle, amf_size dstOffset, void *pSourceHandle, amf_size srcOffset, amf_size size) override;
     virtual AMF_RESULT CopyBufferToHost(void *pDest, void *pSourceHandle, amf_size srcOffset, amf_size size, bool blocking) override;
@@ -26,6 +28,7 @@ public:
 private:
     AMF_MEMORY_TYPE m_type;
     amf_size        m_cacheSize;
+protected:
     AMFContextImpl* m_pContext;
 
     // AMFDevice interface

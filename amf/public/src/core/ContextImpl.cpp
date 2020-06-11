@@ -1,6 +1,8 @@
 #include "ContextImpl.h"
 #include "DeviceHostImpl.h"
+#include "DeviceOCLImpl.h"
 #include "ComputeOCL.h"
+#include "BufferImpl.h"
 
 AMFContextImpl::AMFContextImpl()
 {
@@ -55,36 +57,84 @@ AMF_RESULT AMFContextImpl::UnlockDX11()
 
 AMF_RESULT AMFContextImpl::InitOpenCL(void *pCommandQueue)
 {
-    return AMF_NOT_IMPLEMENTED;
-}
+    if (!pCommandQueue)
+    {
+        AMF_RESULT res;
+        amf::AMFComputeFactoryPtr oclComputeFactory;
+        res = GetOpenCLComputeFactory(&oclComputeFactory);
+        if (res == AMF_OK && oclComputeFactory->GetDeviceCount() > 0)
+        {
+            AMFComputeDevice* pComputeDevice;
+            res = oclComputeFactory->GetDeviceAt(0, &pComputeDevice);
+            if (res == AMF_OK)
+            {
+                AMFDeviceOCLImpl * device = static_cast<AMFDeviceOCLImpl*>(pComputeDevice);
+                m_pDeviceOCL = device;
+            }
+        }
+        return res;
+    }
+    else
+    {
+        cl_context context = NULL;
+        cl_device_id deviceId = NULL;
+        cl_platform_id platformId = NULL;
 
-void *AMFContextImpl::GetOpenCLContext()
-{
-    return NULL;
-}
+        size_t resultsize;
+        int err = clGetCommandQueueInfo(cl_command_queue(pCommandQueue), CL_QUEUE_CONTEXT, sizeof(cl_context), &context, &resultsize);
+        err |= clGetCommandQueueInfo(cl_command_queue(pCommandQueue), CL_QUEUE_DEVICE, sizeof(cl_device_id), &deviceId, &resultsize);
+        err |= clGetDeviceInfo(deviceId, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &platformId, &resultsize);
 
-void *AMFContextImpl::GetOpenCLCommandQueue()
-{
-    return NULL;
-}
+		if (err != CL_SUCCESS)
+		{
+			printf("Error: Failed to clGetCommandQueueInfo!\n");
+			return AMF_FAIL;
+		}
 
-void *AMFContextImpl::GetOpenCLDeviceID()
-{
-    return NULL;
-}
-
-AMF_RESULT AMFContextImpl::GetOpenCLComputeFactory(AMFComputeFactory **ppFactory)
-{
-    AMFComputeFactoryOCL *computeFactoryOCL = new AMFComputeFactoryOCL;
-    computeFactoryOCL->Init();
-    *ppFactory = computeFactoryOCL;
-    (*ppFactory)->Acquire();
-    return AMF_OK;
+        m_pDeviceOCL = new AMFDeviceOCLImpl(platformId, deviceId, this, context);
+    }
+	return AMF_OK;
 }
 
 AMF_RESULT AMFContextImpl::InitOpenCLEx(AMFComputeDevice *pDevice)
 {
-    return AMF_NOT_IMPLEMENTED;
+    AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(pDevice);
+
+    if(device)
+    {
+        m_pDeviceOCL = device;
+
+        return AMF_OK;
+    }
+
+    return AMF_INVALID_ARG;
+}
+
+void *AMFContextImpl::GetOpenCLContext()
+{
+	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+    return device->GetNativeContext();
+}
+
+void *AMFContextImpl::GetOpenCLCommandQueue()
+{
+	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+	return device->GetNativeCommandQueue();
+}
+
+void *AMFContextImpl::GetOpenCLDeviceID()
+{
+	AMFDeviceOCLImpl *device = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+	return device->GetNativeDeviceID();
+}
+
+AMF_RESULT AMFContextImpl::GetOpenCLComputeFactory(AMFComputeFactory **ppFactory)
+{
+    AMFComputeFactoryOCL *computeFactoryOCL = new AMFComputeFactoryOCL(this);
+    computeFactoryOCL->Init();
+    *ppFactory = computeFactoryOCL;
+    (*ppFactory)->Acquire();
+    return AMF_OK;
 }
 
 AMF_RESULT AMFContextImpl::LockOpenCL()
@@ -164,7 +214,11 @@ AMF_RESULT AMFContextImpl::UnlockGralloc()
 
 AMF_RESULT AMFContextImpl::AllocBuffer(AMF_MEMORY_TYPE type, amf_size size, AMFBuffer **ppBuffer)
 {
-    return AMF_NOT_IMPLEMENTED;
+    AMFBufferImpl * impl = new AMFBufferImpl(this);
+    AMF_RESULT res = impl->Allocate(type, size);
+    *ppBuffer = impl;
+    (*ppBuffer)->Acquire();
+    return res;
 }
 
 AMF_RESULT AMFContextImpl::AllocSurface(AMF_MEMORY_TYPE type, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, AMFSurface **ppSurface)
@@ -179,7 +233,9 @@ AMF_RESULT AMFContextImpl::AllocAudioBuffer(AMF_MEMORY_TYPE type, AMF_AUDIO_FORM
 
 AMF_RESULT AMFContextImpl::CreateBufferFromHostNative(void *pHostBuffer, amf_size size, AMFBuffer **ppBuffer, AMFBufferObserver *pObserver)
 {
-    return AMF_NOT_IMPLEMENTED;
+	AMF_RETURN_IF_FAILED(AllocBuffer(AMF_MEMORY_HOST, size, ppBuffer));
+	AMF_RETURN_IF_FAILED(GetDeviceHost()->CopyBufferFromHost((*ppBuffer)->GetNative(), 0, pHostBuffer, size, true));
+    return AMF_OK;
 }
 
 AMF_RESULT AMFContextImpl::CreateSurfaceFromHostNative(AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, amf_int32 hPitch, amf_int32 vPitch, void *pData, AMFSurface **ppSurface, AMFSurfaceObserver *pObserver)
@@ -214,7 +270,11 @@ AMF_RESULT AMFContextImpl::CreateSurfaceFromOpenCLNative(AMF_SURFACE_FORMAT form
 
 AMF_RESULT AMFContextImpl::CreateBufferFromOpenCLNative(void *pCLBuffer, amf_size size, AMFBuffer **ppBuffer)
 {
-    return AMF_NOT_IMPLEMENTED;
+	AMFBufferImpl * impl = new AMFBufferImpl(this);
+	AMF_RESULT res = impl->Attach(AMF_MEMORY_OPENCL, pCLBuffer, size);
+	*ppBuffer = impl;
+	(*ppBuffer)->Acquire();
+	return res;
 }
 
 AMF_RESULT AMFContextImpl::GetCompute(AMF_MEMORY_TYPE eMemType, AMFCompute **ppCompute)
@@ -274,6 +334,10 @@ AMF_RESULT AMFContextImpl::GetVulkanDeviceExtensions(amf_size *pCount, const cha
 
 AMFDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
 {
+    if (type == AMF_MEMORY_HOST)
+        return GetDeviceHost();
+    if (type == AMF_MEMORY_OPENCL)
+        return m_pDeviceOCL;
     return nullptr;
 }
 
@@ -285,3 +349,4 @@ AMFDevice* AMF_STD_CALL AMFContextImpl::GetDeviceHost()
     }
     return m_pDeviceHost;
 }
+

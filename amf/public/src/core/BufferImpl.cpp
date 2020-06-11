@@ -10,6 +10,12 @@ AMFBufferImpl::AMFBufferImpl(AMFContextImpl *pContext)
 {
 }
 
+inline AMFBufferImpl::~AMFBufferImpl()
+{
+	if (m_pDevice && m_pMemory)
+		m_pDevice->ReleaseBuffer(m_pMemory, m_attached);
+}
+
 AMF_MEMORY_TYPE AMFBufferImpl::GetMemoryType()
 {
     return m_pDevice->GetType();
@@ -113,6 +119,33 @@ amf_size AMFBufferImpl::GetSize()
 void *AMFBufferImpl::GetNative()
 {
     return m_pMemory;
+}
+
+AMF_RESULT AMF_STD_CALL AMFBufferImpl::CreateSubBuffer(AMFBuffer** subBuffer, amf_size offset, amf_size size)
+{
+	AMFDevice* pDevice = nullptr;
+	void* pMemory = nullptr;
+
+	AMF_RETURN_IF_FALSE((pDevice = GetContext()->GetDevice(GetMemoryType())) != nullptr, AMF_NO_DEVICE);
+
+	AMF_RETURN_IF_FAILED(pDevice->CreateSubBuffer(this, &pMemory, offset, size));
+
+	*subBuffer = new AMFBufferImpl(GetContext());
+
+	((AMFBufferImpl *)(*subBuffer))->m_pDevice = pDevice;
+	((AMFBufferImpl *)(*subBuffer))->m_pMemory = pMemory;
+	((AMFBufferImpl *)(*subBuffer))->m_attached = false;
+	((AMFBufferImpl *)(*subBuffer))->m_size = m_size;
+
+	return AMF_OK;
+}
+
+AMF_RESULT AMF_STD_CALL AMFBufferImpl::MapToHost(void ** pMemory, amf_size offset, amf_size size, bool blocking)
+{
+	AMFDevice* pDevice = nullptr;
+	AMF_RETURN_IF_FALSE((pDevice = GetContext()->GetDevice(GetMemoryType())) != nullptr, AMF_NO_DEVICE);
+
+	return pDevice->MapToHost(this, pMemory, offset, size, blocking);
 }
 
 AMF_RESULT AMFBufferImpl::Allocate(AMF_MEMORY_TYPE type, amf_size size)
