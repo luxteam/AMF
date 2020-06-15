@@ -1,4 +1,4 @@
-// 
+//
 // Notice Regarding Standards.  AMD does not provide a license or sublicense to
 // any Intellectual Property Rights relating to any standards, including but not
 // limited to any audio and/or video codec technologies such as MPEG-2, MPEG-4;
@@ -6,9 +6,9 @@
 // (collectively, the "Media Technologies"). For clarity, you will pay any
 // royalties due for such third party technologies, which may include the Media
 // Technologies that are owed as a result of AMD providing the Software to you.
-// 
-// MIT license 
-// 
+//
+// MIT license
+//
 // Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -42,11 +42,13 @@ namespace amf
 #endif
 // compute device audio capabilities accessed via GetProperties() from AMFComputeDevice
 #define AMF_DEVICE_NAME                         L"DeviceName"                       // char*, string, device name
-#define AMF_DRIVER_VERSION_NAME                 L"DriverVersion"                       // char*, string, driver version
+#define AMF_DRIVER_VERSION_NAME                 L"DriverVersion"                    // char*, string, driver version
 #define AMF_AUDIO_CONVOLUTION_MAX_STREAMS       L"ConvolutionMaxStreams"            // amf_int64, maximum number of audio streams supported in realtime
 #define AMF_AUDIO_CONVOLUTION_LENGTH            L"ConvolutionLength"                // amf_int64, length of convolution in samples
 #define AMF_AUDIO_CONVOLUTION_BUFFER_SIZE       L"ConvolutionBufferSize"            // amf_int64, buffer size in samples
 #define AMF_AUDIO_CONVOLUTION_SAMPLE_RATE       L"ConvolutionSampleRate"            // amf_int64, sample rate
+#define AMF_DEVICE_BASEMEMORY_ALIGN             L"DeviceBaseMemoryAlign"            // char*, string, device name
+
 
 #if defined(__cplusplus)
     class AMF_NO_VTABLE AMFComputeDevice  : public AMFPropertyStorage

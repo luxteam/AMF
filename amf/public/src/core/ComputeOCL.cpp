@@ -42,7 +42,7 @@ AMF_RESULT AMFComputeFactoryOCL::Init()
                 );
 
             //on Mac/Radeon pbuf === 'Apple'
-
+            
             /*if(!strcmp(pbuf, "Advanced Micro Devices, Inc."))
             {
                 platformID = platforms[i];

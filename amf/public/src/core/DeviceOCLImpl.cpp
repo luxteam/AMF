@@ -16,9 +16,18 @@ static uint32_t amf_to_cl_format(enum AMF_ARGUMENT_ACCESS_TYPE format)
     return CL_MEM_READ_ONLY;
 }
 
-AMFDeviceOCLImpl::AMFDeviceOCLImpl(cl_platform_id platformID, cl_device_id deviceID, AMFContextImpl *pContext, cl_context context, cl_command_queue command_queue)
-    : AMFDeviceImpl(AMF_MEMORY_OPENCL, 0, pContext),
-      m_platformID(platformID), m_deviceID(deviceID), m_context(context), m_command_queue(command_queue)
+AMFDeviceOCLImpl::AMFDeviceOCLImpl(
+    cl_platform_id      platformID,
+    cl_device_id        deviceID,
+    AMFContextImpl      *pContext,
+    cl_context          context,
+    cl_command_queue    command_queue
+    ):
+    AMFDeviceImpl(AMF_MEMORY_OPENCL, 0, pContext),
+    m_platformID(platformID),
+    m_deviceID(deviceID),
+    m_context(context),
+    m_command_queue(command_queue)
 {
     {
         char name[256] = {0};
@@ -26,6 +35,7 @@ AMFDeviceOCLImpl::AMFDeviceOCLImpl(cl_platform_id platformID, cl_device_id devic
         {
             SetProperty(AMF_DEVICE_NAME, AMFVariant(name));
         }
+
     }
 
     {
@@ -126,7 +136,7 @@ AMF_RESULT AMFDeviceOCLImpl::CreateSubBuffer(AMFBuffer * pHandle, void ** subBuf
 		CL_MEM_READ_WRITE,
 		CL_BUFFER_CREATE_TYPE_REGION, &region, &err);
 
-	if (err != CL_SUCCESS)
+    if (err != CL_SUCCESS)
 	{
 		printf("Error: clCreateSubBuffer failed!");
 		return AMF_FAIL;
@@ -486,8 +496,11 @@ AMF_RESULT AMFDeviceOCLImpl::ConvertPlaneToBuffer(AMFPlane *pSrcPlane, AMFBuffer
 
 AMF_RESULT AMFDeviceOCLImpl::CopyBuffer(AMFBuffer *pSrcBuffer, amf_size srcOffset, amf_size size, AMFBuffer *pDstBuffer, amf_size dstOffset)
 {
+    auto source(pSrcBuffer->GetNative());
+    auto dest(pDstBuffer->GetNative());
+
     //TODO: memory type
-    return CopyBuffer(pDstBuffer->GetNative(), dstOffset, pSrcBuffer->GetNative(), srcOffset, size);
+    return CopyBuffer(dest, dstOffset, source, srcOffset, size);
 }
 
 AMF_RESULT AMFDeviceOCLImpl::CopyPlane(AMFPlane *pSrcPlane, const amf_size srcOrigin[], const amf_size region[], AMFPlane *pDstPlane, const amf_size dstOrigin[])
@@ -503,8 +516,10 @@ AMF_RESULT AMFDeviceOCLImpl::CopyBufferToHost(AMFBuffer *pSrcBuffer, amf_size sr
 
 AMF_RESULT AMFDeviceOCLImpl::CopyBufferFromHost(const void *pSource, amf_size size, AMFBuffer *pDstBuffer, amf_size dstOffsetInBytes, amf_bool blocking)
 {
+    cl_mem native((cl_mem)pDstBuffer->GetNative());
+
     //TODO: memory type check
-    return CopyBufferFromHost(pDstBuffer, dstOffsetInBytes, pSource, size, blocking);
+    return CopyBufferFromHost(native, dstOffsetInBytes, pSource, size, blocking);
 }
 
 AMF_RESULT AMFDeviceOCLImpl::CopyPlaneToHost(AMFPlane *pSrcPlane, const amf_size origin[], const amf_size region[], void *pDest, amf_size dstPitch, amf_bool blocking)
