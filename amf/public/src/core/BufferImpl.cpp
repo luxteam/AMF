@@ -10,13 +10,10 @@ AMFBufferImpl::AMFBufferImpl(AMFContextImpl *pContext)
         m_size(0),
         m_attached(false)
 {
-    //printf("\ncreate buffer: %llx\n", this);
 }
 
 AMFBufferImpl::~AMFBufferImpl()
 {
-    //printf("\ndestroy buffer %llx\n", this);
-
     if (m_pDevice && m_pMemory)
 	{
         m_pDevice->ReleaseBuffer(m_pMemory, m_attached);

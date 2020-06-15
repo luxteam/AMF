@@ -12,16 +12,12 @@ AMFContextImpl::~AMFContextImpl()
 {
     if(m_pDeviceOCL)
     {
-        printf("\n\nCALL RELEASE HERE\n\n");
-
-        //(AMFDeviceImpl *)m_pDeviceOCL->Release();
+        m_pDeviceOCL->Release();
         m_pDeviceOCL = nullptr;
     }
 
     if(m_pDeviceHost)
     {
-        printf("\n\nCALL RELEASE HERE\n\n");
-
         m_pDeviceHost->Release();
         m_pDeviceHost = nullptr;
     }
@@ -363,10 +359,15 @@ AMF_RESULT AMFContextImpl::GetVulkanDeviceExtensions(amf_size *pCount, const cha
 
 AMFDevice * AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
 {
-    //if (type == AMF_MEMORY_HOST)
-    //    return GetDeviceHost();
-    if (type == AMF_MEMORY_OPENCL)
+    if (type == AMF_MEMORY_HOST)
+    {
+        return GetDeviceHost();
+    }
+    else if (type == AMF_MEMORY_OPENCL)
+    {
         return m_pDeviceOCL;
+    }
+
     return nullptr;
 }
 
@@ -376,5 +377,6 @@ AMFDeviceHostImpl * AMF_STD_CALL AMFContextImpl::GetDeviceHost()
     {
         m_pDeviceHost = new AMFDeviceHostImpl(this);
     }
+
     return m_pDeviceHost;
 }
