@@ -39,23 +39,23 @@
 #include <vector>
 
 
-class AMFFactoryHelper
+class AMFFactoryHelper 
 {
 public:
     AMFFactoryHelper();
     virtual ~AMFFactoryHelper();
 
-    AMF_RESULT  Init();
-    AMF_RESULT  Terminate();
+    AMF_RESULT AMF_STD_CALL  Init();
+    AMF_RESULT AMF_STD_CALL  Terminate();
 
-    AMF_RESULT  LoadExternalComponent(amf::AMFContext* pContext, const wchar_t* dll, const char* function, void* reserved, amf::AMFComponent** ppComponent);
-    AMF_RESULT  UnLoadExternalComponent(const wchar_t* dll);
+    AMF_RESULT AMF_STD_CALL  LoadExternalComponent(amf::AMFContext* pContext, const wchar_t* dll, const char* function, void* reserved, amf::AMFComponent** ppComponent);
+    AMF_RESULT AMF_STD_CALL  UnLoadExternalComponent(const wchar_t* dll);
 
-    amf::AMFFactory* GetFactory();
-    amf::AMFDebug* GetDebug();
-    amf::AMFTrace* GetTrace();
+    amf::AMFFactory* AMF_STD_CALL GetFactory();
+    amf::AMFDebug* AMF_STD_CALL GetDebug();
+    amf::AMFTrace* AMF_STD_CALL GetTrace();
 
-    amf_uint64 AMFQueryVersion();
+    amf_uint64 AMF_STD_CALL AMFQueryVersion();
 protected:
     struct ComponentHolder
     {

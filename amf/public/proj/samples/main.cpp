@@ -1,6 +1,6 @@
-#include "../../../include/core/Factory.h"
-#include "../../../common/AMFFactory.h"
-#include "../../../include/core/Buffer.h"
+#include "../../include/core/Factory.h"
+#include "../../common/AMFFactory.h"
+#include "../../include/core/Buffer.h"
 
 #define CL_TARGET_OPENCL_VERSION 120
 

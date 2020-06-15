@@ -100,6 +100,7 @@ set(
   HEADER_LIB
 
   ../../common/AMFMath.h
+  ../../common/AMFFactory.h
   ../../common/AMFSTL.h
   ../../common/ByteArray.h
   ../../common/CurrentTime.h
