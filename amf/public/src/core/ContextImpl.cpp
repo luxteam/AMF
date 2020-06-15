@@ -82,7 +82,9 @@ AMF_RESULT AMFContextImpl::InitOpenCL(void *pCommandQueue)
             if (res == AMF_OK)
             {
                 AMFDeviceOCLImpl * device = static_cast<AMFDeviceOCLImpl*>(pComputeDevice);
+
                 m_pDeviceOCL = device;
+                m_pDeviceOCL->Acquire();
             }
         }
         return res;

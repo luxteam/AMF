@@ -35,7 +35,6 @@ AMFDeviceOCLImpl::AMFDeviceOCLImpl(
         {
             SetProperty(AMF_DEVICE_NAME, AMFVariant(name));
         }
-
     }
 
     {
