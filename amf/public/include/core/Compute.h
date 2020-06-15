@@ -1,4 +1,4 @@
-//
+// 
 // Notice Regarding Standards.  AMD does not provide a license or sublicense to
 // any Intellectual Property Rights relating to any standards, including but not
 // limited to any audio and/or video codec technologies such as MPEG-2, MPEG-4;
@@ -6,9 +6,9 @@
 // (collectively, the "Media Technologies"). For clarity, you will pay any
 // royalties due for such third party technologies, which may include the Media
 // Technologies that are owed as a result of AMD providing the Software to you.
-//
-// MIT license
-//
+// 
+// MIT license 
+// 
 // Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -90,8 +90,8 @@ namespace amf
         AMF_ARGUMENT_ACCESS_READWRITE   = 2,
         AMF_ARGUMENT_ACCESS_READWRITE_MASK  = 0xFFFF,
         //Sampler parameters
-        AMF_ARGUMENT_SAMPLER_LINEAR        = 0x10000000,
-        AMF_ARGUMENT_SAMPLER_NORM_COORD    = 0x20000000,
+        AMF_ARGUMENT_SAMPLER_LINEAR        = 0x10000000, 
+        AMF_ARGUMENT_SAMPLER_NORM_COORD    = 0x20000000, 
         AMF_ARGUMENT_SAMPLER_POINT         = 0x40000000,
         AMF_ARGUMENT_SAMPLER_MASK          = 0xFFFF0000,
     } AMF_ARGUMENT_ACCESS_TYPE;
@@ -137,7 +137,7 @@ namespace amf
         amf_long            (AMF_STD_CALL *Release)(AMFComputeKernel* pThis);
         enum AMF_RESULT     (AMF_STD_CALL *QueryInterface)(AMFComputeKernel* pThis, const struct AMFGuid *interfaceID, void** ppInterface);
 
-        // AMFComputeKernel interface
+        // AMFComputeKernel interface 
 
     } AMFComputeKernelVtbl;
 
@@ -172,7 +172,7 @@ namespace amf
         amf_long            (AMF_STD_CALL *Release)(AMFComputeSyncPoint* pThis);
         enum AMF_RESULT     (AMF_STD_CALL *QueryInterface)(AMFComputeSyncPoint* pThis, const struct AMFGuid *interfaceID, void** ppInterface);
 
-        // AMFComputeSyncPoint interface
+        // AMFComputeSyncPoint interface 
         amf_bool            (AMF_STD_CALL *IsCompleted)(AMFComputeSyncPoint* pThis);
         void                (AMF_STD_CALL *Wait)(AMFComputeSyncPoint* pThis);
 
@@ -236,7 +236,7 @@ namespace amf
         amf_long            (AMF_STD_CALL *Release)(AMFCompute* pThis);
         enum AMF_RESULT     (AMF_STD_CALL *QueryInterface)(AMFCompute* pThis, const struct AMFGuid *interfaceID, void** ppInterface);
 
-        // AMFCompute interface
+        // AMFCompute interface 
         AMF_MEMORY_TYPE     (AMF_STD_CALL *GetMemoryType)(AMFCompute* pThis);
         void*               (AMF_STD_CALL *GetNativeContext)(AMFCompute* pThis);
         void*               (AMF_STD_CALL *GetNativeDeviceID)(AMFCompute* pThis);

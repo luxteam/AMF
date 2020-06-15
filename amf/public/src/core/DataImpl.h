@@ -23,10 +23,7 @@ public:
 
     virtual ~AMFDataImpl()
     {
-        if(m_pContext)
-        {
-            m_pContext->Release();
-        }
+        m_pContext = nullptr;
     }
 
     // interface access
