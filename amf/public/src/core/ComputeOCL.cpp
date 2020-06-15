@@ -36,6 +36,13 @@ AMF_RESULT AMFComputeFactoryOCL::Init()
             status = clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, sizeof(pbuf), pbuf, NULL);
             AMF_RETURN_IF_CL_FAILED(status, L"clGetPlatformInfo() failed");
 
+            m_pContext->SetProperty(
+                AMF_DRIVER_VERSION_NAME,
+                AMFVariant(pbuf)
+                );
+
+            //on Mac/Radeon pbuf === 'Apple'
+
             /*if(!strcmp(pbuf, "Advanced Micro Devices, Inc."))
             {
                 platformID = platforms[i];
