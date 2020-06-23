@@ -18,7 +18,11 @@ public:
         m_duration(-1LL),
         m_pContext(pContext)
     {
-
+        m_pContext->Acquire();
+    }
+    virtual ~AMFDataImpl()
+    {
+        m_pContext = null;
     }
     // interface access
     AMF_BEGIN_INTERFACE_MAP
