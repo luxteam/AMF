@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
     g_AMFFactory.GetDebug()->AssertsEnable(true);
 
 
-	g_AMFFactory.GetTrace()->SetWriterLevel(AMF_TRACE_WRITER_FILE, AMF_TRACE_TRACE);
-	g_AMFFactory.GetTrace()->SetGlobalLevel(AMF_TRACE_TRACE);
+	g_AMFFactory.GetTrace()->SetWriterLevel(AMF_TRACE_WRITER_FILE, AMF_TRACE_TEST);
+	g_AMFFactory.GetTrace()->SetGlobalLevel(AMF_TRACE_TEST);
 	g_AMFFactory.GetTrace()->SetWriterLevel(AMF_TRACE_WRITER_CONSOLE, AMF_TRACE_TRACE);
 	g_AMFFactory.GetTrace()->SetWriterLevelForScope(AMF_TRACE_WRITER_CONSOLE, L"scope2", AMF_TRACE_TRACE);
 	g_AMFFactory.GetTrace()->SetWriterLevelForScope(AMF_TRACE_WRITER_CONSOLE, L"scope2", AMF_TRACE_ERROR);

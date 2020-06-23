@@ -156,6 +156,7 @@ AMFComputeDeviceOCLImpl::AMFComputeDeviceOCLImpl(AMFDeviceImpl* device, AMFConte
     m_pContext(pContext),
     m_device(device)
 {
+    amf::AMFTraceW(AMF_UNICODE(__FILE__), __LINE__, AMF_TRACE_TEST, L"AMFComputeDeviceOCLImpl", 0, L"new");
     {
         char name[256] = { 0 };
         clGetDeviceInfo(deviceId, CL_DEVICE_NAME, sizeof(name), name, nullptr);
@@ -189,6 +190,7 @@ AMFComputeDeviceOCLImpl::AMFComputeDeviceOCLImpl(AMFDeviceImpl* device, AMFConte
 
 inline AMFComputeDeviceOCLImpl::~AMFComputeDeviceOCLImpl()
 {
+    amf::AMFTraceW(AMF_UNICODE(__FILE__), __LINE__, AMF_TRACE_TEST, L"AMFComputeDeviceOCLImpl", 0, L"delete");
     clReleaseDevice(m_deviceID);
     clReleaseContext(m_context);
 }
@@ -246,7 +248,7 @@ AMFDeviceImpl* AMFComputeDeviceOCLImpl::GetDevice() const
 inline AMFDeviceOCLImpl::AMFDeviceOCLImpl(cl_platform_id platformID, cl_device_id deviceID, AMFContextImpl* pContext, cl_context context, cl_command_queue command_queue)
     : AMFDeviceImpl(AMF_MEMORY_OPENCL, 0, pContext), m_command_queue(command_queue)
 {
-
+    amf::AMFTraceW(AMF_UNICODE(__FILE__), __LINE__, AMF_TRACE_TEST, L"AMFDeviceOCLImpl", 0, L"new");
     m_computeDevice = new AMFComputeDeviceOCLImpl(this, m_pContext, platformID, deviceID, context);
     if (!command_queue)
     {
@@ -270,6 +272,7 @@ inline AMFDeviceOCLImpl::AMFDeviceOCLImpl(cl_platform_id platformID, cl_device_i
 
 inline AMFDeviceOCLImpl::~AMFDeviceOCLImpl()
 {
+    amf::AMFTraceW(AMF_UNICODE(__FILE__), __LINE__, AMF_TRACE_TEST, L"AMFDeviceOCLImpl", 0, L"delete");
     m_computeDevice = nullptr;
     clReleaseCommandQueue(m_command_queue);
 }
@@ -398,11 +401,13 @@ AMFComputeDevicePtr AMFDeviceOCLImpl::GetComputeDevice() const
 
 inline AMFComputeOCLImpl::AMFComputeOCLImpl(cl_platform_id platformID, cl_device_id deviceID, AMFContextImpl* pContext, cl_context context, cl_command_queue command_queue)
 {
+    amf::AMFTraceW(AMF_UNICODE(__FILE__), __LINE__, AMF_TRACE_TEST, L"AMFComputeOCLImpl", 0, L"new");
     m_device = new AMFDeviceOCLImpl(platformID, deviceID, pContext, context, command_queue);
 }
 
 inline AMFComputeOCLImpl::~AMFComputeOCLImpl()
 {
+    amf::AMFTraceW(AMF_UNICODE(__FILE__), __LINE__, AMF_TRACE_TEST, L"AMFComputeOCLImpl", 0, L"delete");
     delete m_device;
 }
 
