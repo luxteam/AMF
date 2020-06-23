@@ -33,7 +33,10 @@ void AMFFileTraceWriter::Write(const wchar_t * scope, const wchar_t * message)
 
 	amf::AMFLock lock(&s_file_out_cs);
 	wchar_t * timeInfo = timeWString();
-	m_fout << timeInfo<< m_indentBuffer << " [" << scope << "] " << message << std::endl;
+	if (scope != nullptr)
+		m_fout << timeInfo<< m_indentBuffer << " [" << scope << "] " << message << std::endl;
+	else
+		m_fout << timeInfo << m_indentBuffer << message << std::endl;
 	free(timeInfo);
 }
 

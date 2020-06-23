@@ -545,11 +545,17 @@ void AMFTraceImpl::Trace(const wchar_t *src_path, amf_int32 line, amf_int32 leve
 
 	if (m_consoleEx.enable && CheckLevel(m_consoleEx.level, level))
 	{
-		std::map <const wchar_t *, amf_int32> ::iterator it_scope;
-		it_scope = m_consoleEx.levels.find(scope);
-		if (it_scope == m_consoleEx.levels.end() || CheckLevel(it_scope->second, level))
+		if (scope == nullptr)
 		{
 			m_consoleWriter.Write(scope, message, level);
+		}
+		else {
+			std::map <const wchar_t*, amf_int32> ::iterator it_scope;
+			it_scope = m_consoleEx.levels.find(scope);
+			if (it_scope == m_consoleEx.levels.end() || CheckLevel(it_scope->second, level))
+			{
+				m_consoleWriter.Write(scope, message, level);
+			}
 		}
 	}
 
