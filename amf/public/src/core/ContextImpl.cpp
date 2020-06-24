@@ -3,6 +3,7 @@
 #include "DeviceOCLImpl.h"
 #include "ComputeOCL.h"
 #include "BufferImpl.h"
+#include <iostream>
 
 AMFContextImpl::AMFContextImpl()
 {
@@ -12,7 +13,9 @@ AMFContextImpl::~AMFContextImpl()
 {
     if(m_pDeviceOCL)
     {
-        m_pDeviceOCL->Release();
+        std::cerr << std::endl << "Error: CALL RELEASE HERE" << std::endl;
+
+        //m_pDeviceOCL->Release();
         m_pDeviceOCL = nullptr;
     }
 
@@ -84,7 +87,9 @@ AMF_RESULT AMFContextImpl::InitOpenCL(void *pCommandQueue)
                 AMFDeviceOCLImpl * device = static_cast<AMFDeviceOCLImpl*>(pComputeDevice);
 
                 m_pDeviceOCL = device;
-                m_pDeviceOCL->Acquire();
+                std::cerr << std::endl << "Error: CALL Acquire HERE" << std::endl;
+
+                //m_pDeviceOCL->Acquire();
             }
         }
         return res;
