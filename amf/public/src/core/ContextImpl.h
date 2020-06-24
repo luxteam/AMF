@@ -18,7 +18,6 @@ class AMFContextImpl : public AMFInterfaceImpl<AMFPropertyStorageImpl<AMFContext
 public:
     AMFContextImpl();
     virtual ~AMFContextImpl();
-
     // AMFContext interface
 public:
     virtual AMF_RESULT AMF_STD_CALL Terminate() override;
@@ -91,13 +90,11 @@ public:
 
 public:
     AMFDevice* AMF_STD_CALL GetDevice(AMF_MEMORY_TYPE type);
-
-    AMFDeviceOCLImpl *AMF_STD_CALL GetDeviceOCL() {return m_pDeviceOCL;}
-    AMFDeviceHostImpl *AMF_STD_CALL GetDeviceHost();
+    AMFDevice* AMF_STD_CALL GetDeviceHost();
 
 private:
-    AMFDeviceHostImpl *m_pDeviceHost = nullptr;
-    AMFDeviceOCLImpl *m_pDeviceOCL = nullptr;
+    AMFDevicePtr m_pDeviceHost;
+    AMFDevicePtr m_pDeviceOCL;
 };
 
 #endif // AMFCONTEXTIMPL_H

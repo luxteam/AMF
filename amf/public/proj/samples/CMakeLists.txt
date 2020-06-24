@@ -14,7 +14,7 @@ if(NOT AMF_NAME)
 endif()
 
 if(OpenCL_INCLUDE_DIR)
-  get_filename_component(Path_To_OpenCL ../${OpenCL_INCLUDE_DIR} ABSOLUTE)
+  get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
   message(WARNING "OpenCL location was set manually(sample)")
   include_directories(${Path_To_OpenCL}/include)
   set_property(GLOBAL PROPERTY OpenCL_LIBRARIES ${Path_To_OpenCL}/lib/x86_64/opencl.lib)
@@ -22,6 +22,8 @@ if(OpenCL_INCLUDE_DIR)
   message("OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL}/include)
   message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
   ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
+
+  
 else()
   find_package(OpenCL REQUIRED)
 
@@ -54,16 +56,20 @@ SET(HEADERS
 
 # Local source files here
 SET(SOURCES
-    ../../Qt/AMF_test/main.cpp
+    main.cpp
     )
 
-include_directories(..)
-add_subdirectory(.. ${AMF_NAME})
+include_directories(../../include)
+add_subdirectory(../cmake ${AMF_NAME})
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(
+    ${PROJECT_NAME}
+    ${SOURCES}
+    ${HEADER_FILES}
+)
 
 if(AMF_CORE_STATIC)
   target_link_libraries(${PROJECT_NAME} ${AMF_NAME} ${OpenCL_LIBRARIES})
 else()
-  #target_link_libraries(${PROJECT_NAME} ${AMF_NAME})
+  target_link_libraries(${PROJECT_NAME} ${AMF_NAME})
 endif()

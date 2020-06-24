@@ -52,7 +52,7 @@ public:
     virtual amf_int32           AMF_STD_CALL GetDeviceCount() override;
     virtual AMF_RESULT          AMF_STD_CALL GetDeviceAt(amf_int32 index, AMFComputeDevice **ppDevice) override;
 private:
-    amf_vector<AMFComputeDevicePtr> m_devices;
+    amf_vector<AMFDevicePtr> m_devices;
     AMFContextImpl* m_pContext;
 };
 #endif // AMFCOMPUTEOCL_H
