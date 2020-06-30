@@ -16,13 +16,17 @@ static uint32_t amf_to_cl_format(enum AMF_ARGUMENT_ACCESS_TYPE format)
     return CL_MEM_READ_ONLY;
 }
 
-char* DeviceName(cl_device_id device)
+std::string GetCLDeviceNameByID(cl_device_id device)
 {
-	size_t size;
-	clGetDeviceInfo(device, CL_DEVICE_NAME, 0, NULL, &size);
-	char* deviceName = (char*)malloc(size * sizeof(char));
-	clGetDeviceInfo(device, CL_DEVICE_NAME, size, deviceName, 0);
-	return deviceName;
+    std::string name;
+
+	size_t size(0);
+    AMF_ASSERT(CL_SUCCESS == clGetDeviceInfo(device, CL_DEVICE_NAME, 0, NULL, &size) && size);
+
+    name.resize(size);
+	AMF_ASSERT(CL_SUCCESS == clGetDeviceInfo(device, CL_DEVICE_NAME, size, &name.front(), 0));
+
+    return name;
 }
 
 bool SaveProgramBinary(cl_program program, cl_device_id device, const wchar_t* name, const char* kernelName)
@@ -84,14 +88,15 @@ bool SaveProgramBinary(cl_program program, cl_device_id device, const wchar_t* n
 		delete[] programBinaries;
 		return false;
 	}
-	char* deviceName = DeviceName(device);
+
+	auto deviceName = GetCLDeviceNameByID(device);
 
 	AMF_RESULT res;
 	for (cl_uint i = 0; i < numDevices; i++)
 	{
 		if (devices[i] == device)
 		{
-			res = AMFKernelStorage::Instance()->SaveProgramBinary(name, kernelName, deviceName, ".cl.bin", programBinaries[i], programBinarySizes[i]);
+			res = AMFKernelStorage::Instance()->SaveProgramBinary(name, kernelName, deviceName.c_str(), ".cl.bin", programBinaries[i], programBinarySizes[i]);
 			break;
 		}
 	}
@@ -103,8 +108,8 @@ bool SaveProgramBinary(cl_program program, cl_device_id device, const wchar_t* n
 		delete[] programBinaries[i];
 	}
 	delete[] programBinaries;
-	free(deviceName);
-	return res == AMF_OK;;
+
+    return res == AMF_OK;
 }
 
 cl_program CreateProgramFromBinary(cl_context context, cl_device_id device, unsigned char* programBinary, size_t binarySize)
@@ -149,7 +154,7 @@ cl_program CreateProgramFromBinary(cl_context context, cl_device_id device, unsi
 //AMFComputeDevice interface
 
 AMFComputeDeviceOCLImpl::AMFComputeDeviceOCLImpl(AMFDeviceImpl* device, AMFContextImpl* pContext, cl_platform_id platform, cl_device_id deviceId, cl_context context)
-    : 
+    :
     m_platformID(platform),
     m_deviceID(deviceId),
     m_context(context),
@@ -158,12 +163,19 @@ AMFComputeDeviceOCLImpl::AMFComputeDeviceOCLImpl(AMFDeviceImpl* device, AMFConte
 {
     amf::AMFTraceW(AMF_UNICODE(__FILE__), __LINE__, AMF_TRACE_TEST, L"AMFComputeDeviceOCLImpl", 0, L"new");
     {
-        char name[256] = { 0 };
-        clGetDeviceInfo(deviceId, CL_DEVICE_NAME, sizeof(name), name, nullptr);
+        SetProperty(AMF_DEVICE_NAME, AMFVariant(GetCLDeviceNameByID(m_deviceID).c_str()));
+    }
 
-        SetProperty(AMF_DEVICE_NAME, AMFVariant(name));
+    {
+        cl_uint align = 0;
 
-        fprintf(stdout, "device name: %s\n", name);
+        if(CL_SUCCESS == clGetDeviceInfo(m_deviceID, CL_DEVICE_MEM_BASE_ADDR_ALIGN, sizeof(align), &align, NULL))
+        {
+            if(align > 0)
+            {
+                SetProperty(AMF_DEVICE_BASEMEMORY_ALIGN, AMFVariant(align));
+            }
+        }
     }
     //todo: support this properties too
     //(only if device is AMD based)
@@ -310,15 +322,15 @@ AMF_RESULT AMFDeviceOCLImpl::CreateSubBuffer(AMFBuffer* pHandle, void** subBuffe
     region.origin = offset;
     region.size = size;
     int err = 0;
-    (*subBuffer) = clCreateSubBuffer((cl_mem)pHandle->GetNative(),
+    (*subBuffer) = clCreateSubBuffer(
+        (cl_mem)pHandle->GetNative(),
         CL_MEM_READ_WRITE,
-        CL_BUFFER_CREATE_TYPE_REGION, &region, &err);
+        CL_BUFFER_CREATE_TYPE_REGION,
+        &region,
+        &err
+        );
 
-    if (err != CL_SUCCESS)
-    {
-        printf("Error: clCreateSubBuffer failed!");
-        return AMF_FAIL;
-    }
+    AMF_RETURN_IF_CL_FAILED(err);
 
     return AMF_OK;
 }
@@ -384,8 +396,20 @@ AMF_RESULT AMFDeviceOCLImpl::AllocateBufferEx(amf_size size, void** ppHandle, AM
 {
     AMF_RETURN_IF_FALSE(size != 0, AMF_INVALID_ARG, L"AllocateBufferEx() - size cannot be 0");
     AMF_RETURN_IF_FALSE(ppHandle != 0, AMF_INVALID_ARG, L"AllocateBufferEx() - ppHandle cannot be 0");
-    *ppHandle = clCreateBuffer((cl_context)m_computeDevice->GetNativeContext(), amf_to_cl_format(format), size, NULL, NULL);
+
+    cl_int returnCode(CL_SUCCESS);
+    *ppHandle = clCreateBuffer(
+        (cl_context)m_computeDevice->GetNativeContext(),
+        amf_to_cl_format(format),
+        size,
+        NULL,
+        &returnCode
+        );
+
+    AMF_RETURN_IF_CL_FAILED(returnCode, L"Error: AllocateBuffer failed!\n");
     AMF_RETURN_IF_FALSE(*ppHandle != nullptr, AMF_OUT_OF_MEMORY, L"Error: Failed to allocate device memory!\n");
+
+
     return AMF_OK;
 }
 
@@ -394,7 +418,7 @@ void* AMFDeviceOCLImpl::GetNativeCommandQueue()
 	return m_command_queue;
 }
 
-AMFComputeDevicePtr AMFDeviceOCLImpl::GetComputeDevice() const
+const AMFComputeDevicePtr & AMFDeviceOCLImpl::GetComputeDevice() const
 {
 	return m_computeDevice;
 }
@@ -443,12 +467,15 @@ AMF_RESULT AMFComputeOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel
         return res;
     }
     cl_program program;
-    char* deviceName = DeviceName((cl_device_id)GetNativeDeviceID());
+
+    AMFVariant deviceName;
+    AMF_RETURN_IF_FAILED(m_device->GetComputeDevice()->GetProperty(AMF_DEVICE_NAME, &deviceName));
+
     if (kernelData->type == AMFKernelStorage::KernelData::Source)
     {
         AMFKernelStorage::KernelData* cacheKernelData;
-        res = AMFKernelStorage::Instance()->GetCacheKernelData(&cacheKernelData, kernelData->kernelid_name, kernelData->kernelName, deviceName, ".cl.bin");
-        free(deviceName);
+        res = AMFKernelStorage::Instance()->GetCacheKernelData(&cacheKernelData, kernelData->kernelid_name, kernelData->kernelName, deviceName.ToString().c_str(), ".cl.bin");
+
         if (res == AMF_OK)
             kernelData = cacheKernelData;//now kernelData->type == AMFKernelStorage::KernelData::Binary
     }
@@ -464,7 +491,7 @@ AMF_RESULT AMFComputeOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel
                 return AMF_FAIL;
             }
 
-            AMFComputeKernelOCL* computeKernel = new AMFComputeKernelOCL(program, kernel_CL, (cl_command_queue)GetNativeCommandQueue(), 
+            AMFComputeKernelOCL* computeKernel = new AMFComputeKernelOCL(program, kernel_CL, (cl_command_queue)GetNativeCommandQueue(),
 				kernelID, (cl_device_id)GetNativeDeviceID(), (cl_context)GetNativeContext());
             *kernel = computeKernel;
             (*kernel)->Acquire();
@@ -515,7 +542,7 @@ AMF_RESULT AMFComputeOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel
         return AMF_FAIL;
     }
 
-    AMFComputeKernelOCL* computeKernel = new AMFComputeKernelOCL(program, kernel_CL, (cl_command_queue)GetNativeCommandQueue(), kernelID, 
+    AMFComputeKernelOCL* computeKernel = new AMFComputeKernelOCL(program, kernel_CL, (cl_command_queue)GetNativeCommandQueue(), kernelID,
 		(cl_device_id)GetNativeDeviceID(), (cl_context)GetNativeContext());
     *kernel = computeKernel;
     (*kernel)->Acquire();

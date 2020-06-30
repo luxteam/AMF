@@ -75,6 +75,7 @@ AMF_RESULT AMFContextImpl::InitOpenCL(void *pCommandQueue)
             if (res == AMF_OK)
             {
                 AMFComputeDeviceOCLImpl* deviceImpl = dynamic_cast<AMFComputeDeviceOCLImpl*>(pComputeDevice);
+
                 AMFDeviceImpl* device = deviceImpl->GetDevice();
                 if (device)
                 {
@@ -111,7 +112,10 @@ AMF_RESULT AMFContextImpl::InitOpenCL(void *pCommandQueue)
 
 AMF_RESULT AMFContextImpl::InitOpenCLEx(AMFComputeDevice *pDevice)
 {
+    printf("<E");
     AMFComputeDeviceOCLImpl* deviceImpl = dynamic_cast<AMFComputeDeviceOCLImpl*>(pDevice);
+    printf("E>");
+
     AMFDeviceImpl* device = deviceImpl->GetDevice();
     if (device)
     {
@@ -125,19 +129,30 @@ AMF_RESULT AMFContextImpl::InitOpenCLEx(AMFComputeDevice *pDevice)
 
 void *AMFContextImpl::GetOpenCLContext()
 {
+    printf("<D");
     AMFDeviceOCLImpl* deviceImpl = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+    printf("D>");
+
+
     return deviceImpl->GetComputeDevice()->GetNativeContext();
 }
 
 void *AMFContextImpl::GetOpenCLCommandQueue()
 {
+    printf("<C");
     AMFDeviceOCLImpl* deviceImpl = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+    printf("C>");
+
+
     return deviceImpl->GetNativeCommandQueue();
 }
 
 void *AMFContextImpl::GetOpenCLDeviceID()
 {
+    printf("<B");
     AMFDeviceOCLImpl* deviceImpl = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+    printf("B>");
+
     return deviceImpl->GetComputeDevice()->GetNativeDeviceID();
 }
 
