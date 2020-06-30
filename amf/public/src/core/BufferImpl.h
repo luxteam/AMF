@@ -12,7 +12,7 @@ class AMFBufferImpl : public AMFDataImpl< AMFInterfaceImpl<AMFBuffer> >, public 
 {
 public:
     AMFBufferImpl(AMFContextImpl* pContext);
-    virtual ~AMFBufferImpl();
+	~AMFBufferImpl();
 
     AMF_BEGIN_INTERFACE_MAP
         AMF_INTERFACE_CHAIN_ENTRY(AMFInterfaceImpl)
@@ -47,11 +47,12 @@ public:
 
     virtual AMF_RESULT AMF_STD_CALL Duplicate(AMF_MEMORY_TYPE type, AMFBufferImpl **ppData);
 private:
-    void *m_pMemory = nullptr;
-    amf_size m_size = 0;
-    bool m_attached = false;
+    void* m_pMemory;
+    amf_size m_size;
+    bool m_attached;
 
-    AMFDevice *m_pDevice = nullptr;
+    AMFDevicePtr m_pDevice;
 };
+
 
 #endif // BUFFERIMPL_H

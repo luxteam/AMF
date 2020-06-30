@@ -47,12 +47,12 @@ public:
     AMF_RESULT CopyBufferFromHost(void* pDestHandle, amf_size dstOffset, const void* pSource, amf_size size, bool blocking);
     AMF_RESULT FillBuffer(void* pDestHandle, amf_size dstOffset, amf_size dstSize, const void* pSourcePattern, amf_size patternSize);
     AMF_RESULT AllocateBufferEx(amf_size size, void** ppHandle, AMF_ARGUMENT_ACCESS_TYPE format);
-    
-    
+
     void* GetNativeCommandQueue();
-    AMFComputeDevicePtr GetComputeDevice() const;
+    const AMFComputeDevicePtr & GetComputeDevice() const;
+
 private:
-    AMFComputeDevicePtr m_computeDevice; 
+    AMFComputeDevicePtr m_computeDevice;
     cl_command_queue m_command_queue;
 };
 

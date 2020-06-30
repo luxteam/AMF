@@ -4,14 +4,9 @@
 #include "../../include/core/Context.h"
 #include "../../common/InterfaceImpl.h"
 #include "../../common/PropertyStorageImpl.h"
-
 #include "Device.h"
-#include "DeviceOCLImpl.h"
 
 using namespace amf;
-
-class AMFDeviceHostImpl;
-class AMFDeviceOCLImpl;
 
 class AMFContextImpl : public AMFInterfaceImpl<AMFPropertyStorageImpl<AMFContext1> >
 {
@@ -91,7 +86,6 @@ public:
 public:
     AMFDevice* AMF_STD_CALL GetDevice(AMF_MEMORY_TYPE type);
     AMFDevice* AMF_STD_CALL GetDeviceHost();
-
 private:
     AMFDevicePtr m_pDeviceHost;
     AMFDevicePtr m_pDeviceOCL;

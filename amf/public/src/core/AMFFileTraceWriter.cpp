@@ -6,17 +6,17 @@
 
 amf::AMFCriticalSection      s_file_out_cs;
 
-std::string timeWString()
+std::wstring GetTimeString()
 {
 	time_t rawtime;
 	struct tm * timeinfo;
 
-	std::string buffer(28);
+	std::wstring buffer(28, ' ');
 
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
 
-	wcsftime(buffer.front(), 21, L"%Y-%m-%d %T.", timeinfo);
+	wcsftime(&buffer.front(), 21, L"%Y-%m-%d %T.", timeinfo);
 	unsigned long now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 	int ms = now % 1000;
 	wchar_t vOut[4];
@@ -33,11 +33,16 @@ void AMFFileTraceWriter::Write(const wchar_t * scope, const wchar_t * message)
 		return;
 
 	amf::AMFLock lock(&s_file_out_cs);
-	auto timeInfo = timeWString();
+	auto timeInfo = GetTimeString();
+
 	if (scope != nullptr)
-		m_fout << timeInfo<< m_indentBuffer << " [" << scope << "] " << message << std::endl;
+	{
+		m_fout << timeInfo << m_indentBuffer << " [" << scope << "] " << message << std::endl;
+	}
 	else
+	{
 		m_fout << timeInfo << m_indentBuffer << message << std::endl;
+	}
 }
 
 void AMFFileTraceWriter::Flush()

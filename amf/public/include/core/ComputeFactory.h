@@ -49,7 +49,6 @@ namespace amf
 #define AMF_AUDIO_CONVOLUTION_SAMPLE_RATE       L"ConvolutionSampleRate"            // amf_int64, sample rate
 #define AMF_DEVICE_BASEMEMORY_ALIGN             L"DeviceBaseMemoryAlign"            // char*, string, device name
 
-
 #if defined(__cplusplus)
     class AMF_NO_VTABLE AMFComputeDevice  : public AMFPropertyStorage
     {

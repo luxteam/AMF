@@ -121,8 +121,11 @@ amf_int32 AMFComputeFactoryOCL::GetDeviceCount()
 
 AMF_RESULT AMFComputeFactoryOCL::GetDeviceAt(amf_int32 index, AMFComputeDevice **ppDevice)
 {
+    printf("<A");
     //TODO: check out of range
     AMFDeviceOCLImpl* deviceImpl = dynamic_cast<AMFDeviceOCLImpl*>(m_devices.at(index).GetPtr());
+    printf("A>");
+
     *ppDevice = deviceImpl->GetComputeDevice();
     (*ppDevice)->Acquire();
     return AMF_OK;

@@ -23,38 +23,39 @@ endif()
 project(${AMF_NAME})
 include_directories(../../..)
 
-if(OpenCL_INCLUDE_DIR)
+if(OpenCL_INCLUDE_DIR AND (OpenCL_LIBRARIES OR AMF_CORE_STATIC))
+  message("${AMF_NAME}> OpenCL paths was set externally")
+
   get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
-  message(WARNING "OpenCL location was set manually")
+  message("${AMF_NAME}> OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL}/include)
+
   include_directories(${Path_To_OpenCL}/include)
-  set_property(GLOBAL PROPERTY OpenCL_LIBRARIES ${Path_To_OpenCL}/lib/x86_64/opencl.lib)
-  get_property(OpenCL_LIBRARIES GLOBAL PROPERTY OpenCL_LIBRARIES)
-  message("OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL}/include)
-  message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
+
+  if(NOT AMF_CORE_STATIC AND OpenCL_LIBRARIES)
+    message("${AMF_NAME}> OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
+  endif()
 else()
   find_package(OpenCL REQUIRED)
 
   if(NOT OpenCL_FOUND)
     message("")
-    message(SEND_ERROR "Error: Failed to find OpenCL!")
+    message(SEND_ERROR "${AMF_NAME}> Error: Failed to find OpenCL!")
     return()
   else()
-    message("OpenCL found: " ${OpenCL_FOUND})
-    message("OpenCL_INCLUDE_DIRS: " ${OpenCL_INCLUDE_DIRS})
-    message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
-    message("OpenCL_VERSION_STRING: " ${OpenCL_VERSION_STRING})
-    message("OpenCL_VERSION_MAJOR: " ${OpenCL_VERSION_MAJOR})
-    message("OpenCL_VERSION_MINOR: " ${OpenCL_VERSION_MINOR})
+    message("${AMF_NAME}> OpenCL found: " ${OpenCL_FOUND})
+    message("${AMF_NAME}> OpenCL_INCLUDE_DIRS: " ${OpenCL_INCLUDE_DIRS})
+    message("${AMF_NAME}> OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
+    message("${AMF_NAME}> OpenCL_VERSION_STRING: " ${OpenCL_VERSION_STRING})
+    message("${AMF_NAME}> OpenCL_VERSION_MAJOR: " ${OpenCL_VERSION_MAJOR})
+    message("${AMF_NAME}> OpenCL_VERSION_MINOR: " ${OpenCL_VERSION_MINOR})
 
-    message("OpenCL_INCLUDE_DIR: ${OpenCL_INCLUDE_DIR}")
-    message("OpenCL_LIBRARY: ${OpenCL_LIBRARY}")
+    message("${AMF_NAME}> OpenCL_INCLUDE_DIR: ${OpenCL_INCLUDE_DIR}")
+    message("${AMF_NAME}> OpenCL_LIBRARY: ${OpenCL_LIBRARY}")
 
     include_directories(${OpenCL_INCLUDE_DIR})
     #ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
   endif()
 endif()
-
-ADD_DEFINITIONS(-DAMF_CORE_STATIC)
 
 # sources
 set(
@@ -187,9 +188,6 @@ if(AMF_CORE_STATIC)
 else()
   message("Open AMF will be build as shared library")
 
-  #shared library must be linked with OpenCL, so, test package
-  link_directories(${OpenCL_LIBRARIES})
-
   #declare shared library creation
   add_library(
     ${AMF_NAME}
@@ -197,8 +195,14 @@ else()
     ${SOURCE_LIB}
     ${HEADER_LIB}
     )
-    TARGET_LINK_LIBRARIES(${AMF_NAME} ${OpenCL_LIBRARIES})
-    set_property(TARGET ${AMF_NAME} PROPERTY IMPORTED_LOCATION ${OpenCL_LIBRARIES})
+
+  if(NOT OpenCL_LIBRARIES)
+    message(SEND_ERROR "Error: OpenCL_LIBRARIES is not set!")
+  endif()
+
+  #shared library must be linked with OpenCL, so, test package
+  #link_directories(${OpenCL_LIBRARIES})
+  TARGET_LINK_LIBRARIES(${AMF_NAME} ${OpenCL_LIBRARIES})
 endif()
 
 set_property(TARGET ${AMF_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
