@@ -22,7 +22,7 @@ public:
     }
     virtual ~AMFDataImpl()
     {
-        m_pContext = null;
+        m_pContext = nullptr;
     }
     // interface access
     AMF_BEGIN_INTERFACE_MAP

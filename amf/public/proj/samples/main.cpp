@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
 	g_AMFFactory.GetTrace()->SetWriterLevelForScope(AMF_TRACE_WRITER_CONSOLE, L"scope2", AMF_TRACE_TRACE);
 	g_AMFFactory.GetTrace()->SetWriterLevelForScope(AMF_TRACE_WRITER_CONSOLE, L"scope2", AMF_TRACE_ERROR);
 
+    g_AMFFactory.GetTrace()->SetGlobalLevel(AMF_TRACE_TEST);
 	g_AMFFactory.GetTrace()->SetPath(L"E:\\tmp\\openamftest.log");
 	g_AMFFactory.GetTrace()->EnableWriter(AMF_TRACE_WRITER_FILE, true);
 	g_AMFFactory.GetTrace()->TraceW(L"path", 387, AMF_TRACE_ERROR, L"scope", 4, L"mesage1");
