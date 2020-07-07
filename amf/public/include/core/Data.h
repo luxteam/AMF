@@ -63,6 +63,7 @@ namespace amf
         AMF_MEMORY_COMPUTE_FOR_DX9  = 8, // deprecated, the same as AMF_MEMORY_OPENCL
         AMF_MEMORY_COMPUTE_FOR_DX11 = 9, // deprecated, the same as AMF_MEMORY_OPENCL
         AMF_MEMORY_VULKAN           = 10,
+        AMF_MEMORY_METAL           = 11,
     } AMF_MEMORY_TYPE;
 
     //----------------------------------------------------------------------------------------------

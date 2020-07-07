@@ -1,6 +1,10 @@
 #include "ContextImpl.h"
 #include "DeviceHostImpl.h"
 #include "DeviceOCLImpl.h"
+
+#if defined(__APPLE__) && defined(METAL_SUPPORT)
+    #include "AMFDeviceMetalImpl.h"
+#endif
 #include "ComputeOCL.h"
 #include "BufferImpl.h"
 
@@ -13,6 +17,7 @@ AMFContextImpl::~AMFContextImpl()
 {
     m_pDeviceHost = nullptr;
     m_pDeviceOCL = nullptr;
+    m_pDeviceMetal = nullptr;
 }
 
 
@@ -165,6 +170,15 @@ AMF_RESULT AMFContextImpl::UnlockOpenCL()
     return AMF_NOT_IMPLEMENTED;
 }
 
+AMF_RESULT AMF_STD_CALL AMFContextImpl::InitMetal()
+{
+#if defined(__APPLE__) && defined(METAL_SUPPORT)
+    m_pDeviceMetal = new AMFDeviceMetalImpl(this, nullptr);
+    return AMF_OK;
+#endif
+    return AMF_NOT_SUPPORTED;
+}
+
 AMF_RESULT AMFContextImpl::InitOpenGL(amf_handle hOpenGLContext, amf_handle hWindow, amf_handle hDC)
 {
     return AMF_NOT_IMPLEMENTED;
@@ -297,6 +311,15 @@ AMF_RESULT AMFContextImpl::CreateBufferFromOpenCLNative(void *pCLBuffer, amf_siz
 
 AMF_RESULT AMFContextImpl::GetCompute(AMF_MEMORY_TYPE eMemType, AMFCompute **ppCompute)
 {
+#if defined(__APPLE__) && defined(METAL_SUPPORT)
+
+    if (eMemType == AMF_MEMORY_METAL)
+    {
+        AMFDeviceMetalImpl* deviceImpl = dynamic_cast<AMFDeviceMetalImpl*>(m_pDeviceMetal.GetPtr());
+
+        return deviceImpl->GetComputeDevice()->CreateCompute(nullptr, ppCompute);
+    }
+#endif
     return AMF_NOT_IMPLEMENTED;
 }
 
@@ -356,6 +379,8 @@ AMFDevice *AMFContextImpl::GetDevice(AMF_MEMORY_TYPE type)
         return GetDeviceHost();
     if (type == AMF_MEMORY_OPENCL)
         return m_pDeviceOCL;
+    if (type == AMF_MEMORY_METAL)
+        return m_pDeviceMetal;
     return nullptr;
 }
 

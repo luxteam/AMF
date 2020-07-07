@@ -1,9 +1,12 @@
 *.obj
 *Makefile*
-amf/public/proj/cmake/samples/vs2017/ZERO_CHECK.vcxproj
 amf/public/proj/cmake/samples/vs2017/
-amf/public/proj/Qt/build*
 amf/public/proj/cmake/.vscode/
 amf/public/proj/cmake/build*
 amf/public/proj/cmake/vs2017/
 amf/public/proj/samples/vs2017/
+amf/public/src/core/metal/out/
+amf/public/proj/samples/out/
+amf/public/proj/cmake/out/
+.vs/
+amf/public/proj/samples/vs2019/

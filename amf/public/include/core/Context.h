@@ -81,6 +81,9 @@ namespace amf
         virtual AMF_RESULT          AMF_STD_CALL UnlockOpenCL() = 0;
         class AMFOpenCLLocker;
 
+        //metal
+        virtual AMF_RESULT          AMF_STD_CALL InitMetal() = 0;
+
         // OpenGL
         virtual AMF_RESULT          AMF_STD_CALL InitOpenGL(amf_handle hOpenGLContext, amf_handle hWindow, amf_handle hDC) = 0;
         virtual amf_handle          AMF_STD_CALL GetOpenGLContext() = 0;
@@ -211,6 +214,9 @@ namespace amf
         AMF_RESULT          (AMF_STD_CALL *InitOpenCLEx)(AMFContext* pThis, AMFComputeDevice *pDevice);
         AMF_RESULT          (AMF_STD_CALL *LockOpenCL)(AMFContext* pThis);
         AMF_RESULT          (AMF_STD_CALL *UnlockOpenCL)(AMFContext* pThis);
+
+        //metal
+        AMF_RESULT          (AMF_STD_CALL *InitMetal)(AMFContext* pThis);
 
         // OpenGL
         AMF_RESULT          (AMF_STD_CALL *InitOpenGL)(AMFContext* pThis, amf_handle hOpenGLContext, amf_handle hWindow, amf_handle hDC);

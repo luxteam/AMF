@@ -35,6 +35,8 @@ public:
     virtual AMF_RESULT AMF_STD_CALL LockOpenCL() override;
     virtual AMF_RESULT AMF_STD_CALL UnlockOpenCL() override;
 
+    virtual AMF_RESULT AMF_STD_CALL InitMetal() override;
+
     virtual AMF_RESULT AMF_STD_CALL InitOpenGL(amf_handle hOpenGLContext, amf_handle hWindow, amf_handle hDC) override;
     virtual amf_handle AMF_STD_CALL GetOpenGLContext() override;
     virtual amf_handle AMF_STD_CALL GetOpenGLDrawable() override;
@@ -89,6 +91,7 @@ public:
 private:
     AMFDevicePtr m_pDeviceHost;
     AMFDevicePtr m_pDeviceOCL;
+    AMFDevicePtr m_pDeviceMetal;
 };
 
 #endif // AMFCONTEXTIMPL_H

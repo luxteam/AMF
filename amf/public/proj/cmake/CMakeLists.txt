@@ -22,6 +22,9 @@ endif()
 # library name
 project(${AMF_NAME})
 include_directories(../../..)
+if(APPLE)
+  ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
+endif()
 
 if(OpenCL_INCLUDE_DIR AND (OpenCL_LIBRARIES OR AMF_CORE_STATIC))
   message("${AMF_NAME}> OpenCL paths was set externally")
@@ -90,6 +93,11 @@ set(
   ../../src/core/AMFFileTraceWriter.cpp
   ../../src/core/AMFConsoleTraceWriter.cpp
 )
+
+if (APPLE AND METAL_SUPPORT)
+  list(APPEND SOURCE_LIB ../../src/core/AMFDeviceMetalImpl.cpp)
+  list(APPEND SOURCE_LIB ../../src/core/AMFComputeKernelMetal.cpp)
+endif()
 
 if(WIN32)
   list(APPEND SOURCE_LIB ../../common/Windows/ThreadWindows.cpp)
@@ -174,6 +182,13 @@ set(
   ../../src/core/AMFConsoleTraceWriter.h
   )
 
+if (APPLE AND METAL_SUPPORT)
+  list(APPEND HEADER_LIB ../../src/core/AMFDeviceMetalImpl.h)
+  list(APPEND HEADER_LIB ../../src/core/AMFComputeKernelMetal.h)
+
+  add_subdirectory(../../src/core/Metal AMF_Metal)
+endif()
+
 if(AMF_CORE_STATIC)
   message("Open AMF will be build as static library")
 
@@ -206,6 +221,10 @@ else()
 endif()
 
 set_property(TARGET ${AMF_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
+if (APPLE AND METAL_SUPPORT)
+  ADD_DEFINITIONS(-DMETAL_SUPPORT=1)
+  target_link_libraries(${AMF_NAME} AMF_Metal)
+endif()
 
 if(NOT WIN32)
   target_compile_options(${AMF_NAME} PUBLIC -mavx2)
@@ -214,6 +233,14 @@ if(NOT WIN32)
 
   if(CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
     target_compile_options(${AMF_NAME} PUBLIC -g)
+  endif()
+
+  if (APPLE AND METAL_SUPPORT)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+    -framework AppKit \
+    -framework Metal \
+    -framework MetalKit"
+    )
   endif()
 
   if(NOT APPLE)

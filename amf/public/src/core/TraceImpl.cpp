@@ -123,6 +123,8 @@ const wchar_t * const AMFTraceImpl::GetMemoryTypeName(const AMF_MEMORY_TYPE memo
 		return L"COMPUTE_FOR_DX11";
 	case amf::AMF_MEMORY_VULKAN:
 		return L"VULKAN";
+	case amf::AMF_MEMORY_METAL:
+		return L"METAL";
 	}
     return L"UNKNOWN";
 }
@@ -528,7 +530,7 @@ wchar_t * AMFTraceImpl::FormMessage(amf_int32 level, const wchar_t *src_path, am
 	return result;
 }
 
-inline bool AMFTraceImpl::CheckLevel(int current, int traceLevel)
+bool AMFTraceImpl::CheckLevel(int current, int traceLevel)
 {
 	if (traceLevel == AMF_TRACE_NOLOG)
 		return false;
