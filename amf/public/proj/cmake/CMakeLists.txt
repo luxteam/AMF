@@ -235,15 +235,17 @@ if(NOT WIN32)
     target_compile_options(${AMF_NAME} PUBLIC -g)
   endif()
 
-  if (APPLE AND METAL_SUPPORT)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
-    -framework AppKit \
-    -framework Metal \
-    -framework MetalKit"
-    )
+  if(APPLE OR XCODE AND METAL_SUPPORT)
+    message("Link ${AMF_NAME} with Metal")
+
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} \
+      -framework AppKit \
+      -framework Metal \
+      -framework MetalKit"
+      )
   endif()
 
-  if(NOT APPLE)
+  if(NOT APPLE AND NOT XCODE)
     target_compile_options(${AMF_NAME} PUBLIC -Wpsabi)
   endif()
 endif()
