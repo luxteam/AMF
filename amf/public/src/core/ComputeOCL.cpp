@@ -231,7 +231,7 @@ AMF_RESULT AMFComputeKernelOCL::SetArgBufferNative(amf_size index, void *pBuffer
 {
     int err = 0;
 
-    err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), (cl_mem)pBuffer);
+    err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), (cl_mem *)&pBuffer);
     if (err != 0)
     {
         printf("Error: Failed to setup arg buffer! Code = %d\n index = %d", err, index);
