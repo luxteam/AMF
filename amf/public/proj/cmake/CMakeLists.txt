@@ -279,6 +279,9 @@ else()
       ${LOADER_HEADERS}
       ${LIBRARY_HEADERS}
       )
+
+    #link_directories(${OpenCL_LIBRARIES})
+    TARGET_LINK_LIBRARIES(${AMF_NAME} ${OpenCL_LIBRARIES})
   endif()
 
   #declare creation of the static loader helper for amf
@@ -289,9 +292,6 @@ else()
     ${LOADER_SOURCES}
     ${LOADER_HEADERS}
     )
-
-  #link_directories(${OpenCL_LIBRARIES})
-  TARGET_LINK_LIBRARIES(${AMF_NAME} ${OpenCL_LIBRARIES})
 endif()
 
 if(APPLE AND METAL_SUPPORT)
