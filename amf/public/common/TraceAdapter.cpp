@@ -39,7 +39,6 @@
 
 using namespace amf;
 
-/*
 #ifdef AMF_CORE_STATIC
 extern "C"
 {
@@ -47,7 +46,6 @@ extern "C"
     extern AMF_CORE_LINK AMF_RESULT AMF_CDECL_CALL AMFInit(amf_uint64 version, amf::AMFFactory **ppFactory);
 }
 #endif
-*/
 
 //------------------------------------------------------------------------------------------------
 static AMFTrace *s_pTrace = NULL;

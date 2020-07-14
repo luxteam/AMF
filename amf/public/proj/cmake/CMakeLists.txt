@@ -10,6 +10,11 @@ enable_language(CXX)
 message("Prepare OpenAMF project")
 
 if(AMF_CORE_STATIC)
+  if(AMF_CORE_SHARED)
+    message(SEND_ERROR "OpenAMF could not be built as a shared and a static library simultaneously!")
+    return()
+  endif()
+
   message("OpenAMF will be compiled as a static library")
 elseif(AMF_CORE_SHARED)
   message("OpenAMF will be compiled as a shared library and a static loader helper library will be generated")
@@ -31,7 +36,7 @@ if(NOT AMF_NAME)
 endif()
 
 #static library to load AMF
-if(NOT AMF_CORE_STATIC)
+if(NOT AMF_CORE_STATIC AND NOT AMF_LOADER_NAME)
   set_property(GLOBAL PROPERTY AMF_LOADER_NAME ${AMF_NAME}_loader)
   get_property(AMF_LOADER_NAME GLOBAL PROPERTY AMF_LOADER_NAME)
 endif()
