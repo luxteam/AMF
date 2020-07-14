@@ -71,5 +71,5 @@ add_executable(
 if(AMF_CORE_STATIC)
   target_link_libraries(${PROJECT_NAME} ${AMF_NAME} ${OpenCL_LIBRARIES})
 else()
-  target_link_libraries(${PROJECT_NAME} ${AMF_NAME})
+  target_link_libraries(${PROJECT_NAME} ${AMF_LOADER_NAME})
 endif()
