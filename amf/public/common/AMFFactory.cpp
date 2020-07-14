@@ -34,14 +34,14 @@
 #include "Thread.h"
 #include "AMFSTL.h"
 
+#if defined(AMF_CORE_STATIC) || !defined(AMF_CORE_SHARED)
 AMFFactoryHelper g_AMFFactory;
 
-#ifdef AMF_CORE_STATIC
-extern "C"
+/*extern "C"
 {
     extern AMF_CORE_LINK AMF_RESULT AMF_CDECL_CALL AMFInit(amf_uint64 version, amf::AMFFactory **ppFactory);
 }
-#endif
+*/
 
 //-------------------------------------------------------------------------------------------------
 AMFFactoryHelper::AMFFactoryHelper() :
@@ -239,7 +239,4 @@ AMF_RESULT  AMFFactoryHelper::UnLoadExternalComponent(const wchar_t* dll)
     }
     return AMF_OK;
 }
-//-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
-
+#endif

@@ -7,21 +7,64 @@ set(CMAKE_SKIP_RULE_DEPENDENCY TRUE)
 
 enable_language(CXX)
 
-message("Prepare open AMF project")
+message("Prepare OpenAMF project")
+
+if(AMF_CORE_STATIC)
+  message("OpenAMF will be compiled as a static library")
+elseif(AMF_CORE_SHARED)
+  message("OpenAMF will be compiled as a shared library and a static loader helper library will be generated")
+else()
+  message("OpenAMF will be compiled as a static loader helper library only")
+endif()
 
 # detects demanded name (previosly set in setup_amf.cmake)
 get_property(AMF_NAME GLOBAL PROPERTY AMF_NAME)
+get_property(AMF_LOADER_NAME GLOBAL PROPERTY AMF_LOADER_NAME)
 
 if(NOT AMF_NAME)
-  set_property(GLOBAL PROPERTY AMF_NAME amf)
+  if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+    set_property(GLOBAL PROPERTY AMF_NAME amfrt64)
+  else()
+    set_property(GLOBAL PROPERTY AMF_NAME amfrt32)
+  endif()
   get_property(AMF_NAME GLOBAL PROPERTY AMF_NAME)
-
-  message(WARNING "Open AMF will be built with the default library name: " ${AMF_NAME})
 endif()
 
-# library name
+#static library to load AMF
+if(NOT AMF_CORE_STATIC)
+  set_property(GLOBAL PROPERTY AMF_LOADER_NAME ${AMF_NAME}_loader)
+  get_property(AMF_LOADER_NAME GLOBAL PROPERTY AMF_LOADER_NAME)
+endif()
+
+if(NOT AMF_NAME)
+  if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+    set_property(GLOBAL PROPERTY AMF_NAME amfrt64)
+  else()
+    set_property(GLOBAL PROPERTY AMF_NAME amfrt32)
+  endif()
+
+  #static library to load AMF
+  if(NOT AMF_CORE_STATIC)
+    set_property(GLOBAL PROPERTY AMF_LOADER_NAME ${AMF_NAME}_loader)
+  endif()
+
+  set_property(GLOBAL PROPERTY AMF_NAME amf)
+  #get_property(AMF_NAME GLOBAL PROPERTY AMF_NAME)
+
+  message(WARNING "OpenAMF will be built with the default library name: " ${AMF_NAME})
+endif()
+
+if(NOT AMF_CORE_STATIC AND NOT AMF_LOADER_NAME)
+  set_property(GLOBAL PROPERTY AMF_LOADER_NAME ${AMF_NAME}_loader)
+
+  message(WARNING "Default loader name for OpenAMF will be used: " ${AMF_LOADER_NAME})
+endif()
+
+# project name
 project(${AMF_NAME})
+
 include_directories(../../..)
+
 if(APPLE)
   ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
 endif()
@@ -62,7 +105,7 @@ endif()
 
 # sources
 set(
-  SOURCE_LIB
+  LOADER_SOURCES
 
   ../../common/AMFFactory.cpp
   ../../common/AMFSTL.cpp
@@ -75,7 +118,16 @@ set(
   ../../common/PropertyStorageExImpl.cpp
   ../../common/Thread.cpp
   ../../common/TraceAdapter.cpp
-  ../../common/Windows/ThreadWindows.cpp
+)
+
+if(WIN32)
+  list(APPEND LOADER_SOURCES ../../common/Windows/ThreadWindows.cpp)
+else()
+  list(APPEND LOADER_SOURCES ../../common/Linux/ThreadLinux.cpp)
+endif()
+
+set(
+  LIBRARY_SOURCES
 
   ../../src/core/BufferImpl.cpp
   ../../src/core/ComputeOCL.cpp
@@ -94,19 +146,14 @@ set(
   ../../src/core/AMFConsoleTraceWriter.cpp
 )
 
-if (APPLE AND METAL_SUPPORT)
-  list(APPEND SOURCE_LIB ../../src/core/AMFDeviceMetalImpl.cpp)
-  list(APPEND SOURCE_LIB ../../src/core/AMFComputeKernelMetal.cpp)
+if(APPLE AND METAL_SUPPORT)
+  list(APPEND LIBRARY_SOURCES ../../src/core/AMFDeviceMetalImpl.cpp)
+  list(APPEND LIBRARY_SOURCES ../../src/core/AMFComputeKernelMetal.cpp)
 endif()
 
-if(WIN32)
-  list(APPEND SOURCE_LIB ../../common/Windows/ThreadWindows.cpp)
-else()
-  list(APPEND SOURCE_LIB ../../common/Linux/ThreadLinux.cpp)
-endif()
-
+#headers
 set(
-  HEADER_LIB
+  LOADER_HEADERS
 
   ../../common/AMFMath.h
   ../../common/AMFFactory.h
@@ -124,6 +171,7 @@ set(
   ../../common/PropertyStorageImpl.h
   ../../common/Thread.h
   ../../common/TraceAdapter.h
+
   ../../include/components/Ambisonic2SRenderer.h
   ../../include/components/AudioCapture.h
   ../../include/components/ColorSpace.h
@@ -145,6 +193,7 @@ set(
   ../../include/components/VideoEncoderVCE.h
   ../../include/components/VideoStitch.h
   ../../include/components/ZCamLiveStream.h
+
   ../../include/core/AudioBuffer.h
   ../../include/core/Buffer.h
   ../../include/core/Compute.h
@@ -164,60 +213,89 @@ set(
   ../../include/core/Trace.h
   ../../include/core/Variant.h
   ../../include/core/Version.h
-  ../../src/core/BufferImpl.h
-  ../../src/core/ComputeOCL.h
-  ../../src/core/ContextImpl.h
-  ../../src/core/DataImpl.h
-  ../../src/core/DebugImpl.h
-  ../../src/core/Device.h
-  ../../src/core/DeviceHostImpl.h
-  ../../src/core/DeviceImpl.h
-  ../../src/core/DeviceOCLImpl.h
-  ../../src/core/FactoryImpl.h
-  ../../src/core/PlaneImpl.h
-  ../../src/core/ProgramsImpl.h
-  ../../src/core/SurfaceImpl.h
-  ../../src/core/TraceImpl.h
-  ../../src/core/AMFFileTraceWriter.h
-  ../../src/core/AMFConsoleTraceWriter.h
   )
 
-if (APPLE AND METAL_SUPPORT)
-  list(APPEND HEADER_LIB ../../src/core/AMFDeviceMetalImpl.h)
-  list(APPEND HEADER_LIB ../../src/core/AMFComputeKernelMetal.h)
+  if(AMF_CORE_STATIC OR AMF_CORE_SHARED)
+    set(
+      LIBRARY_HEADERS
 
-  add_subdirectory(../../src/core/Metal AMF_Metal)
+      ../../src/core/BufferImpl.h
+      ../../src/core/ComputeOCL.h
+      ../../src/core/ContextImpl.h
+      ../../src/core/DataImpl.h
+      ../../src/core/DebugImpl.h
+      ../../src/core/Device.h
+      ../../src/core/DeviceHostImpl.h
+      ../../src/core/DeviceImpl.h
+      ../../src/core/DeviceOCLImpl.h
+      ../../src/core/FactoryImpl.h
+      ../../src/core/PlaneImpl.h
+      ../../src/core/ProgramsImpl.h
+      ../../src/core/SurfaceImpl.h
+      ../../src/core/TraceImpl.h
+      ../../src/core/AMFFileTraceWriter.h
+      ../../src/core/AMFConsoleTraceWriter.h
+      )
+
+  if(APPLE AND METAL_SUPPORT)
+    list(APPEND LIBRARY_HEADERS ../../src/core/AMFDeviceMetalImpl.h)
+    list(APPEND LIBRARY_HEADERS ../../src/core/AMFComputeKernelMetal.h)
+  endif()
 endif()
 
+#generate projects
 if(AMF_CORE_STATIC)
-  message("Open AMF will be build as static library")
+  message("${AMF_NAME} will be built as a static library")
 
   #declare static library creation
   add_library(
     ${AMF_NAME}
     STATIC
-    ${SOURCE_LIB}
-    ${HEADER_LIB}
-    )
 
+    ${LOADER_SOURCES}
+    ${LIBRARY_SOURCES}
+
+    ${LOADER_HEADERS}
+    ${LIBRARY_HEADERS}
+    )
 else()
-  message("Open AMF will be build as shared library")
-
-  #declare shared library creation
-  add_library(
-    ${AMF_NAME}
-    SHARED
-    ${SOURCE_LIB}
-    ${HEADER_LIB}
-    )
-
+  #shared library must be linked with OpenCL, so, test it first
   if(NOT OpenCL_LIBRARIES)
     message(SEND_ERROR "Error: OpenCL_LIBRARIES is not set!")
   endif()
 
-  #shared library must be linked with OpenCL, so, test package
+  message("${AMF_NAME} will be built as a shared library")
+  message("To use ${AMF_NAME} as a shared library a special static helper will be generated - ${AMF_LOADER_NAME}, link applications against it")
+
+  if(AMF_CORE_SHARED)
+    #declare shared library creation
+    add_library(
+      ${AMF_NAME}
+      SHARED
+
+      ${LOADER_SOURCES}
+      ${LIBRARY_SOURCES}
+
+      ${LOADER_HEADERS}
+      ${LIBRARY_HEADERS}
+      )
+  endif()
+
+  #declare creation of the static loader helper for amf
+  add_library(
+    ${AMF_LOADER_NAME}
+    STATIC
+
+    ${LOADER_SOURCES}
+    ${LOADER_HEADERS}
+    )
+
   #link_directories(${OpenCL_LIBRARIES})
   TARGET_LINK_LIBRARIES(${AMF_NAME} ${OpenCL_LIBRARIES})
+endif()
+
+if(APPLE AND METAL_SUPPORT)
+  add_subdirectory(../../src/core/Metal AMF_Metal)
 endif()
 
 set_property(TARGET ${AMF_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
