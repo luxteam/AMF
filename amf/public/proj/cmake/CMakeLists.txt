@@ -282,6 +282,8 @@ else()
 
     #link_directories(${OpenCL_LIBRARIES})
     TARGET_LINK_LIBRARIES(${AMF_NAME} ${OpenCL_LIBRARIES})
+
+    set_property(TARGET ${AMF_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
   endif()
 
   #declare creation of the static loader helper for amf
@@ -298,7 +300,6 @@ if(APPLE AND METAL_SUPPORT)
   add_subdirectory(../../src/core/Metal AMF_Metal)
 endif()
 
-set_property(TARGET ${AMF_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 if (APPLE AND METAL_SUPPORT)
   ADD_DEFINITIONS(-DMETAL_SUPPORT=1)
   target_link_libraries(${AMF_NAME} AMF_Metal)
