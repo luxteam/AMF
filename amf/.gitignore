@@ -37,3 +37,7 @@ UpgradeLog*.XML
 UpgradeLog*.htm
 
 public/proj/build*
+
+# Built project
+amf/public/proj/samples/vs2017
+amf/public/proj/samples/vs2019

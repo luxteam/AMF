@@ -47,17 +47,30 @@ else()
   endif()
 endif()
 
-project(open_amf_test1)
+project(autotests)
 
 # Local header files here ONLY
 SET(HEADERS
-
+    OpenAMF_Autotests/autotests.h
    )
 
 # Local source files here
 SET(SOURCES
-    main.cpp
+    OpenAMF_Autotests/api.cpp
+    OpenAMF_Autotests/autotests.cpp
+    OpenAMF_Autotests/geometry.cpp
+    OpenAMF_Autotests/implementation.cpp
+    OpenAMF_Autotests/main.cpp
+    OpenAMF_Autotests/multithread.cpp
+    OpenAMF_Autotests/references.cpp
     )
+
+################################
+# GTest
+################################
+add_subdirectory (googletest)
+enable_testing()
+include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
 include_directories(../../include)
 add_subdirectory(../cmake ${AMF_NAME})
@@ -67,6 +80,9 @@ add_executable(
     ${SOURCES}
     ${HEADER_FILES}
 )
+
+target_link_libraries(${PROJECT_NAME} gtest gtest_main)
+add_test( ${PROJECT_NAME} ${PROJECT_NAME} )
 
 if(AMF_CORE_STATIC)
   target_link_libraries(${PROJECT_NAME} ${AMF_NAME} ${OpenCL_LIBRARIES})
