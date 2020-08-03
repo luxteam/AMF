@@ -219,15 +219,7 @@ AMF_RESULT AMFComputeKernelOCL::SetArgBuffer(amf_size index, AMFBuffer *pBuffer,
         }
     }
 
-    cl_mem mem = (cl_mem)pBuffer->GetNative();
-
-    err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), &mem);
-    if (err != 0)
-    {
-        printf("Error: Failed to setup arg buffer!\n index = %d", err, index);
-        return AMF_FAIL;
-    }
-    return AMF_OK;
+    return SetArgBufferNative(index, pBuffer->GetNative(), eAccess);
 }
 
 AMF_RESULT AMFComputeKernelOCL::SetArgPlane(amf_size index, AMFPlane *pPlane, AMF_ARGUMENT_ACCESS_TYPE eAccess)
@@ -239,7 +231,7 @@ AMF_RESULT AMFComputeKernelOCL::SetArgBufferNative(amf_size index, void *pBuffer
 {
     int err = 0;
 
-    err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), (cl_mem)pBuffer);
+    err = clSetKernelArg(m_kernel, index, sizeof(cl_mem), (cl_mem *)&pBuffer);
     if (err != 0)
     {
         printf("Error: Failed to setup arg buffer! Code = %d\n index = %d", err, index);

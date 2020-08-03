@@ -530,7 +530,7 @@ wchar_t * AMFTraceImpl::FormMessage(amf_int32 level, const wchar_t *src_path, am
 	return result;
 }
 
-inline bool AMFTraceImpl::CheckLevel(int current, int traceLevel)
+bool AMFTraceImpl::CheckLevel(int current, int traceLevel)
 {
 	if (traceLevel == AMF_TRACE_NOLOG)
 		return false;
