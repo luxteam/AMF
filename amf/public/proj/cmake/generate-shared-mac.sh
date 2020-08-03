@@ -6,5 +6,6 @@ rm -rf ./mac-gnumake
 mkdir mac-gnumake
 
 cd mac-gnumake
-cmake .. -DOpenCL_INCLUDE_DIR=-DOpenCL_INCLUDE_DIR="../../../../../../../thirdparty/OpenCL-Headers"
+#-DAMF_CORE_STATIC=1
+cmake .. -DOpenCL_INCLUDE_DIR="../../../../../../CL_Headers" -DAMF_CORE_STATIC=1
 cd ..

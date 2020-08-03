@@ -1,0 +1,45 @@
+cmake_minimum_required(VERSION 2.8.8)
+project(Test)
+set(NAME Test)
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -x objective-c")
+
+set(HEADER_FILES
+    ../MetalDevice.h
+    ../MetalCompute.h
+    ../MetalComputeKernel.h
+)
+set(SOURCE_FILES
+    main.mm
+    ../MetalDevice.mm
+    ../MetalCompute.mm
+    ../MetalComputeKernel.mm
+)
+
+add_executable(
+    ${NAME}
+    MACOSX_BUNDLE
+    ${SOURCE_FILES}
+    ${HEADER_FILES}
+    ../process.metal
+)
+
+set_source_files_properties(
+    ../process.metal
+    PROPERTIES
+    MACOSX_PACKAGE_LOCATION
+    Resources
+)
+
+# set_target_properties(
+#     ${NAME}
+#     PROPERTIES
+#     MACOSX_BUNDLE_INFO_PLIST
+#     ${CMAKE_CURRENT_LIST_DIR}/plist.in
+# )
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+    -framework AppKit \
+    -framework Metal \
+    -framework MetalKit \
+    -framework ModelIO"
+    )

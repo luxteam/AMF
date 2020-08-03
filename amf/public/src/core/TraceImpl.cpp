@@ -123,6 +123,8 @@ const wchar_t * const AMFTraceImpl::GetMemoryTypeName(const AMF_MEMORY_TYPE memo
 		return L"COMPUTE_FOR_DX11";
 	case amf::AMF_MEMORY_VULKAN:
 		return L"VULKAN";
+	case amf::AMF_MEMORY_METAL:
+		return L"METAL";
 	}
     return L"UNKNOWN";
 }

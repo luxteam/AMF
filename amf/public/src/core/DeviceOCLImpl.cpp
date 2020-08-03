@@ -268,7 +268,7 @@ inline AMFDeviceOCLImpl::AMFDeviceOCLImpl(cl_platform_id platformID, cl_device_i
         cl_command_queue commandQueue = nullptr;
 
 #if CL_TARGET_OPENCL_VERSION >= 200
-        commandQueue = clCreateCommandQueueWithProperties(m_context, m_deviceID, (cl_command_queue_properties)NULL, &status);
+        commandQueue = clCreateCommandQueueWithProperties(context, deviceID, (cl_command_queue_properties)NULL, &status);
 #else
         commandQueue = clCreateCommandQueue(context, deviceID, NULL, &status);
 #endif
