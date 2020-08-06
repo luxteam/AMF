@@ -6,11 +6,27 @@ set(CMAKE_SKIP_RULE_DEPENDENCY TRUE)
 
 enable_language(CXX)
 
+if(AMF_CORE_STATIC)
+  message("static AMF build will be used")
+  ADD_DEFINITIONS(-DAMF_CORE_STATIC)
+else()
+  message("shared AMF build will be used")
+endif()
+
 if(NOT AMF_NAME)
-  set_property(GLOBAL PROPERTY AMF_NAME amf)
+  set(AMF_NAME openAmf)
+  set_property(GLOBAL PROPERTY AMF_NAME ${AMF_NAME})
   get_property(AMF_NAME GLOBAL PROPERTY AMF_NAME)
 
-  message(WARNING "Open AMF will be built with the default library name: " ${AMF_NAME})
+  message(WARNING "OpenAMF will be built with the default library name: " ${AMF_NAME})
+endif()
+
+if(NOT AMF_CORE_STATIC AND NOT AMF_LOADER_NAME)
+  set(AMF_LOADER_NAME openAmfLoader)
+  set_property(GLOBAL PROPERTY AMF_LOADER_NAME ${AMF_LOADER_NAME})
+  get_property(AMF_LOADER_NAME GLOBAL PROPERTY AMF_LOADER_NAME)
+
+  message(WARNING "OpenAMF will be built with the default loader helper name: " ${AMF_LOADER_NAME})
 endif()
 
 if(OpenCL_INCLUDE_DIR)
@@ -71,5 +87,5 @@ add_executable(
 if(AMF_CORE_STATIC)
   target_link_libraries(${PROJECT_NAME} ${AMF_NAME} ${OpenCL_LIBRARIES})
 else()
-  target_link_libraries(${PROJECT_NAME} ${AMF_NAME})
+  target_link_libraries(${PROJECT_NAME} ${AMF_LOADER_NAME})
 endif()

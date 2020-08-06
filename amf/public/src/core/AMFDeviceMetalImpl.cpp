@@ -205,7 +205,7 @@ AMF_RESULT AMFComputeMetalImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKern
     const char * source = (const char *)kernelData->data;
 
     MetalComputeKernelWrapper *pKernel = NULL;
-    AMF_RESULT res = m_compute->GetKernel(source, &pKernel);
+    AMF_RESULT res = m_compute->GetKernel(source, kernelData->kernelName, &pKernel);
     AMF_RETURN_IF_FALSE(res == AMF_OK, AMF_INVALID_ARG, L"GetKernel");
 
     AMFComputeKernelMetal * computeKernel = new AMFComputeKernelMetal(kernelID, pKernel);

@@ -3,13 +3,8 @@
 
 #define AMF_FACILITY L"AMFFactoryImpl"
 
+#if defined(AMF_CORE_STATIC) || defined(AMF_CORE_SHARED)
 static AMFFactoryImpl g_AMFFactory;
-
-AMFFactoryImpl::AMFFactoryImpl()
-{
-
-}
-
 
 extern "C"
 {
@@ -20,6 +15,9 @@ extern "C"
     }
 }
 
+AMFFactoryImpl::AMFFactoryImpl()
+{
+}
 
 AMF_RESULT AMFFactoryImpl::CreateContext(amf::AMFContext **ppContext)
 {
@@ -66,3 +64,4 @@ AMF_RESULT AMFFactoryImpl::GetPrograms(amf::AMFPrograms **ppPrograms)
     *ppPrograms = &m_Programs;
     return AMF_OK;
 }
+#endif
