@@ -5,14 +5,19 @@
 #include "../../include/core/ComputeFactory.h"
 #include "metal/MetalDeviceWrapper.h"
 #include "metal/MetalComputeWrapper.h"
+#include "metal/MetalDeviceEnumeratorWrapper.h"
 
 using namespace amf;
-
 
 class AMFComputeDeviceMetalImpl : public AMFInterfaceImpl<AMFPropertyStorageImpl<AMFComputeDevice>>
 {
 public:
-    AMFComputeDeviceMetalImpl(AMFContextImpl* pContext, AMFDeviceImpl *  device, void * native);
+    AMFComputeDeviceMetalImpl(
+        AMFContextImpl *    pContext,
+        AMFDeviceImpl *     device,
+        void *              native,
+        const std::string & name
+        );
     ~AMFComputeDeviceMetalImpl();
 
     //AMFComputeDevice interface
@@ -35,7 +40,11 @@ private:
 class AMFDeviceMetalImpl : public AMFDeviceImpl
 {
 public:
-    AMFDeviceMetalImpl(AMFContextImpl* pContext, void * native);
+    AMFDeviceMetalImpl(
+        AMFContextImpl  *               pContext,
+        void *                          native,
+        const std::string &             name
+        );
     ~AMFDeviceMetalImpl();
     //AMFDevice interface
 public:
@@ -62,7 +71,11 @@ private:
 class AMFComputeMetalImpl : public AMFInterfaceImpl<AMFCompute>
 {
 public:
-    AMFComputeMetalImpl(AMFContextImpl* pContext, void * native);
+    AMFComputeMetalImpl(
+        AMFContextImpl* pContext,
+        void * native,
+        const std::string & name
+        );
     ~AMFComputeMetalImpl();
     // AMFCompute interface
 public:
@@ -86,8 +99,8 @@ public:
     virtual AMF_RESULT ConvertPlaneToPlane(AMFPlane* pSrcPlane, AMFPlane** ppDstPlane, AMF_CHANNEL_ORDER order, AMF_CHANNEL_TYPE type) override;
 
 private:
-    AMFDeviceMetalImpl *  m_device;
-    MetalComputeWrapper * m_compute;
+    std::unique_ptr<AMFDeviceMetalImpl> m_device;
+    std::unique_ptr<MetalComputeWrapper> m_compute;
 };
 
 
