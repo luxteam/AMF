@@ -1,4 +1,4 @@
-// 
+//
 // Notice Regarding Standards.  AMD does not provide a license or sublicense to
 // any Intellectual Property Rights relating to any standards, including but not
 // limited to any audio and/or video codec technologies such as MPEG-2, MPEG-4;
@@ -6,9 +6,9 @@
 // (collectively, the "Media Technologies"). For clarity, you will pay any
 // royalties due for such third party technologies, which may include the Media
 // Technologies that are owed as a result of AMD providing the Software to you.
-// 
-// MIT license 
-// 
+//
+// MIT license
+//
 // Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -52,7 +52,7 @@ namespace amf
     {
     public:
         AMF_DECLARE_IID(0xa76a13f0, 0xd80e, 0x4fcc, 0xb5, 0x8, 0x65, 0xd0, 0xb5, 0x2e, 0xd9, 0xee)
-        
+
         // Cleanup
         virtual AMF_RESULT          AMF_STD_CALL Terminate() = 0;
 
@@ -83,6 +83,8 @@ namespace amf
 
         //metal
         virtual AMF_RESULT          AMF_STD_CALL InitMetal() = 0;
+        virtual AMF_RESULT          AMF_STD_CALL GetMetalComputeFactory(AMFComputeFactory **ppFactory) = 0;
+        virtual AMF_RESULT          AMF_STD_CALL InitMetalEx(AMFComputeDevice *pDevice) = 0;
 
         // OpenGL
         virtual AMF_RESULT          AMF_STD_CALL InitOpenGL(amf_handle hOpenGLContext, amf_handle hWindow, amf_handle hDC) = 0;
@@ -109,18 +111,18 @@ namespace amf
         // Allocation
         virtual AMF_RESULT          AMF_STD_CALL AllocBuffer(AMF_MEMORY_TYPE type, amf_size size, AMFBuffer** ppBuffer) = 0;
         virtual AMF_RESULT          AMF_STD_CALL AllocSurface(AMF_MEMORY_TYPE type, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, AMFSurface** ppSurface) = 0;
-        virtual AMF_RESULT          AMF_STD_CALL AllocAudioBuffer(AMF_MEMORY_TYPE type, AMF_AUDIO_FORMAT format, amf_int32 samples, amf_int32 sampleRate, amf_int32 channels, 
+        virtual AMF_RESULT          AMF_STD_CALL AllocAudioBuffer(AMF_MEMORY_TYPE type, AMF_AUDIO_FORMAT format, amf_int32 samples, amf_int32 sampleRate, amf_int32 channels,
                                                     AMFAudioBuffer** ppAudioBuffer) = 0;
 
         // Wrap existing objects
         virtual AMF_RESULT          AMF_STD_CALL CreateBufferFromHostNative(void* pHostBuffer, amf_size size, AMFBuffer** ppBuffer, AMFBufferObserver* pObserver) = 0;
-        virtual AMF_RESULT          AMF_STD_CALL CreateSurfaceFromHostNative(AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, amf_int32 hPitch, amf_int32 vPitch, void* pData, 
+        virtual AMF_RESULT          AMF_STD_CALL CreateSurfaceFromHostNative(AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, amf_int32 hPitch, amf_int32 vPitch, void* pData,
                                                      AMFSurface** ppSurface, AMFSurfaceObserver* pObserver) = 0;
         virtual AMF_RESULT          AMF_STD_CALL CreateSurfaceFromDX9Native(void* pDX9Surface, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver) = 0;
         virtual AMF_RESULT          AMF_STD_CALL CreateSurfaceFromDX11Native(void* pDX11Surface, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver) = 0;
         virtual AMF_RESULT          AMF_STD_CALL CreateSurfaceFromOpenGLNative(AMF_SURFACE_FORMAT format, amf_handle hGLTextureID, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver) = 0;
         virtual AMF_RESULT          AMF_STD_CALL CreateSurfaceFromGrallocNative(amf_handle hGrallocSurface, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver) = 0;
-        virtual AMF_RESULT          AMF_STD_CALL CreateSurfaceFromOpenCLNative(AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, void** pClPlanes, 
+        virtual AMF_RESULT          AMF_STD_CALL CreateSurfaceFromOpenCLNative(AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, void** pClPlanes,
                                                      AMFSurface** ppSurface, AMFSurfaceObserver* pObserver) = 0;
         virtual AMF_RESULT          AMF_STD_CALL CreateBufferFromOpenCLNative(void* pCLBuffer, amf_size size, AMFBuffer** ppBuffer) = 0;
 
@@ -157,7 +159,7 @@ namespace amf
         virtual AMF_RESULT          AMF_STD_CALL CreateBufferFromVulkanNative(void* pVulkanBuffer, AMFBuffer** ppBuffer, AMFBufferObserver* pObserver) = 0;
         virtual AMF_RESULT          AMF_STD_CALL GetVulkanDeviceExtensions(amf_size *pCount, const char **ppExtensions) = 0;
 
-        
+
         class AMFVulkanLocker;
     };
     //----------------------------------------------------------------------------------------------
@@ -175,7 +177,7 @@ namespace amf
         amf_long            (AMF_STD_CALL *Acquire)(AMFContext* pThis);
         amf_long            (AMF_STD_CALL *Release)(AMFContext* pThis);
         enum AMF_RESULT     (AMF_STD_CALL *QueryInterface)(AMFContext* pThis, const struct AMFGuid *interfaceID, void** ppInterface);
-        
+
         // AMFInterface AMFPropertyStorage
 
         AMF_RESULT          (AMF_STD_CALL *SetProperty)(AMFContext* pThis, const wchar_t* name, AMFVariantStruct value);
@@ -190,7 +192,7 @@ namespace amf
         void                (AMF_STD_CALL *RemoveObserver)(AMFContext* pThis, AMFPropertyStorageObserver* pObserver);
 
         // AMFContext interface
-       
+
         // Cleanup
         AMF_RESULT          (AMF_STD_CALL *Terminate)(AMFContext* pThis);
 
@@ -217,6 +219,8 @@ namespace amf
 
         //metal
         AMF_RESULT          (AMF_STD_CALL *InitMetal)(AMFContext* pThis);
+        AMF_RESULT          (AMF_STD_CALL *GetMetalComputeFactory)(AMFContext* pThis, AMFComputeFactory **ppFactory); // advanced compute - multiple queries
+        AMF_RESULT          (AMF_STD_CALL *InitMetalEx)(AMFContext* pThis, AMFComputeDevice *pDevice);
 
         // OpenGL
         AMF_RESULT          (AMF_STD_CALL *InitOpenGL)(AMFContext* pThis, amf_handle hOpenGLContext, amf_handle hWindow, amf_handle hDC);
@@ -238,18 +242,18 @@ namespace amf
         // Allocation
         AMF_RESULT          (AMF_STD_CALL *AllocBuffer)(AMFContext* pThis, AMF_MEMORY_TYPE type, amf_size size, AMFBuffer** ppBuffer);
         AMF_RESULT          (AMF_STD_CALL *AllocSurface)(AMFContext* pThis, AMF_MEMORY_TYPE type, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, AMFSurface** ppSurface);
-        AMF_RESULT          (AMF_STD_CALL *AllocAudioBuffer)(AMFContext* pThis, AMF_MEMORY_TYPE type, AMF_AUDIO_FORMAT format, amf_int32 samples, amf_int32 sampleRate, amf_int32 channels, 
+        AMF_RESULT          (AMF_STD_CALL *AllocAudioBuffer)(AMFContext* pThis, AMF_MEMORY_TYPE type, AMF_AUDIO_FORMAT format, amf_int32 samples, amf_int32 sampleRate, amf_int32 channels,
                                                     AMFAudioBuffer** ppAudioBuffer);
 
         // Wrap existing objects
         AMF_RESULT          (AMF_STD_CALL *CreateBufferFromHostNative)(AMFContext* pThis, void* pHostBuffer, amf_size size, AMFBuffer** ppBuffer, AMFBufferObserver* pObserver);
-        AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromHostNative)(AMFContext* pThis, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, amf_int32 hPitch, amf_int32 vPitch, void* pData, 
+        AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromHostNative)(AMFContext* pThis, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, amf_int32 hPitch, amf_int32 vPitch, void* pData,
                                                      AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
         AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromDX9Native)(AMFContext* pThis, void* pDX9Surface, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
         AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromDX11Native)(AMFContext* pThis, void* pDX11Surface, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
         AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromOpenGLNative)(AMFContext* pThis, AMF_SURFACE_FORMAT format, amf_handle hGLTextureID, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
         AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromGrallocNative)(AMFContext* pThis, amf_handle hGrallocSurface, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
-        AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromOpenCLNative)(AMFContext* pThis, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, void** pClPlanes, 
+        AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromOpenCLNative)(AMFContext* pThis, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, void** pClPlanes,
                                                      AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
         AMF_RESULT          (AMF_STD_CALL *CreateBufferFromOpenCLNative)(AMFContext* pThis, void* pCLBuffer, amf_size size, AMFBuffer** ppBuffer);
 
@@ -273,7 +277,7 @@ namespace amf
         amf_long            (AMF_STD_CALL *Acquire)(AMFContext1* pThis);
         amf_long            (AMF_STD_CALL *Release)(AMFContext1* pThis);
         enum AMF_RESULT     (AMF_STD_CALL *QueryInterface)(AMFContext1* pThis, const struct AMFGuid *interfaceID, void** ppInterface);
-        
+
         // AMFInterface AMFPropertyStorage
 
         AMF_RESULT          (AMF_STD_CALL *SetProperty)(AMFContext1* pThis, const wchar_t* name, AMFVariantStruct value);
@@ -288,7 +292,7 @@ namespace amf
         void                (AMF_STD_CALL *RemoveObserver)(AMFContext1* pThis, AMFPropertyStorageObserver* pObserver);
 
         // AMFContext interface
-       
+
         // Cleanup
         AMF_RESULT          (AMF_STD_CALL *Terminate)(AMFContext1* pThis);
 
@@ -333,18 +337,18 @@ namespace amf
         // Allocation
         AMF_RESULT          (AMF_STD_CALL *AllocBuffer)(AMFContext1* pThis, AMF_MEMORY_TYPE type, amf_size size, AMFBuffer** ppBuffer);
         AMF_RESULT          (AMF_STD_CALL *AllocSurface)(AMFContext1* pThis, AMF_MEMORY_TYPE type, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, AMFSurface** ppSurface);
-        AMF_RESULT          (AMF_STD_CALL *AllocAudioBuffer)(AMFContext1* pThis, AMF_MEMORY_TYPE type, AMF_AUDIO_FORMAT format, amf_int32 samples, amf_int32 sampleRate, amf_int32 channels, 
+        AMF_RESULT          (AMF_STD_CALL *AllocAudioBuffer)(AMFContext1* pThis, AMF_MEMORY_TYPE type, AMF_AUDIO_FORMAT format, amf_int32 samples, amf_int32 sampleRate, amf_int32 channels,
                                                     AMFAudioBuffer** ppAudioBuffer);
 
         // Wrap existing objects
         AMF_RESULT          (AMF_STD_CALL *CreateBufferFromHostNative)(AMFContext1* pThis, void* pHostBuffer, amf_size size, AMFBuffer** ppBuffer, AMFBufferObserver* pObserver);
-        AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromHostNative)(AMFContext1* pThis, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, amf_int32 hPitch, amf_int32 vPitch, void* pData, 
+        AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromHostNative)(AMFContext1* pThis, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, amf_int32 hPitch, amf_int32 vPitch, void* pData,
                                                      AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
         AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromDX9Native)(AMFContext1* pThis, void* pDX9Surface, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
         AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromDX11Native)(AMFContext1* pThis, void* pDX11Surface, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
         AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromOpenGLNative)(AMFContext1* pThis, AMF_SURFACE_FORMAT format, amf_handle hGLTextureID, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
         AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromGrallocNative)(AMFContext1* pThis, amf_handle hGrallocSurface, AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
-        AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromOpenCLNative)(AMFContext1* pThis, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, void** pClPlanes, 
+        AMF_RESULT          (AMF_STD_CALL *CreateSurfaceFromOpenCLNative)(AMFContext1* pThis, AMF_SURFACE_FORMAT format, amf_int32 width, amf_int32 height, void** pClPlanes,
                                                      AMFSurface** ppSurface, AMFSurfaceObserver* pObserver);
         AMF_RESULT          (AMF_STD_CALL *CreateBufferFromOpenCLNative)(AMFContext1* pThis, void* pCLBuffer, amf_size size, AMFBuffer** ppBuffer);
 

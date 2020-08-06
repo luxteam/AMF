@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -154,6 +154,7 @@ set(
 if(APPLE AND METAL_SUPPORT)
   list(APPEND LIBRARY_SOURCES ../../src/core/AMFDeviceMetalImpl.cpp)
   list(APPEND LIBRARY_SOURCES ../../src/core/AMFComputeKernelMetal.cpp)
+  list(APPEND LIBRARY_SOURCES ../../src/core/AMFComputeFactoryMetal.cpp)
 endif()
 
 #headers
@@ -245,6 +246,7 @@ set(
   if(APPLE AND METAL_SUPPORT)
     list(APPEND LIBRARY_HEADERS ../../src/core/AMFDeviceMetalImpl.h)
     list(APPEND LIBRARY_HEADERS ../../src/core/AMFComputeKernelMetal.h)
+    list(APPEND LIBRARY_HEADERS ../../src/core/AMFComputeFactoryMetal.h)
   endif()
 endif()
 
@@ -319,17 +321,16 @@ if(NOT WIN32)
     target_compile_options(${AMF_NAME} PUBLIC -g)
   endif()
 
-  if(APPLE OR XCODE AND METAL_SUPPORT)
+  if (APPLE OR XCODE AND METAL_SUPPORT)
     message("Link ${AMF_NAME} with Metal")
-
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} \
       -framework AppKit \
       -framework Metal \
       -framework MetalKit"
-      )
+    )
   endif()
 
-  if(NOT APPLE AND NOT XCODE)
+  if(NOT APPLE AND NOT XCODE) 
     target_compile_options(${AMF_NAME} PUBLIC -Wpsabi)
   endif()
 endif()

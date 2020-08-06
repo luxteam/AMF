@@ -9,7 +9,7 @@ class MetalComputeWrapper
 public:
     MetalComputeWrapper(void * compute);
 
-    AMF_RESULT GetKernel(const char * name, MetalComputeKernelWrapper ** kernel);
+    AMF_RESULT GetKernel(const char * source, const char * name, MetalComputeKernelWrapper ** kernel);
 
     AMF_RESULT FlushQueue();
     AMF_RESULT FinishQueue();

@@ -6,13 +6,19 @@ MetalCompute::MetalCompute(id<MTLDevice> device, id<MTLCommandQueue> commandQueu
 {
     m_commandBuffer = [m_commandQueue commandBuffer];
     assert(m_commandBuffer != nil);
-    m_library = [m_device newDefaultLibrary];
+    //m_library = [m_device newDefaultLibrary];
 }
 
-AMF_RESULT MetalCompute::GetKernel(NSString * name, MetalComputeKernel ** kernel)
+AMF_RESULT MetalCompute::GetKernel(NSString * source, NSString * name, MetalComputeKernel ** kernel)
 {
     NSError* error = nil;
 
+    m_library = [m_device newLibraryWithSource: source options:nil error:&error];
+    if (m_library == nil)
+    {
+        NSLog(@"Failed to createLibrary from source.");
+        return AMF_FAIL;
+    }
     id<MTLFunction> processFunction = [m_library newFunctionWithName:name];
     if (processFunction == nil)
     {

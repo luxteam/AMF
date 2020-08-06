@@ -9,7 +9,16 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     printf("start");
-
+	const char* kernel_src = "\n"\
+		"#include <metal_stdlib>\n"\
+		"using namespace metal;\n"\
+		"\n"\
+		"kernel void process_array(device const float* inA,\n"\
+		"                   device float* result,\n"\
+		"                   uint index [[thread_position_in_grid]])\n"\
+		"{\n"\
+		"   result[index] = -inA[index] * inA[index] * inA[index] ;\n"\
+		"}\n";
     AMFFactoryHelper helper;
     helper.Init();
     amf::AMFFactory* factory = helper.GetFactory();
@@ -17,15 +26,23 @@ int main(int argc, char *argv[])
 printf("0");
     amf::AMFContextPtr context;
     factory->CreateContext(&context);
-
 	//context1->SetProperty(AMF_CONTEXT_DEVICE_TYPE, AMF_CONTEXT_DEVICE_TYPE_GPU);
-    context->InitMetal();
+    amf::AMFComputeFactoryPtr metalComputeFactory;
+    context->GetMetalComputeFactory(&metalComputeFactory);
+    int deviceCount = metalComputeFactory->GetDeviceCount();
+printf("\nDevice count :%d\n", deviceCount);
+    if (deviceCount < 1)
+        return -1;
+
+    amf::AMFComputeDevicePtr pComputeDevice;
+    metalComputeFactory->GetDeviceAt(0, &pComputeDevice);
+
+    context->InitMetalEx(pComputeDevice.GetPtr());
 
     amf::AMFPrograms* pPrograms;
     factory->GetPrograms(&pPrograms);
 
     amf::AMF_KERNEL_ID kernel = 0;
-    const char* kernel_src = "process_array";
     pPrograms->RegisterKernelSource(&kernel, L"kernelIDName", "process_array", strlen(kernel_src), (amf_uint8*)kernel_src, "option");
 
 	g_AMFFactory.Init();
