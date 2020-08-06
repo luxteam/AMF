@@ -7,10 +7,10 @@ MetalComputeWrapper::MetalComputeWrapper(void * compute)
     assert(m_compute != nil);
 }
 
-AMF_RESULT MetalComputeWrapper::GetKernel(const char * name, MetalComputeKernelWrapper ** kernel)
+AMF_RESULT MetalComputeWrapper::GetKernel(const char * source, const char * name, MetalComputeKernelWrapper ** kernel)
 {
     MetalComputeKernel *pKernel = NULL;
-    AMF_RESULT res = m_compute->GetKernel([NSString stringWithUTF8String:name], &pKernel);
+    AMF_RESULT res = m_compute->GetKernel([NSString stringWithUTF8String:source], [NSString stringWithUTF8String:name], &pKernel);
     if (res != AMF_OK)
         return res;
 

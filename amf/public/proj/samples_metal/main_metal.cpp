@@ -9,7 +9,16 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     printf("start");
-
+	const char* kernel_src = "\n"\
+		"#include <metal_stdlib>\n"\
+		"using namespace metal;\n"\
+		"\n"\
+		"kernel void process_array(device const float* inA,\n"\
+		"                   device float* result,\n"\
+		"                   uint index [[thread_position_in_grid]])\n"\
+		"{\n"\
+		"   result[index] = -inA[index] * inA[index] * inA[index] ;\n"\
+		"}\n";
     AMFFactoryHelper helper;
     helper.Init();
     amf::AMFFactory* factory = helper.GetFactory();
@@ -34,7 +43,6 @@ printf("\nDevice count :%d\n", deviceCount);
     factory->GetPrograms(&pPrograms);
 
     amf::AMF_KERNEL_ID kernel = 0;
-    const char* kernel_src = "process_array";
     pPrograms->RegisterKernelSource(&kernel, L"kernelIDName", "process_array", strlen(kernel_src), (amf_uint8*)kernel_src, "option");
 
 	g_AMFFactory.Init();
