@@ -51,7 +51,13 @@ set_source_files_properties(
 
 get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Path_To_OpenCL}/lib/x86_64/opencl.lib)
-target_link_libraries(${PROJECT_NAME} ${AMF_NAME})
+
+if(AMF_CORE_STATIC)
+  target_link_libraries(${PROJECT_NAME} ${AMF_NAME})
+else()
+  target_link_libraries(${PROJECT_NAME} ${AMF_LOADER_NAME})
+endif()
+
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
     -framework AppKit \
     -framework Metal \

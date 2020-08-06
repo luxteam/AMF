@@ -37,11 +37,11 @@ void AMFFileTraceWriter::Write(const wchar_t * scope, const wchar_t * message)
 
 	if (scope != nullptr)
 	{
-		m_fout << timeInfo << m_indentBuffer << " [" << scope << "] " << message << std::endl;
+		m_fout << timeInfo.c_str() << m_indentBuffer << " [" << scope << "] " << message << std::endl;
 	}
 	else
 	{
-		m_fout << timeInfo << m_indentBuffer << message << std::endl;
+		m_fout << timeInfo.c_str() << m_indentBuffer << message << std::endl;
 	}
 }
 
