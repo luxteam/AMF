@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <fstream>
+#include <alloca.h>
 
 using namespace amf;
 
@@ -19,14 +20,13 @@ public:
 			Source,
 			Binary
 		};
-        wchar_t *kernelid_name;
-        char *kernelName;
-        amf_size dataSize;
-		amf_uint8 *data = nullptr;
-        char *options = nullptr;
+        std::wstring kernelid_name;
+        std::string kernelName;
+        std::vector<amf_uint8> data;
+        std::string options;
 		KernelType type;
-		
-		char * deviceName;
+
+		std::string deviceName;
     };
 
     static AMFKernelStorage * Instance()
@@ -35,7 +35,7 @@ public:
         return &instance;
     }
 
-    void PushKernelData(KernelData data)
+    void PushKernelData(const KernelData & data)
     {
         m_kernels.push_back(data);
     }
@@ -54,8 +54,8 @@ public:
         return AMF_OK;
     }
 
-	AMF_RESULT GetCacheKernelData(KernelData** kernelData, 
-		const wchar_t *kernelid_name, 
+	AMF_RESULT GetCacheKernelData(KernelData** kernelData,
+		const wchar_t *kernelid_name,
 		const char *kernelName,
 		const char *deviceName,
 		const char * extension)
@@ -64,8 +64,8 @@ public:
 		AMF_KERNEL_ID i = 0;
 		std::vector<KernelData>::iterator it;
 		for (it = m_cachedKernels.begin(); it != m_cachedKernels.end(); it++, i++) {
-			if (0 == wcscmp(it->kernelid_name, kernelid_name) &&
-				0 == strcmp(it->deviceName, deviceName))
+			if (0 == wcscmp(it->kernelid_name.c_str(), kernelid_name) &&
+				0 == strcmp(it->deviceName.c_str(), deviceName))
 			{
 				kernelIndex = i;
 				break;
@@ -77,126 +77,110 @@ public:
 			if (m_cacheFolder == nullptr)
 				return AMF_FAIL;
 
-			char * resultName = ResultFileName(kernelid_name, deviceName, extension);
-			FILE *fp = fopen(resultName, "rb");
+			auto resultName = ResultFileName(kernelid_name, deviceName, extension);
+
+			FILE *fp = fopen(resultName.c_str(), "rb");
 			if (fp == NULL)
 			{
 				return AMF_FAIL;
 			}
-			
-			AMFKernelStorage::KernelData kernelData;
-			kernelData.type = KernelData::Binary;
-			size_t size = wcslen(kernelid_name) + 1;
-			kernelData.kernelid_name = (wchar_t *)malloc(size * sizeof(wchar_t));
-			wcsncpy(kernelData.kernelid_name, kernelid_name, size);
 
-			size = strlen(kernelName) + 1;
-			kernelData.kernelName = (char *)malloc(size * sizeof(char));
-			strcpy(kernelData.kernelName, kernelName);
-
-			size = strlen(deviceName) + 1;
-			kernelData.deviceName = (char *)malloc(size * sizeof(char));
-			strcpy(kernelData.deviceName, deviceName);
-			
 			fseek(fp, 0, SEEK_END);
-			kernelData.dataSize = ftell(fp);
-			if (kernelData.dataSize > 0)
+
+			AMFKernelStorage::KernelData kernelData = {
+				kernelid_name,
+				kernelName,
+				std::vector<amf_uint8>(ftell(fp)), //alloc vector with ftell size
+				"",
+				KernelData::Binary,
+				deviceName
+				};
+
+			if(kernelData.data.size() > 0)
 			{
 				rewind(fp);
-				kernelData.data = new unsigned char[kernelData.dataSize];
-				fread((void*)kernelData.data, 1, kernelData.dataSize, fp);
+				fread(&kernelData.data.front(), 1, kernelData.data.size(), fp);
 			}
+
 			fclose(fp);
-			free(resultName);
 
 			kernelIndex = m_cachedKernels.size();
 			m_cachedKernels.push_back(kernelData);
 		}
+
 		*kernelData = &m_cachedKernels[kernelIndex];
+
 		return AMF_OK;
 	}
 
-	char * ResultFileName(const wchar_t *name, const char *deviceName, const char * extension)
+	std::string ResultFileName(const std::wstring & name, const std::string & deviceName, const std::string & extension)
 	{
-		size_t size = wcstombs(nullptr, name, 0) + 1;
-		char * cName = (char *)malloc(size * sizeof(char));
-		cName[size - 1] = '\0';
-		wcstombs(cName, name, size);
+		size_t size = wcstombs(nullptr, name.c_str(), 0);
+		std::string nameInChars(size, 0);
+		wcstombs(&nameInChars.front(), name.c_str(), size);
 
 		size = wcstombs(nullptr, m_cacheFolder, 0) + 1;
-		char * cFolder = (char *)malloc(size * sizeof(char));
-		cFolder[size - 1] = '\0';
-		wcstombs(cFolder, m_cacheFolder, size);
+		std::string folderInChars(size, 0);
+		wcstombs(&folderInChars.front(), m_cacheFolder, size);
 
-		size_t foldLen = strlen(cFolder);
-		size_t nameLen = strlen(cName);
-		size_t extLen = strlen(extension);
+		size = wcstombs(nullptr, PATH_SEPARATOR_WSTR, 0) + 1;
+		std::string delimiter(size, 0);
+		wcstombs(&delimiter.front(), PATH_SEPARATOR_WSTR, size);
 
-		size = foldLen + nameLen + extLen + 2;
-		char * resultName = (char* )malloc(size * sizeof(char));
-		strcpy(resultName, cFolder);
-		resultName[foldLen] = '\\';
-		strcpy(resultName + foldLen + 1, cName);
-		strcpy(resultName + foldLen + nameLen + 1, extension);
-		resultName[size - 1] = '\0';
-		return resultName;
+		return folderInChars
+			+ delimiter
+			+ nameInChars
+			+ extension;
 	}
 
-	AMF_RESULT SaveProgramBinary(const wchar_t *name, 
-		const char *kernelName,
-		const char *deviceName,
-		const char * extension,
-		unsigned char *data, size_t dataSize)
+	AMF_RESULT SaveProgramBinary(
+		const std::wstring & 	name,
+		const std::string & 	kernelName,
+		const std::string & 	deviceName,
+		const std::string & 	extension,
+		const amf_uint8 *		data,
+		size_t					dataSize
+		)
 	{
-		char * resultName = ResultFileName(name, deviceName, extension);
-		FILE *fp = fopen(resultName, "wb");
+		auto resultName = ResultFileName(name, deviceName, extension);
+
+		FILE *fp = fopen(resultName.c_str(), "wb");
 		if (!fp)
 			return AMF_FAIL;
 		fwrite(data, 1,	dataSize, fp);
 		fclose(fp);
-		free(resultName);
 
 		amf_int64 kernelIndex = -1;
 		AMF_KERNEL_ID i = 0;
+
 		std::vector<KernelData>::iterator it;
 		for (it = m_cachedKernels.begin(); it != m_cachedKernels.end(); it++, i++) {
-			if (0 == wcscmp(it->kernelid_name, name) &&
-				0 == strcmp(it->deviceName, deviceName))
+			if (0 == it->kernelid_name.compare(name) &&
+				0 == it->deviceName.compare(deviceName))
 			{
 				kernelIndex = i;
 				break;
 			}
 		}
+
 		if (kernelIndex < 0)
 		{
-			AMFKernelStorage::KernelData kernelData;
-			kernelData.type = KernelData::Binary;
-			size_t size = wcslen(name) + 1;
-			kernelData.kernelid_name = (wchar_t *)malloc(size * sizeof(wchar_t));
-			wcsncpy(kernelData.kernelid_name, name, size);
-
-			size = strlen(kernelName) + 1;
-			kernelData.kernelName = (char *)malloc(size * sizeof(char));
-			strcpy(kernelData.kernelName, kernelName);
-
-			size = strlen(deviceName) + 1;
-			kernelData.deviceName = (char *)malloc(size * sizeof(char));
-			strcpy(kernelData.deviceName, deviceName);
-
-			kernelData.dataSize = dataSize;
-			kernelData.data = new amf_uint8[dataSize];
-			memcpy((void*)kernelData.data, data, dataSize);
+			AMFKernelStorage::KernelData kernelData = {
+				name,
+				kernelName,
+				std::vector<amf_uint8>(dataSize),
+				"",
+				KernelData::Binary,
+				deviceName
+				};
+			std::copy(data, data + dataSize, std::back_inserter(kernelData.data));
 
 			m_cachedKernels.push_back(kernelData);
 		}
 		else
 		{
-			m_cachedKernels[kernelIndex].dataSize = dataSize;
-			if (m_cachedKernels[kernelIndex].data)
-				delete m_cachedKernels[kernelIndex].data;
-
-			m_cachedKernels[kernelIndex].data = new amf_uint8[dataSize];
-			memcpy((void*)m_cachedKernels[kernelIndex].data, data, dataSize);
+			m_cachedKernels[kernelIndex].data.resize(dataSize);
+			std::copy(data, data + dataSize, std::back_inserter(m_cachedKernels[kernelIndex].data));
 		}
 
 		return AMF_OK;
@@ -225,18 +209,18 @@ public:
 		for (it = m_kernels.begin(); it != m_kernels.end(); it++, i++) {
 			if (it->type != type)
 				continue;
-			if (0 == wcscmp(it->kernelid_name, kernelid_name))
+			if (0 == wcscmp(it->kernelid_name.c_str(), kernelid_name))
 			{
-				if (options == NULL && it->options == NULL)
+				if (!options && !it->options.length())
 					return i;
-				if (0 == strcmp(it->options, options))
+				if (0 == strcmp(it->options.c_str(), options))
 					return i;
 			}
 		}
 
 		return -1;
 	}
-	
+
 private:
 	AMFKernelStorage() { m_cacheFolder = NULL; }
 	~AMFKernelStorage()
@@ -249,7 +233,7 @@ private:
 	wchar_t * m_cacheFolder;
     std::vector<KernelData> m_kernels;
 	std::vector<KernelData> m_cachedKernels;
-}; 
+};
 
 
 class AMFProgramsImpl : public AMFPrograms

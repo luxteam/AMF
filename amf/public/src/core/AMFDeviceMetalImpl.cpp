@@ -200,12 +200,13 @@ void *AMFComputeMetalImpl::GetNativeCommandQueue()
 
 AMF_RESULT AMFComputeMetalImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel **kernel)
 {
-    AMFKernelStorage::KernelData *kernelData;
+    AMFKernelStorage::KernelData *kernelData(nullptr);
     AMFKernelStorage::Instance()->GetKernelData(&kernelData, kernelID);
-    const char * source = (const char *)kernelData->data;
+
+    const char * source = reinterpret_cast<const char *>(&kernelData->data.front());
 
     MetalComputeKernelWrapper *pKernel = NULL;
-    AMF_RESULT res = m_compute->GetKernel(source, kernelData->kernelName, &pKernel);
+    AMF_RESULT res = m_compute->GetKernel(source, kernelData->kernelName.c_str(), &pKernel);
     AMF_RETURN_IF_FALSE(res == AMF_OK, AMF_INVALID_ARG, L"GetKernel");
 
     AMFComputeKernelMetal * computeKernel = new AMFComputeKernelMetal(kernelID, pKernel);
