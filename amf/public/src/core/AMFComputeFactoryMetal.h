@@ -7,6 +7,8 @@
 #include "AMFDeviceMetalImpl.h"
 #include "metal/MetalDeviceEnumeratorWrapper.h"
 
+#include <memory>
+
 class AMFComputeFactoryMetal : public AMFInterfaceImpl<AMFComputeFactory>
 {
 public:
@@ -19,5 +21,5 @@ public:
 private:
     amf_vector<AMFDevicePtr> m_devices;
     AMFContextImpl* m_pContext;
-    MetalDeviceEnumeratorWrapper * m_wrapper;
+    std::unique_ptr<MetalDeviceEnumeratorWrapper> m_wrapper;
 };

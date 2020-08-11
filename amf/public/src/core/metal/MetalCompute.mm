@@ -16,7 +16,8 @@ AMF_RESULT MetalCompute::GetKernel(NSString * source, NSString * name, MetalComp
     m_library = [m_device newLibraryWithSource: source options:nil error:&error];
     if (m_library == nil)
     {
-        NSLog(@"Failed to createLibrary from source.");
+        NSLog(@"Failed to createLibrary from source: %@ %@", error, [error userInfo]);
+
         return AMF_FAIL;
     }
     id<MTLFunction> processFunction = [m_library newFunctionWithName:name];

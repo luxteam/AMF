@@ -3,10 +3,17 @@
 #include "AMFComputeKernelMetal.h"
 #include "ProgramsImpl.h"
 
-AMFComputeDeviceMetalImpl::AMFComputeDeviceMetalImpl(AMFContextImpl *pContext, AMFDeviceImpl *device, void *native)
+AMFComputeDeviceMetalImpl::AMFComputeDeviceMetalImpl(
+    AMFContextImpl *    pContext,
+    AMFDeviceImpl *     device,
+    void *              native,
+    const std::string & name
+    )
     :  m_pContext(pContext), m_deviceImpl(device)
 {
     m_device = new MetalDeviceWrapper(native);
+
+    SetProperty(AMF_DEVICE_NAME, AMFVariant(name.c_str()));
 }
 
 AMFComputeDeviceMetalImpl::~AMFComputeDeviceMetalImpl()
@@ -31,19 +38,24 @@ void *AMFComputeDeviceMetalImpl::GetNativeContext()
 
 AMF_RESULT AMFComputeDeviceMetalImpl::CreateCompute(void *reserved, AMFCompute **ppCompute)
 {
-    AMFComputeMetalImpl* computeOCL = new AMFComputeMetalImpl(m_pContext, m_device->GetNativeDevice());
+    AMFVariant name;
+    AMF_RETURN_IF_FAILED(GetProperty(AMF_DEVICE_NAME, &name));
+
+    AMFComputeMetalImpl* computeOCL = new AMFComputeMetalImpl(
+        m_pContext,
+        m_device->GetNativeDevice(),
+        name.ToString().c_str()
+        );
     *ppCompute = computeOCL;
     (*ppCompute)->Acquire();
+
     return AMF_OK;
 }
 
 AMF_RESULT AMFComputeDeviceMetalImpl::CreateComputeEx(void *pCommandQueue, AMFCompute **ppCompute)
 {
     //TODO: native commandqueue support
-    AMFComputeMetalImpl* computeOCL = new AMFComputeMetalImpl(m_pContext, m_device->GetNativeDevice());
-    *ppCompute = computeOCL;
-    (*ppCompute)->Acquire();
-    return AMF_OK;
+    return CreateCompute(nullptr, ppCompute);
 }
 
 AMFDeviceImpl *AMFComputeDeviceMetalImpl::GetDevice() const
@@ -56,10 +68,19 @@ MetalDeviceWrapper *AMFComputeDeviceMetalImpl::GetDeviceWrapper() const
     return m_device;
 }
 
-AMFDeviceMetalImpl::AMFDeviceMetalImpl(AMFContextImpl *pContext, void *native)
+AMFDeviceMetalImpl::AMFDeviceMetalImpl(
+    AMFContextImpl *                pContext,
+    void *                          native,
+    const std::string &             name
+    )
     : AMFDeviceImpl(AMF_MEMORY_METAL, 0, pContext)
 {
-    AMFComputeDeviceMetalImpl * compDeviceImpl = new AMFComputeDeviceMetalImpl(m_pContext, this, native);
+    AMFComputeDeviceMetalImpl * compDeviceImpl = new AMFComputeDeviceMetalImpl(
+        m_pContext,
+        this,
+        native,
+        name
+        );
     m_device = compDeviceImpl->GetDeviceWrapper();
     m_computeDevice = compDeviceImpl;
 }
@@ -139,17 +160,22 @@ MetalDeviceWrapper *AMFDeviceMetalImpl::GetDeviceWrapper() const
     return m_device;
 }
 
-AMFComputeMetalImpl::AMFComputeMetalImpl(AMFContextImpl *pContext, void *native)
+AMFComputeMetalImpl::AMFComputeMetalImpl(
+    AMFContextImpl *    pContext,
+    void *              native,
+    const std::string & name
+    )
 {
-    m_device = new AMFDeviceMetalImpl(pContext, native);
-    AMF_RESULT res = m_device->GetDeviceWrapper()->CreateCompute(&m_compute);
-    assert(res == AMF_OK);
+    m_device.reset(new AMFDeviceMetalImpl(pContext, native, name));
+
+    MetalComputeWrapper *metalComputeWrapper(nullptr);
+    AMF_RESULT res = m_device->GetDeviceWrapper()->CreateCompute(&metalComputeWrapper);
+    assert(res == AMF_OK && metalComputeWrapper);
+    m_compute.reset(metalComputeWrapper);
 }
 
 AMFComputeMetalImpl::~AMFComputeMetalImpl()
 {
-    delete m_device;
-    delete m_compute;
 }
 
 AMF_MEMORY_TYPE AMFComputeMetalImpl::GetMemoryType()
@@ -174,12 +200,13 @@ void *AMFComputeMetalImpl::GetNativeCommandQueue()
 
 AMF_RESULT AMFComputeMetalImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel **kernel)
 {
-    AMFKernelStorage::KernelData *kernelData;
+    AMFKernelStorage::KernelData *kernelData(nullptr);
     AMFKernelStorage::Instance()->GetKernelData(&kernelData, kernelID);
-    const char * source = (const char *)kernelData->data;
+
+    const char * source = reinterpret_cast<const char *>(&kernelData->data.front());
 
     MetalComputeKernelWrapper *pKernel = NULL;
-    AMF_RESULT res = m_compute->GetKernel(source, kernelData->kernelName, &pKernel);
+    AMF_RESULT res = m_compute->GetKernel(source, kernelData->kernelName.c_str(), &pKernel);
     AMF_RETURN_IF_FALSE(res == AMF_OK, AMF_INVALID_ARG, L"GetKernel");
 
     AMFComputeKernelMetal * computeKernel = new AMFComputeKernelMetal(kernelID, pKernel);
