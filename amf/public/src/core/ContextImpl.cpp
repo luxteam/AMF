@@ -4,6 +4,7 @@
 
 #if defined(__APPLE__) && defined(METAL_SUPPORT)
     #include "AMFDeviceMetalImpl.h"
+    #include "AMFComputeFactoryMetal.h"
 #endif
 #include "ComputeOCL.h"
 #include "BufferImpl.h"
@@ -169,12 +170,41 @@ AMF_RESULT AMFContextImpl::UnlockOpenCL()
 {
     return AMF_NOT_IMPLEMENTED;
 }
-
 AMF_RESULT AMF_STD_CALL AMFContextImpl::InitMetal()
 {
 #if defined(__APPLE__) && defined(METAL_SUPPORT)
     m_pDeviceMetal = new AMFDeviceMetalImpl(this, nullptr);
     return AMF_OK;
+#endif
+    return AMF_NOT_SUPPORTED;
+}
+
+AMF_RESULT AMFContextImpl::GetMetalComputeFactory(AMFComputeFactory **ppFactory)
+{
+#if defined(__APPLE__) && defined(METAL_SUPPORT)
+    AMFComputeFactoryMetal *computeFactoryMetal = new AMFComputeFactoryMetal(this);
+    computeFactoryMetal->Init();
+    *ppFactory = computeFactoryMetal;
+    (*ppFactory)->Acquire();
+    return AMF_OK;
+#endif
+    return AMF_NOT_SUPPORTED;
+}
+
+AMF_RESULT AMFContextImpl::InitMetalEx(AMFComputeDevice *pDevice)
+{
+#if defined(__APPLE__) && defined(METAL_SUPPORT)
+    AMFComputeDeviceMetalImpl* deviceImpl = dynamic_cast<AMFComputeDeviceMetalImpl*>(pDevice);
+
+    AMFDeviceImpl* device = deviceImpl->GetDevice();
+    if (device)
+    {
+        device->Acquire();
+        m_pDeviceMetal = device;
+        return AMF_OK;
+    }
+
+    return AMF_INVALID_ARG;
 #endif
     return AMF_NOT_SUPPORTED;
 }

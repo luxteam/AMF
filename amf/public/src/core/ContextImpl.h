@@ -36,6 +36,8 @@ public:
     virtual AMF_RESULT AMF_STD_CALL UnlockOpenCL() override;
 
     virtual AMF_RESULT AMF_STD_CALL InitMetal() override;
+    virtual AMF_RESULT AMF_STD_CALL GetMetalComputeFactory(AMFComputeFactory **ppFactory) override;
+    virtual AMF_RESULT AMF_STD_CALL InitMetalEx(AMFComputeDevice *pDevice) override;
 
     virtual AMF_RESULT AMF_STD_CALL InitOpenGL(amf_handle hOpenGLContext, amf_handle hWindow, amf_handle hDC) override;
     virtual amf_handle AMF_STD_CALL GetOpenGLContext() override;

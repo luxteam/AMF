@@ -13,17 +13,21 @@ set(HEADER_FILES
     #MetalDevice.h
     #MetalCompute.h
     #MetalComputeKernel.h
+    #MetalDeviceEnumerator.h
     MetalDeviceWrapper.h
     MetalComputeWrapper.h
     MetalComputeKernelWrapper.h
+    MetalDeviceEnumeratorWrapper.h
 )
 set(SOURCE_FILES
     MetalDevice.mm
     MetalCompute.mm
     MetalComputeKernel.mm
+    MetalDeviceEnumerator.mm
     MetalDeviceWrapper.mm
     MetalComputeWrapper.mm
     MetalComputeKernelWrapper.mm
+    MetalDeviceEnumeratorWrapper.mm
 )
 
 add_library(

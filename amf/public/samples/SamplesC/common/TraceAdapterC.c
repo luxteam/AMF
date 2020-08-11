@@ -1,4 +1,4 @@
-// 
+//
 // Notice Regarding Standards.  AMD does not provide a license or sublicense to
 // any Intellectual Property Rights relating to any standards, including but not
 // limited to any audio and/or video codec technologies such as MPEG-2, MPEG-4;
@@ -6,9 +6,9 @@
 // (collectively, the "Media Technologies"). For clarity, you will pay any
 // royalties due for such third party technologies, which may include the Media
 // Technologies that are owed as a result of AMD providing the Software to you.
-// 
-// MIT license 
-// 
+//
+// MIT license
+//
 // Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -37,6 +37,7 @@
 #pragma warning(disable: 4251)
 #pragma warning(disable: 4996)
 
+/*
 #ifdef AMF_CORE_STATIC
 extern "C"
 {
@@ -44,6 +45,7 @@ extern "C"
     extern AMF_CORE_LINK AMF_RESULT AMF_CDECL_CALL AMFInit(amf_uint64 version, AMFFactory **ppFactory);
 }
 #endif
+*/
 
 
 //------------------------------------------------------------------------------------------------
@@ -231,15 +233,15 @@ amf_bool AMF_CDECL_CALL  AMFAssertsEnabled()
 {
     return GetDebug()->pVtbl->AssertsEnabled(GetDebug());
 }
-wchar_t * AMF_CDECL_CALL  AMFFormatResult(AMF_RESULT result) 
-{ 
+wchar_t * AMF_CDECL_CALL  AMFFormatResult(AMF_RESULT result)
+{
     static const wchar_t *pStr =  L"AMF_ERROR %d : %s: ";
     size_t size = wcslen(pStr);
     const wchar_t *text = GetTrace()->pVtbl->GetResultText(GetTrace(), result);
     size_t sizeText = wcslen(text);
     wchar_t *buf = (wchar_t *)malloc(sizeof(wchar_t) * (size + sizeText + 20 + 1));
     _snwprintf(buf, size + sizeText + 20 + 1, pStr, result, text);
-    return buf; 
+    return buf;
 }
 
 const wchar_t* AMF_STD_CALL AMFGetResultText(AMF_RESULT res)

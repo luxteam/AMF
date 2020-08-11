@@ -7,7 +7,7 @@ class MetalCompute
 public:
     MetalCompute(id<MTLDevice> device, id<MTLCommandQueue> commandQueue);
 
-    AMF_RESULT GetKernel(NSString * name, MetalComputeKernel ** kernel);
+    AMF_RESULT GetKernel(NSString * source, NSString * name, MetalComputeKernel ** kernel);
 
     AMF_RESULT FlushQueue();
     AMF_RESULT FinishQueue();
