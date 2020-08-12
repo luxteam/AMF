@@ -1,0 +1,2 @@
+# Disable EOL conversion
+*.sh text=lf
