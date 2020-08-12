@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_SKIP_RULE_DEPENDENCY TRUE)
 
 enable_language(CXX)
+enable_testing()
+add_subdirectory(googletest)
 
 if(AMF_CORE_STATIC)
   message("static AMF build will be used")
@@ -63,30 +65,17 @@ else()
   endif()
 endif()
 
-project(autotests)
+project(open_amf_test1)
 
 # Local header files here ONLY
 SET(HEADERS
-    OpenAMF_Autotests/autotests.h
+
    )
 
 # Local source files here
 SET(SOURCES
-    OpenAMF_Autotests/api.cpp
-    OpenAMF_Autotests/autotests.cpp
-    OpenAMF_Autotests/geometry.cpp
-    OpenAMF_Autotests/implementation.cpp
-    OpenAMF_Autotests/main.cpp
-    OpenAMF_Autotests/multithread.cpp
-    OpenAMF_Autotests/references.cpp
+    main.cpp
     )
-
-################################
-# GTest
-################################
-add_subdirectory (googletest)
-enable_testing()
-include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
 include_directories(../../include)
 add_subdirectory(../cmake ${AMF_NAME})
@@ -97,8 +86,7 @@ add_executable(
     ${HEADER_FILES}
 )
 
-target_link_libraries(${PROJECT_NAME} gtest gtest_main)
-add_test( ${PROJECT_NAME} ${PROJECT_NAME} )
+add_subdirectory(OpenAMF_Autotests)
 
 if(AMF_CORE_STATIC)
   target_link_libraries(${PROJECT_NAME} ${AMF_NAME} ${OpenCL_LIBRARIES})
