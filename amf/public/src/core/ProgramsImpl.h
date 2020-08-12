@@ -5,7 +5,6 @@
 #include <vector>
 #include <map>
 #include <fstream>
-#include <alloca.h>
 
 using namespace amf;
 
@@ -119,11 +118,11 @@ public:
 		std::string nameInChars(size, 0);
 		wcstombs(&nameInChars.front(), name.c_str(), size);
 
-		size = wcstombs(nullptr, m_cacheFolder, 0) + 1;
+		size = wcstombs(nullptr, m_cacheFolder, 0);
 		std::string folderInChars(size, 0);
 		wcstombs(&folderInChars.front(), m_cacheFolder, size);
 
-		size = wcstombs(nullptr, PATH_SEPARATOR_WSTR, 0) + 1;
+		size = wcstombs(nullptr, PATH_SEPARATOR_WSTR, 0);
 		std::string delimiter(size, 0);
 		wcstombs(&delimiter.front(), PATH_SEPARATOR_WSTR, size);
 
