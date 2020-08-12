@@ -78,9 +78,9 @@ if(OpenCL_INCLUDE_DIR AND (OpenCL_LIBRARIES OR AMF_CORE_STATIC))
   message("${AMF_NAME}> OpenCL paths was set externally")
 
   get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
-  message("${AMF_NAME}> OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL}/include)
+  message("${AMF_NAME}> OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL})
 
-  include_directories(${Path_To_OpenCL}/include)
+  include_directories(${Path_To_OpenCL})
 
   if(NOT AMF_CORE_STATIC AND OpenCL_LIBRARIES)
     message("${AMF_NAME}> OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
@@ -330,7 +330,7 @@ if(NOT WIN32)
     )
   endif()
 
-  if(NOT APPLE AND NOT XCODE) 
+  if(NOT APPLE AND NOT XCODE)
     target_compile_options(${AMF_NAME} PUBLIC -Wpsabi)
   endif()
 endif()

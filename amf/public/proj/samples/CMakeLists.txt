@@ -32,14 +32,14 @@ endif()
 if(OpenCL_INCLUDE_DIR)
   get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
   message(WARNING "OpenCL location was set manually(sample)")
-  include_directories(${Path_To_OpenCL}/include)
+  include_directories(${Path_To_OpenCL})
   set_property(GLOBAL PROPERTY OpenCL_LIBRARIES ${Path_To_OpenCL}/lib/x86_64/opencl.lib)
   get_property(OpenCL_LIBRARIES GLOBAL PROPERTY OpenCL_LIBRARIES)
-  message("OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL}/include)
+  message("OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL})
   message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
   ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
 
-  
+
 else()
   find_package(OpenCL REQUIRED)
 
