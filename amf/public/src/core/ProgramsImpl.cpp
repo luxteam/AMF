@@ -24,7 +24,7 @@ AMF_RESULT AMFProgramsImpl::RegisterKernelSource(AMF_KERNEL_ID *pKernelID, const
 		kernelid_name,
 		kernelName,
 		std::vector<amf_uint8>(data, data + dataSize),
-		options,
+		options ? options : std::string(),
 		AMFKernelStorage::KernelData::Source
 	    };
 
