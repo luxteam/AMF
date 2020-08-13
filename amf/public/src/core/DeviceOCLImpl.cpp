@@ -504,12 +504,18 @@ AMF_RESULT AMFComputeOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel
     if (kernelData->type == AMFKernelStorage::KernelData::Source)
     {
         AMFKernelStorage::KernelData* cacheKernelData(nullptr);
-        res = AMFKernelStorage::Instance()->GetCacheKernelData(&cacheKernelData, kernelData->kernelid_name.c_str(), kernelData->kernelName.c_str(), deviceName.ToString().c_str(), ".cl.bin");
+        res = AMFKernelStorage::Instance()->GetCacheKernelData(
+            &cacheKernelData,
+            kernelData->kernelid_name.c_str(),
+            kernelData->kernelName.c_str(),
+            deviceName.ToString().c_str(),
+            ".cl.bin"
+            );
 
         if (res == AMF_OK)
             kernelData = cacheKernelData;//now kernelData->type == AMFKernelStorage::KernelData::Binary
     }
-    if (kernelData->type == AMFKernelStorage::KernelData::Binary)
+    else if (kernelData->type == AMFKernelStorage::KernelData::Binary)
     {
         program = CreateProgramFromBinary(
             (cl_context)GetNativeContext(),

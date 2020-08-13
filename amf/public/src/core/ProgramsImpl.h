@@ -73,7 +73,7 @@ public:
 
 		if (kernelIndex < 0)
 		{
-			if (m_cacheFolder == nullptr)
+			if (!m_cacheFolder.length())
 				return AMF_FAIL;
 
 			auto resultName = ResultFileName(kernelid_name, deviceName, extension);
@@ -118,9 +118,9 @@ public:
 		std::string nameInChars(size, 0);
 		wcstombs(&nameInChars.front(), name.c_str(), size);
 
-		size = wcstombs(nullptr, m_cacheFolder, 0);
+		size = wcstombs(nullptr, m_cacheFolder.c_str(), 0);
 		std::string folderInChars(size, 0);
-		wcstombs(&folderInChars.front(), m_cacheFolder, size);
+		wcstombs(&folderInChars.front(), m_cacheFolder.c_str(), size);
 
 		size = wcstombs(nullptr, PATH_SEPARATOR_WSTR, 0);
 		std::string delimiter(size, 0);
@@ -187,18 +187,14 @@ public:
 
 	AMF_RESULT SetCacheFolder(const wchar_t *path)
 	{
-		if (m_cacheFolder)
-			free(m_cacheFolder);
+		m_cacheFolder = path;
 
-		size_t size = wcslen(path) + 1;
-		m_cacheFolder = (wchar_t *) malloc(size * sizeof(wchar_t));
-		wcsncpy(m_cacheFolder, path, size);
 		return AMF_OK;
 	}
 
 	wchar_t * GetCacheFolder()
 	{
-		return m_cacheFolder;
+		return &m_cacheFolder.front();
 	}
 
 	amf_int64 FindSourceIndex(const wchar_t *kernelid_name, const char *options, KernelData::KernelType type = KernelData::Source)
@@ -221,15 +217,13 @@ public:
 	}
 
 private:
-	AMFKernelStorage() { m_cacheFolder = NULL; }
-	~AMFKernelStorage()
+	AMFKernelStorage() {}
+	virtual ~AMFKernelStorage()
 	{
-		if (m_cacheFolder)
-			free(m_cacheFolder);
 		//TODO: cleanup kernels
 	}
 
-	wchar_t * m_cacheFolder;
+	std::wstring m_cacheFolder;
     std::vector<KernelData> m_kernels;
 	std::vector<KernelData> m_cachedKernels;
 };
