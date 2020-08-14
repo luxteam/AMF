@@ -5,8 +5,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_SKIP_RULE_DEPENDENCY TRUE)
 
 enable_language(CXX)
-enable_testing()
-add_subdirectory(googletest)
+
+if(NOT WIN32)
+  #message(SEND_ERROR "ERROR: Test are prepared for Windows ONLY!")
+endif()
 
 if(AMF_CORE_STATIC)
   message("static AMF build will be used")
@@ -31,17 +33,15 @@ if(NOT AMF_CORE_STATIC AND NOT AMF_LOADER_NAME)
   message(WARNING "OpenAMF will be built with the default loader helper name: " ${AMF_LOADER_NAME})
 endif()
 
-if(OpenCL_INCLUDE_DIR)
+if(OpenCL_INCLUDE_DIR AND OpenCL_LIBRARIES)
   get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
   message(WARNING "OpenCL location was set manually(sample)")
-  include_directories(${Path_To_OpenCL}/include)
-  set_property(GLOBAL PROPERTY OpenCL_LIBRARIES ${Path_To_OpenCL}/lib/x86_64/opencl.lib)
-  get_property(OpenCL_LIBRARIES GLOBAL PROPERTY OpenCL_LIBRARIES)
-  message("OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL}/include)
+  include_directories(${Path_To_OpenCL})
+  message("OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL})
   message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
   ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
 
-  
+
 else()
   find_package(OpenCL REQUIRED)
 
@@ -85,8 +85,6 @@ add_executable(
     ${SOURCES}
     ${HEADER_FILES}
 )
-
-add_subdirectory(OpenAMF_Autotests)
 
 if(AMF_CORE_STATIC)
   target_link_libraries(${PROJECT_NAME} ${AMF_NAME} ${OpenCL_LIBRARIES})

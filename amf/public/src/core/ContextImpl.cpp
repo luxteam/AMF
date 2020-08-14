@@ -170,12 +170,42 @@ AMF_RESULT AMFContextImpl::UnlockOpenCL()
 {
     return AMF_NOT_IMPLEMENTED;
 }
+
 AMF_RESULT AMF_STD_CALL AMFContextImpl::InitMetal()
 {
 #if defined(__APPLE__) && defined(METAL_SUPPORT)
-    m_pDeviceMetal = new AMFDeviceMetalImpl(this, nullptr);
-    return AMF_OK;
+
+    //m_pDeviceMetal = new AMFDeviceMetalImpl(this, nullptr, this->);
+
+    AMF_RESULT res(AMF_OK);
+
+    amf::AMFComputeFactoryPtr oclComputeFactory;
+    res = GetMetalComputeFactory(&oclComputeFactory);
+
+    if(res == AMF_OK && oclComputeFactory->GetDeviceCount() > 0)
+    {
+        AMFComputeDevice* pComputeDevice = nullptr;
+        res = oclComputeFactory->GetDeviceAt(0, &pComputeDevice);
+
+        if(res == AMF_OK)
+        {
+            AMFComputeDeviceMetalImpl* deviceImpl = dynamic_cast<AMFComputeDeviceMetalImpl*>(pComputeDevice);
+            AMFDeviceImpl* device = deviceImpl->GetDevice();
+
+            if(device)
+            {
+                device->Acquire();
+                m_pDeviceMetal = device;
+
+                return AMF_OK;
+            }
+        }
+    }
+
+    return AMF_FAIL;
+
 #endif
+
     return AMF_NOT_SUPPORTED;
 }
 

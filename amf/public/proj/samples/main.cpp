@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 
     amf::AMFContextPtr context1;
     factory->CreateContext(&context1);
-    
+
 	context1->SetProperty(AMF_CONTEXT_DEVICE_TYPE, AMF_CONTEXT_DEVICE_TYPE_GPU);
     amf::AMFComputeFactoryPtr oclComputeFactory;
     context1->GetOpenCLComputeFactory(&oclComputeFactory);
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 	g_AMFFactory.GetTrace()->TraceW(L"path", 387, AMF_TRACE_DEBUG, L"scope2", 4, L"mesage3(%d)", 4);
 
 	g_AMFFactory.GetTrace()->Trace(L"", 11, AMF_TRACE_WARNING, L"scope", L"message4", nullptr);
-	g_AMFFactory.GetFactory()->SetCacheFolder(L"e:\\tmp\\amf_cache");
+	g_AMFFactory.GetFactory()->SetCacheFolder(L"amf_cache");
 
 
     for(int i = 0; i < deviceCount; ++i)
@@ -84,9 +84,9 @@ int main(int argc, char *argv[])
 		factory->CreateContext(&context);
 		//context->InitOpenCLEx(pComputeDevice.GetPtr());
 		context->InitOpenCL(pCompute->GetNativeCommandQueue());
-		
-		res = context->AllocBuffer(amf::AMF_MEMORY_HOST, 1024 * sizeof(float), &input); 
-		res = context->AllocBuffer(amf::AMF_MEMORY_OPENCL, 1024 * sizeof(float), &output); 
+
+		res = context->AllocBuffer(amf::AMF_MEMORY_HOST, 1024 * sizeof(float), &input);
+		res = context->AllocBuffer(amf::AMF_MEMORY_OPENCL, 1024 * sizeof(float), &output);
 
         float  *inputData = static_cast<float*>(input->GetNative());
         for (int k = 0; k < 1024; k++)
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 		float  *outputData2 = NULL;
 		res = output->MapToHost((void**)&outputData2, 0, 1024 * sizeof(float), true);
 
-       
+
         for (int k = 0; k < 1024; k++ )
         {
             printf("result[%d] = %f ", k, outputData2[k]);
