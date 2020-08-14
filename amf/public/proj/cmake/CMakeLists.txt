@@ -78,9 +78,9 @@ if(OpenCL_INCLUDE_DIR AND (OpenCL_LIBRARIES OR AMF_CORE_STATIC))
   message("${AMF_NAME}> OpenCL paths was set externally")
 
   get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
-  message("${AMF_NAME}> OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL}/include)
+  message("${AMF_NAME}> OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL})
 
-  include_directories(${Path_To_OpenCL}/include)
+  include_directories(${Path_To_OpenCL})
 
   if(NOT AMF_CORE_STATIC AND OpenCL_LIBRARIES)
     message("${AMF_NAME}> OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
@@ -119,7 +119,6 @@ set(
   ../../common/DataStreamFile.cpp
   ../../common/DataStreamMemory.cpp
   ../../common/IOCapsImpl.cpp
-  ../../common/Linux/ThreadLinux.cpp
   ../../common/PropertyStorageExImpl.cpp
   ../../common/Thread.cpp
   ../../common/TraceAdapter.cpp
@@ -313,24 +312,26 @@ if (APPLE AND METAL_SUPPORT)
 endif()
 
 if(NOT WIN32)
-  target_compile_options(${AMF_NAME} PUBLIC -mavx2)
-  target_compile_options(${AMF_NAME} PUBLIC -mfma)
-  target_compile_options(${AMF_NAME} PUBLIC -msse4.2)
+  if(AMF_CORE_SHARED)
+    target_compile_options(${AMF_NAME} PUBLIC -mavx2)
+    target_compile_options(${AMF_NAME} PUBLIC -mfma)
+    target_compile_options(${AMF_NAME} PUBLIC -msse4.2)
 
-  if(CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
-    target_compile_options(${AMF_NAME} PUBLIC -g)
-  endif()
+    if(CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
+      target_compile_options(${AMF_NAME} PUBLIC -g)
+    endif()
 
-  if (APPLE OR XCODE AND METAL_SUPPORT)
-    message("Link ${AMF_NAME} with Metal")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} \
-      -framework AppKit \
-      -framework Metal \
-      -framework MetalKit"
-    )
-  endif()
+    if (APPLE OR XCODE AND METAL_SUPPORT)
+      message("Link ${AMF_NAME} with Metal")
+      set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} \
+        -framework AppKit \
+        -framework Metal \
+        -framework MetalKit"
+      )
+    endif()
 
-  if(NOT APPLE AND NOT XCODE) 
-    target_compile_options(${AMF_NAME} PUBLIC -Wpsabi)
+    if(NOT APPLE AND NOT XCODE)
+      target_compile_options(${AMF_NAME} PUBLIC -Wpsabi)
+    endif()
   endif()
 endif()
