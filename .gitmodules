@@ -1,9 +1,6 @@
 [submodule "Thirdparty/OpenCL-Headers"]
 	path = Thirdparty/OpenCL-Headers
 	url = https://github.com/KhronosGroup/OpenCL-Headers.git
-[submodule "googletest"]
-	path = amf/public/proj/autotests/googletest
-	url = https://github.com/google/googletest.git
 [submodule "OpenAMF_Autotests"]
 	path = amf/public/proj/autotests/OpenAMF_Autotests
 	url = https://github.com/luxteam/OpenAMF_Autotests.git
