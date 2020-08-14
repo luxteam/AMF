@@ -192,9 +192,9 @@ public:
 		return AMF_OK;
 	}
 
-	wchar_t * GetCacheFolder()
+	const std::wstring & GetCacheFolder() const
 	{
-		return &m_cacheFolder.front();
+		return m_cacheFolder;
 	}
 
 	amf_int64 FindSourceIndex(const wchar_t *kernelid_name, const char *options, KernelData::KernelType type = KernelData::Source)
