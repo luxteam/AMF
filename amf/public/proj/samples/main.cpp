@@ -61,8 +61,15 @@ int main(int argc, char *argv[])
 	g_AMFFactory.GetTrace()->TraceW(L"path", 387, AMF_TRACE_DEBUG, L"scope2", 4, L"mesage3(%d)", 4);
 
 	g_AMFFactory.GetTrace()->Trace(L"", 11, AMF_TRACE_WARNING, L"scope", L"message4", nullptr);
+
+#ifdef WIN32
 	g_AMFFactory.GetFactory()->SetCacheFolder(L"amf_cache");
 
+#else
+    //not a full path will not work on macosx
+    //please see https://stackoverflow.com/questions/23974831/problems-with-fopen-function-on-mac
+	g_AMFFactory.GetFactory()->SetCacheFolder(L"/Users/user/test");
+#endif
 
     for(int i = 0; i < deviceCount; ++i)
     {

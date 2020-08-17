@@ -128,6 +128,8 @@ public:
 
 		return folderInChars
 			+ delimiter
+            + "_" + deviceName + "_"
+            //+ delimiter
 			+ nameInChars
 			+ extension;
 	}
@@ -167,18 +169,21 @@ public:
 			AMFKernelStorage::KernelData kernelData = {
 				name,
 				kernelName,
-				std::vector<amf_uint8>(dataSize),
+				std::vector<amf_uint8>(),
 				"",
 				KernelData::Binary,
 				deviceName
 				};
+			kernelData.data.reserve(dataSize);
 			std::copy(data, data + dataSize, std::back_inserter(kernelData.data));
 
 			m_cachedKernels.push_back(kernelData);
 		}
 		else
 		{
-			m_cachedKernels[kernelIndex].data.resize(dataSize);
+			m_cachedKernels[kernelIndex].data.resize(0);
+			m_cachedKernels[kernelIndex].data.reserve(dataSize);
+
 			std::copy(data, data + dataSize, std::back_inserter(m_cachedKernels[kernelIndex].data));
 		}
 

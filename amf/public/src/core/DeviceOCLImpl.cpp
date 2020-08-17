@@ -27,15 +27,15 @@ std::string GetCLDeviceNameByID(cl_device_id device)
 
     name.resize(size);
 	AMF_ASSERT(CL_SUCCESS == clGetDeviceInfo(device, CL_DEVICE_NAME, size, &name.front(), 0));
-    
-    //eliminate issue with inlinvalid size on Mac
+
+    //eliminate issue with invalid size on Mac (size returned with additional null at the end)
     auto nameStrlen(strnlen(name.c_str(), name.size()));
-    
+
     if(nameStrlen && nameStrlen < size)
     {
         name.resize(nameStrlen);
     }
-    
+
     return name;
 }
 
