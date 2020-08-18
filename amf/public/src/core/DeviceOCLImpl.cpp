@@ -110,27 +110,27 @@ bool SaveProgramBinary(cl_program program, cl_device_id device, const wchar_t* n
 
 	auto deviceName = GetCLDeviceNameByID(device);
 
-	AMF_RESULT res;
 	for (cl_uint i = 0; i < numDevices; i++)
 	{
 		if (devices[i] == device)
 		{
-			AMF_RETURN_IF_FAILED(
-                AMFKernelStorage::Instance()->SaveProgramBinary(
+			AMF_RETURN_IF_FALSE(
+                AMF_OK != AMFKernelStorage::Instance()->SaveProgramBinary(
                     name,
                     kernelName,
                     deviceName,
                     ".cl.bin",
                     programBinaries[i],
                     programBinarySizes[i]
-                    )
+                    ),
+                false
                 );
 
 			break;
 		}
 	}
 
-    return res == AMF_OK;
+    return true;
 }
 
 cl_program CreateProgramFromBinary(
@@ -523,7 +523,8 @@ AMF_RESULT AMFComputeOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel
         if (res == AMF_OK)
             kernelData = cacheKernelData;//now kernelData->type == AMFKernelStorage::KernelData::Binary
     }
-    else if (kernelData->type == AMFKernelStorage::KernelData::Binary)
+
+    if (kernelData->type == AMFKernelStorage::KernelData::Binary)
     {
         program = CreateProgramFromBinary(
             (cl_context)GetNativeContext(),
@@ -562,39 +563,49 @@ AMF_RESULT AMFComputeOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel
             }
         }
     }
-
-    auto source = reinterpret_cast<const char *>(&kernelData->data.front());
-    program = clCreateProgramWithSource((cl_context)GetNativeContext(), 1, &source, nullptr, &err);
-    if (!program || err != CL_SUCCESS)
+    else
     {
-        printf("Error: Failed to create compute program!\n");
-        return AMF_FAIL;
+        auto source = reinterpret_cast<const char *>(&kernelData->data.front());
+        program = clCreateProgramWithSource((cl_context)GetNativeContext(), 1, &source, nullptr, &err);
+        if (!program || err != CL_SUCCESS)
+        {
+            printf("Error: Failed to create compute program!\n");
+            return AMF_FAIL;
+        }
+
+        err = clBuildProgram(program, 0, NULL, kernelData->options.c_str(), NULL, NULL);
+        if (err != CL_SUCCESS)
+        {
+            size_t len;
+            char buffer[2048];
+            printf("Error: Failed to build program executable!\n");
+            clGetProgramBuildInfo(program, (cl_device_id)GetNativeDeviceID(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
+            printf("%s\n", buffer);
+            return AMF_FAIL;
+        }
+
+        if (AMFKernelStorage::Instance()->GetCacheFolder().length())
+            SaveProgramBinary(program, (cl_device_id)GetNativeDeviceID(), kernelData->kernelid_name.c_str(), kernelData->kernelName.c_str());
+
+        kernel_CL = clCreateKernel(program, kernelData->kernelName.c_str(), &err);
+        if (!kernel_CL || err != CL_SUCCESS)
+        {
+            printf("Error: Failed to create compute kernel!\n");
+            return AMF_FAIL;
+        }
     }
 
-    err = clBuildProgram(program, 0, NULL, kernelData->options.c_str(), NULL, NULL);
-    if (err != CL_SUCCESS)
-    {
-        size_t len;
-        char buffer[2048];
-        printf("Error: Failed to build program executable!\n");
-        clGetProgramBuildInfo(program, (cl_device_id)GetNativeDeviceID(), CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
-        printf("%s\n", buffer);
-        return AMF_FAIL;
-    }
-    if (AMFKernelStorage::Instance()->GetCacheFolder().length())
-        SaveProgramBinary(program, (cl_device_id)GetNativeDeviceID(), kernelData->kernelid_name.c_str(), kernelData->kernelName.c_str());
-
-    kernel_CL = clCreateKernel(program, kernelData->kernelName.c_str(), &err);
-    if (!kernel_CL || err != CL_SUCCESS)
-    {
-        printf("Error: Failed to create compute kernel!\n");
-        return AMF_FAIL;
-    }
-
-    AMFComputeKernelOCL* computeKernel = new AMFComputeKernelOCL(program, kernel_CL, (cl_command_queue)GetNativeCommandQueue(), kernelID,
-		(cl_device_id)GetNativeDeviceID(), (cl_context)GetNativeContext());
+    AMFComputeKernelOCL* computeKernel = new AMFComputeKernelOCL(
+        program,
+        kernel_CL,
+        (cl_command_queue)GetNativeCommandQueue(),
+        kernelID,
+		(cl_device_id)GetNativeDeviceID(),
+        (cl_context)GetNativeContext()
+        );
     *kernel = computeKernel;
     (*kernel)->Acquire();
+
     return AMF_OK;
 }
 

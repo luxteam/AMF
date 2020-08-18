@@ -64,7 +64,6 @@ int main(int argc, char *argv[])
 
 #ifdef WIN32
 	g_AMFFactory.GetFactory()->SetCacheFolder(L"amf_cache");
-
 #else
     //not a full path will not work on macosx
     //please see https://stackoverflow.com/questions/23974831/problems-with-fopen-function-on-mac
