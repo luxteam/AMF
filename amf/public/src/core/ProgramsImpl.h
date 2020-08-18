@@ -128,6 +128,8 @@ public:
 
 		return folderInChars
 			+ delimiter
+            + "_" + deviceName + "_"
+            //+ delimiter
 			+ nameInChars
 			+ extension;
 	}
@@ -167,18 +169,21 @@ public:
 			AMFKernelStorage::KernelData kernelData = {
 				name,
 				kernelName,
-				std::vector<amf_uint8>(dataSize),
+				std::vector<amf_uint8>(),
 				"",
 				KernelData::Binary,
 				deviceName
 				};
+			kernelData.data.reserve(dataSize);
 			std::copy(data, data + dataSize, std::back_inserter(kernelData.data));
 
 			m_cachedKernels.push_back(kernelData);
 		}
 		else
 		{
-			m_cachedKernels[kernelIndex].data.resize(dataSize);
+			m_cachedKernels[kernelIndex].data.resize(0);
+			m_cachedKernels[kernelIndex].data.reserve(dataSize);
+
 			std::copy(data, data + dataSize, std::back_inserter(m_cachedKernels[kernelIndex].data));
 		}
 
@@ -192,9 +197,9 @@ public:
 		return AMF_OK;
 	}
 
-	wchar_t * GetCacheFolder()
+	const std::wstring & GetCacheFolder() const
 	{
-		return &m_cacheFolder.front();
+		return m_cacheFolder;
 	}
 
 	amf_int64 FindSourceIndex(const wchar_t *kernelid_name, const char *options, KernelData::KernelType type = KernelData::Source)

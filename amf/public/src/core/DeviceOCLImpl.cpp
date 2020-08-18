@@ -28,13 +28,21 @@ std::string GetCLDeviceNameByID(cl_device_id device)
     name.resize(size);
 	AMF_ASSERT(CL_SUCCESS == clGetDeviceInfo(device, CL_DEVICE_NAME, size, &name.front(), 0));
 
+    //eliminate issue with invalid size on Mac (size returned with additional null at the end)
+    auto nameStrlen(strnlen(name.c_str(), name.size()));
+
+    if(nameStrlen && nameStrlen < size)
+    {
+        name.resize(nameStrlen);
+    }
+
     return name;
 }
 
 bool SaveProgramBinary(cl_program program, cl_device_id device, const wchar_t* name, const char* kernelName)
 {
 	cl_uint numDevices = 0;
-	cl_int errNum;
+	cl_int errNum = 0;
 
 	errNum = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES,
 		sizeof(cl_uint),
@@ -557,7 +565,7 @@ AMF_RESULT AMFComputeOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel
 
     auto source = reinterpret_cast<const char *>(&kernelData->data.front());
     program = clCreateProgramWithSource((cl_context)GetNativeContext(), 1, &source, nullptr, &err);
-    if (!program)
+    if (!program || err != CL_SUCCESS)
     {
         printf("Error: Failed to create compute program!\n");
         return AMF_FAIL;
@@ -573,7 +581,7 @@ AMF_RESULT AMFComputeOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel
         printf("%s\n", buffer);
         return AMF_FAIL;
     }
-    if (AMFKernelStorage::Instance()->GetCacheFolder() != nullptr)
+    if (AMFKernelStorage::Instance()->GetCacheFolder().length())
         SaveProgramBinary(program, (cl_device_id)GetNativeDeviceID(), kernelData->kernelid_name.c_str(), kernelData->kernelName.c_str());
 
     kernel_CL = clCreateKernel(program, kernelData->kernelName.c_str(), &err);

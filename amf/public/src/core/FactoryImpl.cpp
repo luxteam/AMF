@@ -42,7 +42,7 @@ AMF_RESULT AMFFactoryImpl::SetCacheFolder(const wchar_t *path)
 
 const wchar_t *AMFFactoryImpl::GetCacheFolder()
 {
-    return AMFKernelStorage::Instance()->GetCacheFolder();
+    return AMFKernelStorage::Instance()->GetCacheFolder().c_str();
 }
 
 AMF_RESULT AMFFactoryImpl::GetDebug(amf::AMFDebug **ppDebug)
