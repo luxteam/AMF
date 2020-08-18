@@ -565,8 +565,10 @@ AMF_RESULT AMFComputeOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel
     }
     else
     {
-        auto source = reinterpret_cast<const char *>(&kernelData->data.front());
-        program = clCreateProgramWithSource((cl_context)GetNativeContext(), 1, &source, nullptr, &err);
+        std::string source(reinterpret_cast<const char *>(&kernelData->data.front()), kernelData->data.size());
+		const char *pointer(source.c_str());
+        program = clCreateProgramWithSource((cl_context)GetNativeContext(), 1, &pointer, nullptr, &err);
+        
         if (!program || err != CL_SUCCESS)
         {
             printf("Error: Failed to create compute program!\n");
