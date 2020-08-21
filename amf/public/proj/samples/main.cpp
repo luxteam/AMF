@@ -22,6 +22,8 @@ int main(int argc, char *argv[])
     factory->GetPrograms(&pPrograms);
 
     amf::AMF_KERNEL_ID kernel = 0;
+    amf::AMF_KERNEL_ID kernel2 = 0;
+    
     const char* kernel_src = "\n" \
                              "__kernel void square( __global float* input, __global float* output, \n" \
                              " const unsigned int count) {            \n" \
@@ -38,6 +40,7 @@ int main(int argc, char *argv[])
 		"}                     \n";
     pPrograms->RegisterKernelSource(&kernel, L"kernelIDName", "square2", strlen(kernel_src), (amf_uint8*)kernel_src, NULL);
     pPrograms->RegisterKernelSource(&kernel, L"kernelIDName", "square2", strlen(kernel_src), (amf_uint8*)kernel_src, NULL);
+    pPrograms->RegisterKernelSource(&kernel2, L"kernelIDName2", "square2", strlen(kernel_src), (amf_uint8*)kernel_src, NULL);
 
     int deviceCount = oclComputeFactory->GetDeviceCount();
 	g_AMFFactory.Init();
@@ -82,6 +85,9 @@ int main(int argc, char *argv[])
 
         amf::AMFComputeKernelPtr pKernel;
         res = pCompute->GetKernel(kernel, &pKernel);
+        
+        amf::AMFComputeKernelPtr pKernel2;
+        res = pCompute->GetKernel(kernel2, &pKernel2);
 
         amf::AMFBuffer *input = NULL;
         amf::AMFBuffer *output = NULL;
