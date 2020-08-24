@@ -1,7 +1,11 @@
 #include "../../include/core/Factory.h"
+#include "../../common/TraceAdapter.h"
 #include "../../common/AMFFactory.h"
 #include "../../include/core/Buffer.h"
-#include "iostream"
+
+#include <iostream>
+
+#define AMF_FACILITY L"amf_metal_test1"
 
 #define CL_TARGET_OPENCL_VERSION 120
 using namespace std;
@@ -9,16 +13,26 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     printf("start");
-	const char* kernel_src = "\n"\
-		"#include <metal_stdlib>\n"\
-		"using namespace metal;\n"\
-		"\n"\
-		"kernel void process_array(device const float* inA,\n"\
-		"                   device float* result,\n"\
-		"                   uint index [[thread_position_in_grid]])\n"\
-		"{\n"\
-		"   result[index] = -inA[index] * inA[index] * inA[index] ;\n"\
-		"}\n";
+	const char* kernel_src = R"(
+		#include <metal_stdlib>
+
+		using namespace metal;
+
+		kernel void process_array(
+            device const float*     inA,
+            device const float*     inB,
+		    device float*           result,
+
+            uint2 global_id [[thread_position_in_grid]],
+            uint2 local_id [[thread_position_in_threadgroup]],
+            uint2 group_id [[threadgroup_position_in_grid]],
+            uint2 group_size [[threads_per_threadgroup]],
+            uint2 grid_size [[threads_per_grid]]
+            )
+		{
+            result[global_id.x] = inA[global_id.x] + inB[global_id.x];
+		}
+        )";
     AMFFactoryHelper helper;
     helper.Init();
     amf::AMFFactory* factory = helper.GetFactory();
@@ -57,43 +71,60 @@ printf("1");
 printf("%d", (int)res);
     amf::AMFComputeKernelPtr pKernel;
     res = pCompute->GetKernel(kernel, &pKernel);
-    amf::AMFBuffer *input = NULL;
-    amf::AMFBuffer *output = NULL;
+    
+    AMF_RETURN_IF_FALSE(res == AMF_OK, -1);
 
-    res = context->AllocBuffer(amf::AMF_MEMORY_HOST, 1024 * sizeof(float), &input);
-    res = context->AllocBuffer(amf::AMF_MEMORY_METAL, 1024 * sizeof(float), &output);
-printf("2");
+    amf::AMFBufferPtr input1;
+    amf::AMFBufferPtr input2;
+    amf::AMFBufferPtr output;
 
-    float  *inputData = static_cast<float*>(input->GetNative());
-    for (int k = 0; k < 1024; k++)
+    const int arraysSize = 16;
+
+    res = context->AllocBuffer(amf::AMF_MEMORY_HOST, arraysSize * sizeof(float), &input1);
+    res = context->AllocBuffer(amf::AMF_MEMORY_HOST, arraysSize * sizeof(float), &input2);
+    res = context->AllocBuffer(amf::AMF_MEMORY_METAL, arraysSize * sizeof(float), &output);
+
     {
-        inputData[k] = rand() / 50.00;;
+        float  *inputData = static_cast<float*>(input1->GetNative());
+        for (int k = 0; k < arraysSize; k++)
+        {
+            inputData[k] = k;
+        }
     }
 
-    input->Convert(amf::AMF_MEMORY_METAL);
+    {
+        float  *inputData = static_cast<float*>(input2->GetNative());
+        for (int k = 0; k < arraysSize; k++)
+        {
+            inputData[k] = arraysSize - k;
+        }
+    }
 
-    res = pKernel->SetArgBuffer(0, input, amf::AMF_ARGUMENT_ACCESS_READ);
-    res = pKernel->SetArgBuffer(1, output, amf::AMF_ARGUMENT_ACCESS_WRITE);
-printf("3");
-    amf_size sizeLocal[3] = {1024, 1, 1};
-    amf_size sizeGlobal[3] = {1024, 1, 1};
+    input1->Convert(amf::AMF_MEMORY_METAL);
+    input2->Convert(amf::AMF_MEMORY_METAL);
+
+    res = pKernel->SetArgBuffer(0, input1, amf::AMF_ARGUMENT_ACCESS_READ);
+    res = pKernel->SetArgBuffer(1, input2, amf::AMF_ARGUMENT_ACCESS_READ);
+    res = pKernel->SetArgBuffer(2, output, amf::AMF_ARGUMENT_ACCESS_WRITE);
+
+    amf_size sizeLocal[3] = {arraysSize, 1, 1};
+    amf_size sizeGlobal[3] = {arraysSize, 1, 1};
     amf_size offset[3] = {0, 0, 0};
 
     pKernel->GetCompileWorkgroupSize(sizeLocal);
-
     pKernel->Enqueue(1, offset, sizeGlobal, sizeLocal);
     pCompute->FlushQueue();
-printf("4");
+
     //output->Convert(amf::AMF_MEMORY_HOST);
     amf::AMFBuffer *subBuffer = NULL;
-    output->CreateSubBuffer(&subBuffer, 0, 1024 * sizeof(float));
+    output->CreateSubBuffer(&subBuffer, 0, arraysSize * sizeof(float));
     subBuffer->Convert(amf::AMF_MEMORY_HOST);
-printf("5");
+
     float  *outputData = static_cast<float*>(subBuffer->GetNative());
 
-    for (int k = 0; k < 10; k++ )
+    for (int k = 0; k < arraysSize; k++ )
     {
-        printf("result[%d] = %f \n", k, outputData[k]);
+        std::cout << "result[" << k << "] = " << outputData[k] << std::endl;
     }
 
     return 0;
