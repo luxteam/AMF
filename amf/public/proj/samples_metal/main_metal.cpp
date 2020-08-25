@@ -7,9 +7,6 @@
 
 #define AMF_FACILITY L"amf_metal_test1"
 
-#define CL_TARGET_OPENCL_VERSION 120
-using namespace std;
-
 int main(int argc, char *argv[])
 {
     printf("start");
@@ -22,6 +19,7 @@ int main(int argc, char *argv[])
             device const float*     inA,
             device const float*     inB,
 		    device float*           result,
+            constant int32_t &      value,
 
             uint2 global_id [[thread_position_in_grid]],
             uint2 local_id [[thread_position_in_threadgroup]],
@@ -30,7 +28,64 @@ int main(int argc, char *argv[])
             uint2 grid_size [[threads_per_grid]]
             )
 		{
-            result[global_id.x] = inA[global_id.x] + inB[global_id.x];
+            if(!global_id.x)
+            {
+                result[global_id.x] = global_id.y;
+            }
+            else if(1 == global_id.x)
+            {
+                result[global_id.x] = global_id.y;
+            }
+
+            else if(2 == global_id.x)
+            {
+                result[global_id.x] = local_id.x;
+            }
+            else if(3 == global_id.x)
+            {
+                result[global_id.x] = local_id.y;
+            }
+
+            else if(4 == global_id.x)
+            {
+                result[global_id.x] = local_id.x;
+            }
+            else if(5 == global_id.x)
+            {
+                result[global_id.x] = local_id.y;
+            }
+
+            else if(6 == global_id.x)
+            {
+                result[global_id.x] = group_id.x;
+            }
+            else if(7 == global_id.x)
+            {
+                result[global_id.x] = group_id.y;
+            }
+
+            else if(8 == global_id.x)
+            {
+                result[global_id.x] = group_size.x;
+            }
+            else if(9 == global_id.x)
+            {
+                result[global_id.x] = group_size.y;
+            }
+
+            else if(10 == global_id.x)
+            {
+                result[global_id.x] = grid_size.x;
+            }
+            else if(11 == global_id.x)
+            {
+                result[global_id.x] = grid_size.y;
+            }
+
+            else
+            {
+                result[global_id.x] = inA[global_id.x] + inB[global_id.x] - value;
+            }
 		}
         )";
     AMFFactoryHelper helper;
@@ -71,18 +126,18 @@ printf("1");
 printf("%d", (int)res);
     amf::AMFComputeKernelPtr pKernel;
     res = pCompute->GetKernel(kernel, &pKernel);
-    
+
     AMF_RETURN_IF_FALSE(res == AMF_OK, -1);
 
     amf::AMFBufferPtr input1;
     amf::AMFBufferPtr input2;
     amf::AMFBufferPtr output;
 
-    const int arraysSize = 16;
+    const int arraysSize = 128;
 
-    res = context->AllocBuffer(amf::AMF_MEMORY_HOST, arraysSize * sizeof(float), &input1);
-    res = context->AllocBuffer(amf::AMF_MEMORY_HOST, arraysSize * sizeof(float), &input2);
-    res = context->AllocBuffer(amf::AMF_MEMORY_METAL, arraysSize * sizeof(float), &output);
+    AMF_RETURN_IF_FALSE(AMF_OK == context->AllocBuffer(amf::AMF_MEMORY_HOST, arraysSize * sizeof(float), &input1), -1);
+    AMF_RETURN_IF_FALSE(AMF_OK == context->AllocBuffer(amf::AMF_MEMORY_HOST, arraysSize * sizeof(float), &input2), -1);
+    AMF_RETURN_IF_FALSE(AMF_OK == context->AllocBuffer(amf::AMF_MEMORY_METAL, arraysSize * sizeof(float), &output), -1);
 
     {
         float  *inputData = static_cast<float*>(input1->GetNative());
@@ -103,9 +158,10 @@ printf("%d", (int)res);
     input1->Convert(amf::AMF_MEMORY_METAL);
     input2->Convert(amf::AMF_MEMORY_METAL);
 
-    res = pKernel->SetArgBuffer(0, input1, amf::AMF_ARGUMENT_ACCESS_READ);
-    res = pKernel->SetArgBuffer(1, input2, amf::AMF_ARGUMENT_ACCESS_READ);
-    res = pKernel->SetArgBuffer(2, output, amf::AMF_ARGUMENT_ACCESS_WRITE);
+    AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgBuffer(0, input1, amf::AMF_ARGUMENT_ACCESS_READ), -1);
+    AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgBuffer(1, input2, amf::AMF_ARGUMENT_ACCESS_READ), -1);
+    AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgBuffer(2, output, amf::AMF_ARGUMENT_ACCESS_WRITE), -1);
+    AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgInt32(3, -1), -1);
 
     amf_size sizeLocal[3] = {arraysSize, 1, 1};
     amf_size sizeGlobal[3] = {arraysSize, 1, 1};
