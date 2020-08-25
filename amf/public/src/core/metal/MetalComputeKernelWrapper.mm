@@ -12,6 +12,16 @@ AMF_RESULT MetalComputeKernelWrapper::SetArgBuffer(void * buffer, int index)
     return m_kernel->SetArgBuffer((id<MTLBuffer>)buffer, index);
 }
 
+AMF_RESULT MetalComputeKernelWrapper::SetArgInt32(int32_t value, int index)
+{
+    return m_kernel->SetArgInt32(value, index);
+}
+
+AMF_RESULT MetalComputeKernelWrapper::SetArgFloat(float value, int index)
+{
+    return m_kernel->SetArgFloat(value, index);
+}
+
 AMF_RESULT MetalComputeKernelWrapper::GetCompileWorkgroupSize(amf_size workgroupSize[3])
 {
     MTLSize size = m_kernel->GetCompileWorkgroupSize(workgroupSize[0]);

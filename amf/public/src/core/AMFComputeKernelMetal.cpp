@@ -43,7 +43,7 @@ AMF_RESULT    AMFComputeKernelMetal::SetArgBuffer(amf_size index, AMFBuffer* pBu
 
 AMF_RESULT    AMFComputeKernelMetal::SetArgInt32(amf_size index, amf_int32 data)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_kernel->SetArgInt32(data, index);
 }
 
 AMF_RESULT    AMFComputeKernelMetal::SetArgInt64(amf_size index, amf_int64 data)
@@ -53,7 +53,7 @@ AMF_RESULT    AMFComputeKernelMetal::SetArgInt64(amf_size index, amf_int64 data)
 
 AMF_RESULT    AMFComputeKernelMetal::SetArgFloat(amf_size index, amf_float data)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_kernel->SetArgFloat(data, index);
 }
 
 AMF_RESULT    AMFComputeKernelMetal::SetArgBlob(amf_size index, amf_size dataSize, const void* pData)

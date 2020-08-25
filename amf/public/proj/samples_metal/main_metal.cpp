@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
             device const float*     inB,
 		    device float*           result,
             constant int32_t &      value,
+            constant float &        extra,
 
             uint2 global_id [[thread_position_in_grid]],
             uint2 local_id [[thread_position_in_threadgroup]],
@@ -84,7 +85,7 @@ int main(int argc, char *argv[])
 
             else
             {
-                result[global_id.x] = inA[global_id.x] + inB[global_id.x] - value;
+                result[global_id.x] = inA[global_id.x] + inB[global_id.x] - value + extra;
             }
 		}
         )";
@@ -162,6 +163,7 @@ printf("%d", (int)res);
     AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgBuffer(1, input2, amf::AMF_ARGUMENT_ACCESS_READ), -1);
     AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgBuffer(2, output, amf::AMF_ARGUMENT_ACCESS_WRITE), -1);
     AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgInt32(3, -1), -1);
+    AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgFloat(4, 0.345f), -1);
 
     amf_size sizeLocal[3] = {arraysSize, 1, 1};
     amf_size sizeGlobal[3] = {arraysSize, 1, 1};
