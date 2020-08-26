@@ -21,6 +21,7 @@ public:
 
     AMF_RESULT CreateCompute(MetalCompute ** compute);
     AMF_RESULT CreateSubBuffer(id<MTLBuffer> pSourceHandle, void ** subBuffer, amf_size offset, amf_size size);
+    AMF_RESULT FillBuffer(id<MTLBuffer> pDestHandle, amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize);
 
     id<MTLDevice> GetNativeDevice();
     id<MTLCommandQueue> GetNativeCommandQueue();

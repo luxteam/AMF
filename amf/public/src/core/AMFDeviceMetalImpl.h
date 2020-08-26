@@ -33,8 +33,8 @@ public:
     MetalDeviceWrapper* GetDeviceWrapper() const;
 private:
     AMFContextImpl* m_pContext;
-    MetalDeviceWrapper* m_device;
-    AMFDeviceImpl * m_deviceImpl;
+    std::unique_ptr<MetalDeviceWrapper> m_device;
+    AMFDeviceImpl *m_deviceImpl = nullptr;
 };
 
 class AMFDeviceMetalImpl : public AMFDeviceImpl
@@ -65,7 +65,7 @@ public:
     MetalDeviceWrapper* GetDeviceWrapper() const;
 private:
     AMFComputeDevicePtr m_computeDevice;
-    MetalDeviceWrapper* m_device;
+    MetalDeviceWrapper* m_device = nullptr;
 };
 
 class AMFComputeMetalImpl : public AMFInterfaceImpl<AMFCompute>

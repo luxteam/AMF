@@ -181,3 +181,14 @@ AMF_RESULT AMFBufferImpl::Attach(AMF_MEMORY_TYPE type, void *pNative, amf_size s
     m_size = size;
     return AMF_OK;
 }
+
+AMF_RESULT AMFBufferImpl::Fill(amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize) { 
+    AMFDevice* pDevice = nullptr;
+
+    AMF_RETURN_IF_FALSE((pDevice = GetContext()->GetDevice(GetMemoryType())) != nullptr, AMF_NO_DEVICE);
+
+    AMF_RETURN_IF_FAILED(pDevice->FillBuffer(m_pMemory, dstOffset, dstSize, pSourcePattern, patternSize));
+
+    return AMF_OK;
+}
+

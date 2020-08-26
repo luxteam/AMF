@@ -6,11 +6,67 @@ set(CMAKE_SKIP_RULE_DEPENDENCY TRUE)
 
 enable_language(CXX)
 
-project(open_amf_test1)
-set(AMF_NAME amf)
-ADD_DEFINITIONS(-DAMF_CORE_STATIC)
-set(OpenCL_INCLUDE_DIR "../../../../../../CL_Headers")
-ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
+if(NOT WIN32)
+  #message(SEND_ERROR "ERROR: Test are prepared for Windows ONLY!")
+endif()
+
+if(AMF_CORE_STATIC)
+  message("static AMF build will be used")
+  ADD_DEFINITIONS(-DAMF_CORE_STATIC)
+else()
+  message("shared AMF build will be used")
+endif()
+
+if(NOT AMF_NAME)
+  set(AMF_NAME openAmf)
+  set_property(GLOBAL PROPERTY AMF_NAME ${AMF_NAME})
+  get_property(AMF_NAME GLOBAL PROPERTY AMF_NAME)
+
+  message(WARNING "OpenAMF will be built with the default library name: " ${AMF_NAME})
+endif()
+
+if(NOT AMF_CORE_STATIC AND NOT AMF_LOADER_NAME)
+  set(AMF_LOADER_NAME openAmfLoader)
+  set_property(GLOBAL PROPERTY AMF_LOADER_NAME ${AMF_LOADER_NAME})
+  get_property(AMF_LOADER_NAME GLOBAL PROPERTY AMF_LOADER_NAME)
+
+  message(WARNING "OpenAMF will be built with the default loader helper name: " ${AMF_LOADER_NAME})
+endif()
+
+if(OpenCL_INCLUDE_DIR AND OpenCL_LIBRARIES)
+  get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
+  message(WARNING "OpenCL location was set manually(sample)")
+  include_directories(${Path_To_OpenCL})
+  message("OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL})
+  message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
+  ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
+
+
+else()
+  find_package(OpenCL REQUIRED)
+
+  if(NOT OpenCL_FOUND)
+    message("")
+    message(SEND_ERROR "Error: Failed to find OpenCL!")
+    return()
+  else()
+    message("OpenCL found: " ${OpenCL_FOUND})
+    message("OpenCL_INCLUDE_DIRS: " ${OpenCL_INCLUDE_DIRS})
+    message("OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
+    message("OpenCL_VERSION_STRING: " ${OpenCL_VERSION_STRING})
+    message("OpenCL_VERSION_MAJOR: " ${OpenCL_VERSION_MAJOR})
+    message("OpenCL_VERSION_MINOR: " ${OpenCL_VERSION_MINOR})
+
+    message("OpenCL_INCLUDE_DIR: ${OpenCL_INCLUDE_DIR}")
+    message("OpenCL_LIBRARY: ${OpenCL_LIBRARY}")
+
+    include_directories(${OpenCL_INCLUDE_DIR})
+    ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
+  endif()
+endif()
+
+project(open_amf_metal_test1)
+
 # Local header files here ONLY
 SET(HEADERS
 
@@ -21,39 +77,17 @@ SET(SOURCES
     main_metal.cpp
     )
 
-#include_directories(..)
+include_directories(../../include)
 add_subdirectory(../cmake ${AMF_NAME})
-
-#add_executable(${PROJECT_NAME} ${SOURCES})
-add_custom_command(OUTPUT default.air
-    COMMAND xcrun -sdk macosx metal -c ../process.metal -o default.air
-)
-add_custom_command(OUTPUT default.metallib
-    COMMAND xcrun -sdk macosx metallib default.air -o default.metallib
-    DEPENDS default.air
-)
 
 add_executable(
     ${PROJECT_NAME}
-    MACOSX_BUNDLE
     ${SOURCES}
-#    ${HEADER_FILES}
-    process.metal
-    default.metallib
+    ${HEADER_FILES}
 )
-
-set_source_files_properties(
-    default.metallib
-    PROPERTIES
-    MACOSX_PACKAGE_LOCATION
-    Resources
-)
-
-get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${Path_To_OpenCL}/lib/x86_64/opencl.lib)
 
 if(AMF_CORE_STATIC)
-  target_link_libraries(${PROJECT_NAME} ${AMF_NAME})
+  target_link_libraries(${PROJECT_NAME} ${AMF_NAME} ${OpenCL_LIBRARIES})
 else()
   target_link_libraries(${PROJECT_NAME} ${AMF_LOADER_NAME})
 endif()

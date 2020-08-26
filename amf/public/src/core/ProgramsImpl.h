@@ -86,19 +86,23 @@ public:
 
 			fseek(fp, 0, SEEK_END);
 
-			AMFKernelStorage::KernelData kernelData = {
+            auto size(ftell(fp));
+
+            AMFKernelStorage::KernelData kernelData = {
 				kernelid_name,
 				kernelName,
-				std::vector<amf_uint8>(ftell(fp)), //alloc vector with ftell size
+				std::vector<amf_uint8>(),
 				"",
 				KernelData::Binary,
 				deviceName
 				};
 
-			if(kernelData.data.size() > 0)
+			if(size)
 			{
+                kernelData.data.resize(size);
+
 				rewind(fp);
-				fread(&kernelData.data.front(), 1, kernelData.data.size(), fp);
+				fread(&kernelData.data.front(), 1, size, fp);
 			}
 
 			fclose(fp);

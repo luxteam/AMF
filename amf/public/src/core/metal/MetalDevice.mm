@@ -127,6 +127,41 @@ AMF_RESULT MetalDevice::CopyBufferFromHost(id<MTLBuffer> pDestHandle, size_t dst
     return AMF_OK;
 }
 
+AMF_RESULT MetalDevice::FillBuffer(id<MTLBuffer> pDestHandle, amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize)
+{
+    NSUInteger alignedSize = AlignedValue(patternSize, false);
+    id<MTLBuffer> tmpBuffer = [m_device newBufferWithLength:alignedSize options:MTLResourceStorageModeShared];
+    memcpy(tmpBuffer.contents, pSourcePattern, patternSize);
+
+    id<MTLCommandBuffer> commandBuffer = [m_defaultCommandQueue commandBuffer];
+    if (commandBuffer == nil)
+    {
+        NSLog(@"Failed to find the process function.");
+        return AMF_FAIL;
+    }
+
+    id <MTLBlitCommandEncoder> blitCommandEncoder = [commandBuffer blitCommandEncoder];
+
+    for (int i = 0; i < dstSize - dstOffset; i+=patternSize)
+    {
+        
+        [blitCommandEncoder
+            copyFromBuffer: tmpBuffer
+            sourceOffset: 0
+            toBuffer: pDestHandle
+            destinationOffset: dstOffset + i
+            size: patternSize
+        ];
+
+        
+    }
+    [blitCommandEncoder endEncoding];
+    [commandBuffer commit];
+    [commandBuffer waitUntilCompleted];
+
+    return AMF_OK;
+}
+
 AMF_RESULT MetalDevice::CreateCompute(MetalCompute ** compute)
 {
     id<MTLCommandQueue> commandQueue = [m_device newCommandQueue];

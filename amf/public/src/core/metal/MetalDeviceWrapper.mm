@@ -49,6 +49,11 @@ AMF_RESULT MetalDeviceWrapper::CreateSubBuffer(void* pHandle, void ** subBuffer,
     return m_device->CreateSubBuffer((id<MTLBuffer>)pHandle, subBuffer, offset, size);
 }
 
+AMF_RESULT MetalDeviceWrapper::FillBuffer(void *pDestHandle, amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize)
+{
+    return m_device->FillBuffer((id<MTLBuffer>)pDestHandle, dstOffset, dstSize, pSourcePattern, patternSize);
+}
+
 void * MetalDeviceWrapper::GetNativeDevice()
 {
     return m_device->GetNativeDevice();

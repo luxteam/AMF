@@ -8,17 +8,16 @@ AMFComputeDeviceMetalImpl::AMFComputeDeviceMetalImpl(
     AMFDeviceImpl *     device,
     void *              native,
     const std::string & name
-    )
-    :  m_pContext(pContext), m_deviceImpl(device)
+    ):
+    m_pContext(pContext),
+    m_device(new MetalDeviceWrapper(native)),
+    m_deviceImpl(device)
 {
-    m_device = new MetalDeviceWrapper(native);
-
     SetProperty(AMF_DEVICE_NAME, AMFVariant(name.c_str()));
 }
 
 AMFComputeDeviceMetalImpl::~AMFComputeDeviceMetalImpl()
 {
-    delete m_device;
 }
 
 void *AMFComputeDeviceMetalImpl::GetNativePlatform()
@@ -65,7 +64,7 @@ AMFDeviceImpl *AMFComputeDeviceMetalImpl::GetDevice() const
 
 MetalDeviceWrapper *AMFComputeDeviceMetalImpl::GetDeviceWrapper() const
 {
-    return m_device;
+    return m_device.get();
 }
 
 AMFDeviceMetalImpl::AMFDeviceMetalImpl(
@@ -142,7 +141,7 @@ AMF_RESULT AMFDeviceMetalImpl::CopyBufferFromHost(void *pDestHandle, amf_size ds
 
 AMF_RESULT AMFDeviceMetalImpl::FillBuffer(void *pDestHandle, amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_device->FillBuffer(pDestHandle, dstOffset, dstSize, pSourcePattern, patternSize);
 }
 
 void *AMFDeviceMetalImpl::GetNativeCommandQueue()
@@ -203,10 +202,11 @@ AMF_RESULT AMFComputeMetalImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKern
     AMFKernelStorage::KernelData *kernelData(nullptr);
     AMFKernelStorage::Instance()->GetKernelData(&kernelData, kernelID);
 
-    const char * source = reinterpret_cast<const char *>(&kernelData->data.front());
+    std::string source(reinterpret_cast<const char *>(&kernelData->data.front()), kernelData->data.size());
+    const char *pointer(source.c_str());
 
     MetalComputeKernelWrapper *pKernel = NULL;
-    AMF_RESULT res = m_compute->GetKernel(source, kernelData->kernelName.c_str(), &pKernel);
+    AMF_RESULT res = m_compute->GetKernel(pointer, kernelData->kernelName.c_str(), &pKernel);
     AMF_RETURN_IF_FALSE(res == AMF_OK, AMF_INVALID_ARG, L"GetKernel");
 
     AMFComputeKernelMetal * computeKernel = new AMFComputeKernelMetal(kernelID, pKernel);

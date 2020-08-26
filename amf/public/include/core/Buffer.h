@@ -103,6 +103,7 @@ namespace amf
         virtual amf_size            AMF_STD_CALL GetSize() = 0;
         virtual void*               AMF_STD_CALL GetNative() = 0;
 		virtual AMF_RESULT          AMF_STD_CALL CreateSubBuffer(AMFBuffer** subBuffer, amf_size offset, amf_size size) = 0;
+        virtual AMF_RESULT          AMF_STD_CALL Fill(amf_size dstOffset, amf_size dstSize, const void* pSourcePattern, amf_size patternSize) = 0;
 		virtual AMF_RESULT			AMF_STD_CALL MapToHost(void ** memory, amf_size offset, amf_size size, bool blocking) = 0;
 
         // Observer management
@@ -160,7 +161,7 @@ namespace amf
         amf_size            (AMF_STD_CALL *GetSize)(AMFBuffer* pThis);
         void*               (AMF_STD_CALL *GetNative)(AMFBuffer* pThis);
 		AMF_RESULT          (AMF_STD_CALL *CreateSubBuffer)(AMFBuffer* pThis, AMFBuffer** subBuffer, amf_size offset, amf_size size);
-
+        AMF_RESULT          (AMF_STD_CALL *Fill)(AMFBuffer* pThis, amf_size dstOffset, amf_size dstSize, const void* pSourcePattern, amf_size patternSize);
         // Observer management
         void                (AMF_STD_CALL *AddObserver_Buffer)(AMFBuffer* pThis, AMFBufferObserver* pObserver);
         void                (AMF_STD_CALL *RemoveObserver_Buffer)(AMFBuffer* pThis, AMFBufferObserver* pObserver);

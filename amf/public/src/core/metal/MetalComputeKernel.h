@@ -10,6 +10,8 @@ public:
                         id<MTLComputePipelineState> processFunctionPSO);
 
     AMF_RESULT SetArgBuffer(id<MTLBuffer> buffer, int index);
+    AMF_RESULT SetArgInt32(int32_t value, int index);
+    AMF_RESULT SetArgFloat(float value, int index);
 
     MTLSize GetCompileWorkgroupSize(NSUInteger maxSize);
 

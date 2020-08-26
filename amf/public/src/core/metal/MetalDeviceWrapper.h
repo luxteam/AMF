@@ -19,7 +19,7 @@ public:
 
     AMF_RESULT CreateCompute(MetalComputeWrapper ** compute);
     AMF_RESULT CreateSubBuffer(void* pHandle, void ** subBuffer, amf_size offset, amf_size size);
-
+    AMF_RESULT FillBuffer(void *pDestHandle, amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize);
     void * GetNativeDevice();
 private:
     MetalDevice * m_device;

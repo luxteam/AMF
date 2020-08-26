@@ -16,6 +16,18 @@ AMF_RESULT MetalComputeKernel::SetArgBuffer(id<MTLBuffer> buffer, int index)
     return AMF_OK;
 }
 
+AMF_RESULT MetalComputeKernel::SetArgInt32(int32_t value, int index)
+{
+    [m_encoder setBytes:&value length:sizeof(int32_t) atIndex:index];
+    return AMF_OK;
+}
+
+AMF_RESULT MetalComputeKernel::SetArgFloat(float value, int index)
+{
+    [m_encoder setBytes:&value length:sizeof(float) atIndex:index];
+    return AMF_OK;
+}
+
 MTLSize MetalComputeKernel::GetCompileWorkgroupSize(NSUInteger maxSize)
 {
     NSUInteger threadGroupSize = m_processFunctionPSO.maxTotalThreadsPerThreadgroup;
