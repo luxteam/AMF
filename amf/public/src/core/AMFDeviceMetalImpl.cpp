@@ -141,7 +141,7 @@ AMF_RESULT AMFDeviceMetalImpl::CopyBufferFromHost(void *pDestHandle, amf_size ds
 
 AMF_RESULT AMFDeviceMetalImpl::FillBuffer(void *pDestHandle, amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_device->FillBuffer(pDestHandle, dstOffset, dstSize, pSourcePattern, patternSize);
 }
 
 void *AMFDeviceMetalImpl::GetNativeCommandQueue()
