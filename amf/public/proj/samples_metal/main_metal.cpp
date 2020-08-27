@@ -178,6 +178,7 @@ printf("%d", (int)res);
     output->CreateSubBuffer(&subBuffer, 0, arraysSize * sizeof(float));
     float  pattern[4] ={0.3, 0.4, 0.5, 0.6};
     subBuffer->Fill(24 * sizeof(float), (arraysSize - 24)  * sizeof(float), &pattern[0], 4 * sizeof(float));
+    pCompute->FillBuffer(subBuffer, 24 * sizeof(float), (arraysSize - 24)  * sizeof(float), &pattern[0], 4 * sizeof(float));
     subBuffer->Convert(amf::AMF_MEMORY_HOST);
 
     float  *outputData = static_cast<float*>(subBuffer->GetNative());

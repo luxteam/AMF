@@ -237,7 +237,7 @@ AMF_RESULT AMFComputeMetalImpl::FillPlane(AMFPlane *pPlane, const amf_size origi
 
 AMF_RESULT AMFComputeMetalImpl::FillBuffer(AMFBuffer *pBuffer, amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_device->FillBuffer(pBuffer->GetNative(), dstOffset, dstSize, pSourcePattern, patternSize);
 }
 
 AMF_RESULT AMFComputeMetalImpl::ConvertPlaneToBuffer(AMFPlane *pSrcPlane, AMFBuffer **ppDstBuffer)

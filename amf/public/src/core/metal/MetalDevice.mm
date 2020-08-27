@@ -142,7 +142,7 @@ AMF_RESULT MetalDevice::FillBuffer(id<MTLBuffer> pDestHandle, amf_size dstOffset
 
     id <MTLBlitCommandEncoder> blitCommandEncoder = [commandBuffer blitCommandEncoder];
 
-    for (int i = 0; i < dstSize - dstOffset; i+=patternSize)
+    for (int i = 0; i < dstSize; i+=patternSize)
     {
         
         [blitCommandEncoder
