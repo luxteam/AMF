@@ -9,6 +9,7 @@ public:
 
     AMF_RESULT SetArgBuffer(void * buffer, int index);
     AMF_RESULT SetArgInt32(int32_t value, int index);
+    AMF_RESULT SetArgInt64(int64_t value, int index);
     AMF_RESULT SetArgFloat(float value, int index);
 
     AMF_RESULT GetCompileWorkgroupSize(amf_size workgroupSize[3]);

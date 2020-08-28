@@ -48,7 +48,7 @@ AMF_RESULT    AMFComputeKernelMetal::SetArgInt32(amf_size index, amf_int32 data)
 
 AMF_RESULT    AMFComputeKernelMetal::SetArgInt64(amf_size index, amf_int64 data)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_kernel->SetArgInt64(data, index);
 }
 
 AMF_RESULT    AMFComputeKernelMetal::SetArgFloat(amf_size index, amf_float data)

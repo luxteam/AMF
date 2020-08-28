@@ -162,7 +162,7 @@ printf("%d", (int)res);
     AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgBuffer(0, input1, amf::AMF_ARGUMENT_ACCESS_READ), -1);
     AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgBuffer(1, input2, amf::AMF_ARGUMENT_ACCESS_READ), -1);
     AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgBuffer(2, output, amf::AMF_ARGUMENT_ACCESS_WRITE), -1);
-    AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgInt32(3, -1), -1);
+    AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgInt64(3, -1), -1);
     AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgFloat(4, 0.345f), -1);
 
     amf_size sizeLocal[3] = {arraysSize, 1, 1};

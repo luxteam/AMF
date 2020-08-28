@@ -22,6 +22,12 @@ AMF_RESULT MetalComputeKernel::SetArgInt32(int32_t value, int index)
     return AMF_OK;
 }
 
+AMF_RESULT MetalComputeKernel::SetArgInt64(int64_t value, int index)
+{
+    [m_encoder setBytes:&value length:sizeof(int64_t) atIndex:index];
+    return AMF_OK;
+}
+
 AMF_RESULT MetalComputeKernel::SetArgFloat(float value, int index)
 {
     [m_encoder setBytes:&value length:sizeof(float) atIndex:index];

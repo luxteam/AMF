@@ -17,6 +17,11 @@ AMF_RESULT MetalComputeKernelWrapper::SetArgInt32(int32_t value, int index)
     return m_kernel->SetArgInt32(value, index);
 }
 
+AMF_RESULT MetalComputeKernelWrapper::SetArgInt64(int64_t value, int index)
+{
+    return m_kernel->SetArgInt64(value, index);
+}
+
 AMF_RESULT MetalComputeKernelWrapper::SetArgFloat(float value, int index)
 {
     return m_kernel->SetArgFloat(value, index);
