@@ -12,8 +12,10 @@ MetalCompute::MetalCompute(id<MTLDevice> device, id<MTLCommandQueue> commandQueu
 AMF_RESULT MetalCompute::GetKernel(NSString * source, NSString * name, MetalComputeKernel ** kernel)
 {
     NSError* error = nil;
-
-    m_library = [m_device newLibraryWithSource: source options:nil error:&error];
+    MTLCompileOptions * options = [MTLCompileOptions new];
+    if (@available(macOS 10.15, iOS 13.0, *))
+        options.languageVersion = MTLLanguageVersion2_2;
+    m_library = [m_device newLibraryWithSource: source options:options error:&error];
     if (m_library == nil)
     {
         NSLog(@"Failed to createLibrary from source: %@ %@", error, [error userInfo]);

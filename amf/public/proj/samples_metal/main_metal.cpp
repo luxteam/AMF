@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
             device const float*     inA,
             device const float*     inB,
 		    device float*           result,
-            constant int32_t &      value,
+            constant int64_t &      value,
             constant float &        extra,
 
             uint2 global_id [[thread_position_in_grid]],
