@@ -1,12 +1,14 @@
 #include "MetalComputeKernel.h"
 
-MetalComputeKernel::MetalComputeKernel( id<MTLComputeCommandEncoder> encoder,
+MetalComputeKernel::MetalComputeKernel( id<MTLCommandBuffer> buffer,
                         id<MTLFunction> processFunction,
                         id<MTLComputePipelineState> processFunctionPSO)
-    :   m_encoder(encoder),
+    :   m_buffer(buffer),
         m_processFunction(processFunction),
         m_processFunctionPSO(processFunctionPSO)
 {
+    m_encoder = [m_buffer computeCommandEncoder];
+    assert(m_encoder != nil);
     [m_encoder setComputePipelineState:m_processFunctionPSO];
 }
 

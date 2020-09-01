@@ -6,15 +6,23 @@ MetalCompute::MetalCompute(id<MTLDevice> device, id<MTLCommandQueue> commandQueu
 {
     m_commandBuffer = [m_commandQueue commandBuffer];
     assert(m_commandBuffer != nil);
+    m_kernelBuffers = [NSMutableArray array];
     //m_library = [m_device newDefaultLibrary];
+}
+
+MetalCompute::~MetalCompute()
+{
+    [m_kernelBuffers removeAllObjects];
 }
 
 AMF_RESULT MetalCompute::GetKernel(NSString * source, NSString * name, MetalComputeKernel ** kernel)
 {
     NSError* error = nil;
     MTLCompileOptions * options = [MTLCompileOptions new];
+
     if (@available(macOS 10.15, iOS 13.0, *))
-        options.languageVersion = MTLLanguageVersion2_2;
+        options.languageVersion = MTLLanguageVersion::MTLLanguageVersion2_2;
+
     m_library = [m_device newLibraryWithSource: source options:options error:&error];
     if (m_library == nil)
     {
@@ -38,25 +46,31 @@ AMF_RESULT MetalCompute::GetKernel(NSString * source, NSString * name, MetalComp
         NSLog(@"Failed to created pipeline state object, error %@.", error);
         return AMF_FAIL;
     }
-    id<MTLComputeCommandEncoder> computeEncoder = [m_commandBuffer computeCommandEncoder];
-    if (computeEncoder == nil)
-    {
-        NSLog(@"Failed to created computeEncoder");
-        return AMF_FAIL;
-    }
 
-    (*kernel) = new MetalComputeKernel(computeEncoder, processFunction, processFunctionPSO);
+    id<MTLCommandBuffer> buffer = [m_commandQueue commandBuffer];
+    [m_kernelBuffers addObject: buffer];
+    (*kernel) = new MetalComputeKernel(buffer, processFunction, processFunctionPSO);
     return AMF_OK;
 }
 
 AMF_RESULT MetalCompute::FlushQueue()
 {
     [m_commandBuffer commit];
+    for (id<MTLCommandBuffer> buffer in m_kernelBuffers)
+    {
+        [buffer commit];
+    }
     return AMF_OK;
 }
 
 AMF_RESULT MetalCompute::FinishQueue()
 {
     [m_commandBuffer waitUntilCompleted];
+    for (id<MTLCommandBuffer> buffer in m_kernelBuffers)
+    {
+        [buffer waitUntilCompleted];
+    }
     return AMF_OK;
 }
+
+

@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
             device const float*     inA,
             device const float*     inB,
 		    device float*           result,
-            constant int64_t &      value,
+            constant int32_t &      value,
             constant float &        extra,
 
             uint2 global_id [[thread_position_in_grid]],
@@ -120,10 +120,18 @@ printf("\nDevice count :%d\n", deviceCount);
     AMF_RESULT res;
 printf("1");
     //amf::AMFComputeDevicePtr pComputeDevice;
-
+    {
+        amf::AMFComputePtr pCompute1;
+        res =  context->GetCompute(amf::AMF_MEMORY_METAL, &pCompute1);
+        amf::AMFComputeKernelPtr pKernel1;
+        res = pCompute1->GetKernel(kernel, &pKernel1);
+        amf::AMFComputeKernelPtr pKernel2;
+        res = pCompute1->GetKernel(kernel, &pKernel1);
+    }
     amf::AMFComputePtr pCompute;
-    //pComputeDevice->CreateCompute(nullptr, &pCompute);
-    res =  context->GetCompute(amf::AMF_MEMORY_METAL, &pCompute);
+    
+    pComputeDevice->CreateCompute(nullptr, &pCompute);
+    
 printf("%d", (int)res);
     amf::AMFComputeKernelPtr pKernel;
     res = pCompute->GetKernel(kernel, &pKernel);
@@ -162,7 +170,7 @@ printf("%d", (int)res);
     AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgBuffer(0, input1, amf::AMF_ARGUMENT_ACCESS_READ), -1);
     AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgBuffer(1, input2, amf::AMF_ARGUMENT_ACCESS_READ), -1);
     AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgBuffer(2, output, amf::AMF_ARGUMENT_ACCESS_WRITE), -1);
-    AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgInt64(3, -1), -1);
+    AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgInt32(3, -1), -1);
     AMF_RETURN_IF_FALSE(AMF_OK == pKernel->SetArgFloat(4, 0.345f), -1);
 
     amf_size sizeLocal[3] = {arraysSize, 1, 1};

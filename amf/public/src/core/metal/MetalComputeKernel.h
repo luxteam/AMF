@@ -5,7 +5,7 @@
 class MetalComputeKernel
 {
 public:
-    MetalComputeKernel( id<MTLComputeCommandEncoder> encoder,
+    MetalComputeKernel( id<MTLCommandBuffer> buffer,
                         id<MTLFunction> processFunction,
                         id<MTLComputePipelineState> processFunctionPSO);
 
@@ -18,6 +18,7 @@ public:
 
     AMF_RESULT Enqueue(MTLSize workgroupSize, MTLSize sizeInWorkgroup);
 private:
+    id<MTLCommandBuffer> m_buffer;
     id<MTLComputeCommandEncoder> m_encoder;
     id<MTLFunction> m_processFunction;
     id<MTLComputePipelineState> m_processFunctionPSO;
