@@ -122,17 +122,62 @@ printf("1");
     //amf::AMFComputeDevicePtr pComputeDevice;
     {
         amf::AMFComputePtr pCompute1;
-        res =  context->GetCompute(amf::AMF_MEMORY_METAL, &pCompute1);
+        res = context->GetCompute(amf::AMF_MEMORY_METAL, &pCompute1);
         amf::AMFComputeKernelPtr pKernel1;
         res = pCompute1->GetKernel(kernel, &pKernel1);
         amf::AMFComputeKernelPtr pKernel2;
         res = pCompute1->GetKernel(kernel, &pKernel1);
     }
+
+    {
+        amf::AMFComputePtr сompute;
+        pComputeDevice->CreateCompute(nullptr, &сompute);
+
+        size_t bufferSizeInBytes(8192);
+        size_t buffersCount(2);
+        size_t channelsCount(2);
+
+        amf::AMFBufferPtr large;
+
+        AMF_RETURN_IF_FAILED(
+            context->AllocBuffer(
+                amf::AMF_MEMORY_TYPE::AMF_MEMORY_METAL
+                ,
+                bufferSizeInBytes * buffersCount * channelsCount,
+                &large
+                ),
+                L"Could not create OpenCL buffer"
+                );
+
+        std::vector<amf::AMFBufferPtr> small(buffersCount * channelsCount);
+
+        /**/
+        for(amf_uint32 i = 0; i < buffersCount * channelsCount; i++)
+        {
+            AMF_RETURN_IF_FAILED(
+                large->CreateSubBuffer(
+                    &small[i],
+                    i * bufferSizeInBytes,
+                    bufferSizeInBytes
+                    )
+                );
+
+            float zero = 0.0;
+            AMF_RETURN_IF_FAILED(
+                сompute->FillBuffer(
+                    small[i],
+                    0,
+					bufferSizeInBytes,
+                    &zero,
+                    sizeof(zero)
+                    )
+                );
+        }
+    }
+
     amf::AMFComputePtr pCompute;
-    
     pComputeDevice->CreateCompute(nullptr, &pCompute);
-    
-printf("%d", (int)res);
+
     amf::AMFComputeKernelPtr pKernel;
     res = pCompute->GetKernel(kernel, &pKernel);
 

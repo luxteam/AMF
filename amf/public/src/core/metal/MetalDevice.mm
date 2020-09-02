@@ -180,7 +180,8 @@ AMF_RESULT MetalDevice::CreateSubBuffer(id<MTLBuffer> pSourceHandle, void ** sub
     NSUInteger alignedSize = AlignedValue(size, false);
     if (alignedOffset != offset)
     {
-        NSLog(@"CreateSubBuffer: aligned offset != offset");
+        //NSLog(@"CreateSubBuffer: aligned offset != offset");
+        NSLog(@"CreateSubBuffer: aligned offset != offset (%lu - %lu) pageSize = %lu", alignedOffset, offset, m_pageSize);
     }
     float * dataPtr = static_cast<float*>(pSourceHandle.contents);
     (*subBuffer) = (void*) [m_device newBufferWithBytesNoCopy:(dataPtr + alignedOffset)
