@@ -203,8 +203,8 @@ id<MTLDevice> MetalDevice::GetNativeDevice()
 
 NSUInteger MetalDevice::AlignedValue(NSUInteger value, bool toLower)
 {
-    NSUInteger result = (value % m_pageSize) * m_pageSize;
-    if (!toLower || result != value)
+    NSUInteger result = (value / m_pageSize) * m_pageSize;
+    if (!toLower && result != value)
         result += m_pageSize;
     return result;
 }
