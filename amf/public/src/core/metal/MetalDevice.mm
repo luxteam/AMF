@@ -184,10 +184,21 @@ AMF_RESULT MetalDevice::CreateSubBuffer(id<MTLBuffer> pSourceHandle, void ** sub
         NSLog(@"CreateSubBuffer: aligned offset != offset (%lu - %lu) pageSize = %lu", alignedOffset, offset, m_pageSize);
     }
     float * dataPtr = static_cast<float*>(pSourceHandle.contents);
-    (*subBuffer) = (void*) [m_device newBufferWithBytesNoCopy:(dataPtr + alignedOffset)
+    id<MTLBuffer> result = [m_device newBufferWithBytesNoCopy:(dataPtr + alignedOffset)
                                             length: alignedSize
                                             options: MTLResourceStorageModeShared
                                             deallocator: nil];
+    if (!subBuffer)
+    {
+        NSLog(@"CreateSubBuffer: result = nil");
+        return  AMF_FAIL;
+    }
+    if ( [result length] != alignedSize)
+    {
+        NSLog(@"CreateSubBuffer: result length != alignedSize (%lu - %lu) pageSize = %lu", [result length], alignedSize, m_pageSize);
+        return  AMF_FAIL;
+    }
+    (*subBuffer) = (void*)result;
     return AMF_OK;
 }
 
