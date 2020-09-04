@@ -29,7 +29,9 @@ AMF_RESULT MetalComputeKernelWrapper::SetArgFloat(float value, int index)
 
 AMF_RESULT MetalComputeKernelWrapper::GetCompileWorkgroupSize(amf_size workgroupSize[3])
 {
-    MTLSize size = m_kernel->GetCompileWorkgroupSize(workgroupSize[0]);
+    MTLSize size = m_kernel->GetCompileWorkgroupSize(MTLSizeMake(workgroupSize[0],
+                                                                 workgroupSize[1],
+                                                                 workgroupSize[2]));
     workgroupSize[0] = size.width;
     workgroupSize[1] = size.height;
     workgroupSize[2] = size.depth;
