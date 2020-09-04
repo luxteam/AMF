@@ -36,13 +36,17 @@ AMF_RESULT MetalComputeKernel::SetArgFloat(float value, int index)
     return AMF_OK;
 }
 
-MTLSize MetalComputeKernel::GetCompileWorkgroupSize(NSUInteger maxSize)
+MTLSize MetalComputeKernel::GetCompileWorkgroupSize(MTLSize maxSize)
 {
-    NSUInteger threadGroupSize = m_processFunctionPSO.maxTotalThreadsPerThreadgroup;
-    if (threadGroupSize > maxSize)
-        return MTLSizeMake(maxSize, 1, 1);
-
-    return MTLSizeMake(threadGroupSize, 1, 1);
+    NSUInteger w = m_processFunctionPSO.threadExecutionWidth;
+    if (w > maxSize.width)
+        w = maxSize.width;
+    NSUInteger h = m_processFunctionPSO.maxTotalThreadsPerThreadgroup / w;
+    if (h > maxSize.height)
+        h = maxSize.height;
+    
+    int d = m_processFunctionPSO.maxTotalThreadsPerThreadgroup / (w * h);
+    return MTLSizeMake(w, h, 1);
 }
 
 AMF_RESULT MetalComputeKernel::Enqueue(MTLSize workgroupSize, MTLSize sizeInWorkgroup)

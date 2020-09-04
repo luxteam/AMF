@@ -14,7 +14,7 @@ public:
     AMF_RESULT SetArgInt64(int64_t value, int index);
     AMF_RESULT SetArgFloat(float value, int index);
 
-    MTLSize GetCompileWorkgroupSize(NSUInteger maxSize);
+    MTLSize GetCompileWorkgroupSize(MTLSize maxSize);
 
     AMF_RESULT Enqueue(MTLSize workgroupSize, MTLSize sizeInWorkgroup);
 private:
