@@ -121,58 +121,104 @@ printf("\nDevice count :%d\n", deviceCount);
 printf("1");
     //amf::AMFComputeDevicePtr pComputeDevice;
     {
-        amf::AMFComputePtr pCompute1;
-        res = context->GetCompute(amf::AMF_MEMORY_METAL, &pCompute1);
-        amf::AMFComputeKernelPtr pKernel1;
-        res = pCompute1->GetKernel(kernel, &pKernel1);
-        amf::AMFComputeKernelPtr pKernel2;
-        res = pCompute1->GetKernel(kernel, &pKernel1);
-    }
+        const char* init_src = R"(
+        #include <metal_stdlib>
 
-    {
-        amf::AMFComputePtr сompute;
-        pComputeDevice->CreateCompute(nullptr, &сompute);
+        using namespace metal;
 
-        size_t bufferSizeInBytes(8192);
-        size_t buffersCount(2);
-        size_t channelsCount(2);
+        kernel void init_array(
+            device float*           result,
+            constant int32_t &      value,
 
-        amf::AMFBufferPtr large;
-
-        AMF_RETURN_IF_FAILED(
-            context->AllocBuffer(
-                amf::AMF_MEMORY_TYPE::AMF_MEMORY_METAL
-                ,
-                bufferSizeInBytes * buffersCount * channelsCount,
-                &large
-                ),
-                L"Could not create OpenCL buffer"
-                );
-
-        std::vector<amf::AMFBufferPtr> small(buffersCount * channelsCount);
-
-        /**/
-        for(amf_uint32 i = 0; i < buffersCount * channelsCount; i++)
+            uint2 global_id [[thread_position_in_grid]]
+            )
         {
-            AMF_RETURN_IF_FAILED(
-                large->CreateSubBuffer(
-                    &small[i],
-                    i * bufferSizeInBytes,
-                    bufferSizeInBytes
-                    )
-                );
+            result[global_id.x] = value;
+        })";
+        
+        const char* add_src = R"(
+        #include <metal_stdlib>
 
-            float zero = 0.0;
-            AMF_RETURN_IF_FAILED(
-                сompute->FillBuffer(
-                    small[i],
-                    0,
-					bufferSizeInBytes,
-                    &zero,
-                    sizeof(zero)
-                    )
-                );
+        using namespace metal;
+
+        kernel void add_array(
+            device float*           result,
+            constant int32_t &      value,
+
+            uint2 global_id [[thread_position_in_grid]]
+            )
+        {
+            result[global_id.x] += value;
+        })";
+        
+        const char* mult_src = R"(
+        #include <metal_stdlib>
+
+        using namespace metal;
+
+        kernel void mult_array(
+            device float*           result,
+            constant int32_t &      value,
+
+            uint2 global_id [[thread_position_in_grid]]
+            )
+        {
+            result[global_id.x] = result[global_id.x] * value;
+        })";
+        
+        amf::AMF_KERNEL_ID kernel1_1;
+        pPrograms->RegisterKernelSource(&kernel1_1, L"init_src", "init_array", strlen(init_src), (amf_uint8*)init_src, "option");
+        amf::AMF_KERNEL_ID kernel1_2;
+        pPrograms->RegisterKernelSource(&kernel1_2, L"add_src", "add_array", strlen(init_src), (amf_uint8*)add_src, "option");
+        
+        amf::AMF_KERNEL_ID kernel12_1;
+        pPrograms->RegisterKernelSource(&kernel12_1, L"mult_src", "mult_array", strlen(mult_src), (amf_uint8*)mult_src, "option");
+        
+        amf::AMFComputePtr pCompute1;
+        pComputeDevice->CreateCompute(nullptr, &pCompute1);
+        amf::AMFComputePtr pCompute2;
+        pComputeDevice->CreateCompute(nullptr, &pCompute2);
+        
+        amf::AMFComputeKernelPtr pKernel1;
+        res = pCompute1->GetKernel(kernel1_1, &pKernel1);
+        
+        amf::AMFComputeKernelPtr pKernel2;
+        res = pCompute1->GetKernel(kernel1_2, &pKernel2);
+        
+        amf::AMFComputeKernelPtr pKernel3;
+        res = pCompute2->GetKernel(kernel12_1, &pKernel3);
+        
+        const int arraysSize = 128;
+        amf::AMFBufferPtr buf1;
+        AMF_RETURN_IF_FALSE(AMF_OK == context->AllocBuffer(amf::AMF_MEMORY_METAL, arraysSize * sizeof(float), &buf1), -1);
+        
+        AMF_RETURN_IF_FALSE(AMF_OK == pKernel1->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE), -1);
+        AMF_RETURN_IF_FALSE(AMF_OK == pKernel1->SetArgInt32(1, 2), -1);
+        AMF_RETURN_IF_FALSE(AMF_OK == pKernel2->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE), -1);
+        AMF_RETURN_IF_FALSE(AMF_OK == pKernel2->SetArgInt32(1, 2), -1);
+        
+        AMF_RETURN_IF_FALSE(AMF_OK == pKernel3->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE), -1);
+        AMF_RETURN_IF_FALSE(AMF_OK == pKernel3->SetArgInt32(1, 2), -1);
+        
+        amf_size sizeLocal[3] = {arraysSize, 1, 1};
+        amf_size sizeGlobal[3] = {arraysSize, 1, 1};
+
+        pKernel1->GetCompileWorkgroupSize(sizeLocal);
+        AMF_RETURN_IF_FALSE(AMF_OK == pKernel1->Enqueue(1, 0, sizeGlobal, sizeLocal), -1);
+        AMF_RETURN_IF_FALSE(AMF_OK == pKernel2->Enqueue(1, 0, sizeGlobal, sizeLocal), -1);
+        AMF_RETURN_IF_FALSE(AMF_OK == pCompute1->FlushQueue(), -1);
+        AMF_RETURN_IF_FALSE(AMF_OK == pCompute1->FinishQueue(), -1);
+        AMF_RETURN_IF_FALSE(AMF_OK == pKernel3->Enqueue(1, 0, sizeGlobal, sizeLocal), -1);
+        AMF_RETURN_IF_FALSE(AMF_OK == pCompute2->FlushQueue(), -1);
+        AMF_RETURN_IF_FALSE(AMF_OK == pCompute2->FinishQueue(), -1);
+        buf1->Convert(amf::AMF_MEMORY_HOST);
+        float  *outputData = static_cast<float*>(buf1->GetNative());
+
+        for (int k = 0; k < arraysSize; k++ )
+        {
+            std::cout << "result[" << k << "] = " << outputData[k] << std::endl;
         }
+
     }
 
     amf::AMFComputePtr pCompute;
@@ -220,11 +266,10 @@ printf("1");
 
     amf_size sizeLocal[3] = {arraysSize, 1, 1};
     amf_size sizeGlobal[3] = {arraysSize, 1, 1};
-    amf_size offset[3] = {0, 0, 0};
 
     pKernel->GetCompileWorkgroupSize(sizeLocal);
-    pKernel->Enqueue(1, offset, sizeGlobal, sizeLocal);
-    pCompute->FlushQueue();
+    AMF_RETURN_IF_FALSE(AMF_OK == pKernel->Enqueue(1, 0, sizeGlobal, sizeLocal), -1);
+    AMF_RETURN_IF_FALSE(AMF_OK == pCompute->FlushQueue(), -1);
 
     //output->Convert(amf::AMF_MEMORY_HOST);
     amf::AMFBuffer *subBuffer = NULL;
@@ -234,12 +279,12 @@ printf("1");
     pCompute->FillBuffer(subBuffer, 24 * sizeof(float), (arraysSize - 24)  * sizeof(float), &pattern[0], 4 * sizeof(float));
     subBuffer->Convert(amf::AMF_MEMORY_HOST);
 
-    float  *outputData = static_cast<float*>(subBuffer->GetNative());
-
-    for (int k = 0; k < arraysSize; k++ )
-    {
-        std::cout << "result[" << k << "] = " << outputData[k] << std::endl;
-    }
+//    float  *outputData = static_cast<float*>(subBuffer->GetNative());
+//
+//    for (int k = 0; k < arraysSize; k++ )
+//    {
+//        std::cout << "result[" << k << "] = " << outputData[k] << std::endl;
+//    }
 
     return 0;
 }
