@@ -1,12 +1,10 @@
 #include "MetalCompute.h"
 
-MetalCompute::MetalCompute(id<MTLDevice> device, id<MTLCommandQueue> commandQueue)
- :  m_device(device),
-    m_commandQueue(commandQueue)
+MetalCompute::MetalCompute(id<MTLDevice> device, id<MTLCommandQueue> commandQueue):
+    m_device(device),
+    m_commandQueue(commandQueue),
+    m_kernelBuffers([NSMutableArray array])
 {
-    m_commandBuffer = [m_commandQueue commandBuffer];
-    assert(m_commandBuffer != nil);
-    m_kernelBuffers = [NSMutableArray array];
     //m_library = [m_device newDefaultLibrary];
 }
 
@@ -55,22 +53,20 @@ AMF_RESULT MetalCompute::GetKernel(NSString * source, NSString * name, MetalComp
 
 AMF_RESULT MetalCompute::FlushQueue()
 {
-    [m_commandBuffer commit];
     for (id<MTLCommandBuffer> buffer in m_kernelBuffers)
     {
         [buffer commit];
     }
+
     return AMF_OK;
 }
 
 AMF_RESULT MetalCompute::FinishQueue()
 {
-    [m_commandBuffer waitUntilCompleted];
     for (id<MTLCommandBuffer> buffer in m_kernelBuffers)
     {
         [buffer waitUntilCompleted];
     }
+
     return AMF_OK;
 }
-
-

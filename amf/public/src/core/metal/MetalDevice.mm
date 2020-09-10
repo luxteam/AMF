@@ -78,7 +78,7 @@ AMF_RESULT MetalDevice::CopyBufferToHost(void *pDest, id<MTLBuffer> pSourceHandl
 
     [blitCommandEncoder endEncoding];
     [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> cb) {
-        NSLog(@"CopyBufferToHost finished");
+        //NSLog(@"CopyBufferToHost finished");
         memcpy(pDest, tmpBuffer.contents, size);
         //TODO: cleanup
     }];
@@ -144,7 +144,6 @@ AMF_RESULT MetalDevice::FillBuffer(id<MTLBuffer> pDestHandle, amf_size dstOffset
 
     for (int i = 0; i < dstSize; i+=patternSize)
     {
-        
         [blitCommandEncoder
             copyFromBuffer: tmpBuffer
             sourceOffset: 0
@@ -152,9 +151,8 @@ AMF_RESULT MetalDevice::FillBuffer(id<MTLBuffer> pDestHandle, amf_size dstOffset
             destinationOffset: dstOffset + i
             size: patternSize
         ];
-
-        
     }
+
     [blitCommandEncoder endEncoding];
     [commandBuffer commit];
     [commandBuffer waitUntilCompleted];
