@@ -19,9 +19,22 @@ MetalDevice::MetalDevice()
     m_defaultCommandQueue = [m_device newCommandQueue];
 }
 
+int buffersCount = 0;
+
 id<MTLBuffer> MetalDevice::AllocateBuffer(size_t size)
 {
-    return [m_device newBufferWithLength:size options:MTLResourceStorageModeShared];
+    NSLog(@"AllocateBuffer: %d, size: %d", buffersCount++, size);
+
+    id<MTLBuffer> buffer = [m_device newBufferWithLength:size options:MTLResourceStorageModeShared];
+
+    if(buffer == nil)
+    {
+        NSLog(@"Failed to create buffer.");
+
+        return nil;
+    }
+
+    return buffer;
 }
 
 AMF_RESULT MetalDevice::ReleaseBuffer(id<MTLBuffer>  buffer)
@@ -37,6 +50,7 @@ AMF_RESULT MetalDevice::CopyBuffer(id<MTLBuffer> pDestHandle, size_t dstOffset, 
         if (commandBuffer == nil)
         {
             NSLog(@"Failed to find the process function.");
+
             return AMF_FAIL;
         }
 
@@ -172,8 +186,12 @@ AMF_RESULT MetalDevice::CreateCompute(MetalCompute ** compute)
     return AMF_OK;
 }
 
+int subBuffersCount = 0;
+
 AMF_RESULT MetalDevice::CreateSubBuffer(id<MTLBuffer> pSourceHandle, void ** subBuffer, amf_size offset, amf_size size)
 {
+    NSLog(@"CreateSubBuffer: %d, offset: %d, size: %d", subBuffersCount++, offset, size);
+
     NSUInteger alignedOffset = AlignedValue(offset, true);
     NSUInteger alignedSize = AlignedValue(size, false);
     if (alignedOffset != offset)
@@ -186,17 +204,20 @@ AMF_RESULT MetalDevice::CreateSubBuffer(id<MTLBuffer> pSourceHandle, void ** sub
                                             length: alignedSize
                                             options: MTLResourceStorageModeShared
                                             deallocator: nil];
-    if (!subBuffer)
+    if (!result)
     {
         NSLog(@"CreateSubBuffer: result = nil");
         return  AMF_FAIL;
     }
+
     if ( [result length] != alignedSize)
     {
         NSLog(@"CreateSubBuffer: result length != alignedSize (%lu - %lu) pageSize = %lu", [result length], alignedSize, m_pageSize);
         return  AMF_FAIL;
     }
+
     (*subBuffer) = (void*)result;
+
     return AMF_OK;
 }
 
