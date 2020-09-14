@@ -23,7 +23,7 @@ int buffersCount = 0;
 
 id<MTLBuffer> MetalDevice::AllocateBuffer(size_t size)
 {
-    NSLog(@"AllocateBuffer: %d, size: %d", buffersCount++, size);
+    //NSLog(@"AllocateBuffer: %d, size: %zu", buffersCount++, size);
 
     id<MTLBuffer> buffer = [m_device newBufferWithLength:size options:MTLResourceStorageModeShared];
 
@@ -33,6 +33,8 @@ id<MTLBuffer> MetalDevice::AllocateBuffer(size_t size)
 
         return nil;
     }
+
+    //NSLog(@"Buffer created: %llx", buffer.contents);
 
     return buffer;
 }
@@ -190,16 +192,38 @@ int subBuffersCount = 0;
 
 AMF_RESULT MetalDevice::CreateSubBuffer(id<MTLBuffer> pSourceHandle, void ** subBuffer, amf_size offset, amf_size size)
 {
-    NSLog(@"CreateSubBuffer: %d, offset: %d, size: %d", subBuffersCount++, offset, size);
-
     NSUInteger alignedOffset = AlignedValue(offset, true);
     NSUInteger alignedSize = AlignedValue(size, false);
+
     if (alignedOffset != offset)
     {
         //NSLog(@"CreateSubBuffer: aligned offset != offset");
         NSLog(@"CreateSubBuffer: aligned offset != offset (%lu - %lu) pageSize = %lu", alignedOffset, offset, m_pageSize);
+
+        return AMF_FAIL;
     }
-    float * dataPtr = static_cast<float*>(pSourceHandle.contents);
+
+    unsigned char * dataPtr = static_cast<unsigned char *>(pSourceHandle.contents);
+
+    auto verify = NSUInteger(dataPtr) % m_pageSize;
+    if(verify != 0)
+    {
+        //NSLog(@"CreateSubBuffer: aligned offset != offset");
+        NSLog(@"CreateSubBuffer: address are not alligned: %lu", verify);
+
+        return AMF_FAIL;
+    }
+
+    //NSLog(
+    //    @"CreateSubBuffer: %d, offset: %zu, size: %zu, alignedSize: %lu, source: %llx, ptr: %llx",
+    //    subBuffersCount++,
+    //    offset,
+    //    size,
+    //    alignedSize,
+    //    pSourceHandle.contents,
+    //    (unsigned long)(dataPtr + alignedOffset)
+    //    );
+
     id<MTLBuffer> result = [m_device newBufferWithBytesNoCopy:(dataPtr + alignedOffset)
                                             length: alignedSize
                                             options: MTLResourceStorageModeShared
@@ -207,12 +231,14 @@ AMF_RESULT MetalDevice::CreateSubBuffer(id<MTLBuffer> pSourceHandle, void ** sub
     if (!result)
     {
         NSLog(@"CreateSubBuffer: result = nil");
+
         return  AMF_FAIL;
     }
 
     if ( [result length] != alignedSize)
     {
         NSLog(@"CreateSubBuffer: result length != alignedSize (%lu - %lu) pageSize = %lu", [result length], alignedSize, m_pageSize);
+
         return  AMF_FAIL;
     }
 
