@@ -1,16 +1,16 @@
 #include "MetalCompute.h"
+#include "public/common/TraceAdapter.h"
+
+#define AMF_FACILITY L"MetalCompute"
 
 MetalCompute::MetalCompute(id<MTLDevice> device, id<MTLCommandQueue> commandQueue):
     m_device(device),
-    m_commandQueue(commandQueue),
-    m_kernelBuffers([NSMutableArray array])
+    m_commandQueue(commandQueue)
 {
-    //m_library = [m_device newDefaultLibrary];
 }
 
 MetalCompute::~MetalCompute()
 {
-    [m_kernelBuffers removeAllObjects];
 }
 
 AMF_RESULT MetalCompute::GetKernel(NSString * source, NSString * name, MetalComputeKernel ** kernel)
@@ -45,28 +45,41 @@ AMF_RESULT MetalCompute::GetKernel(NSString * source, NSString * name, MetalComp
         return AMF_FAIL;
     }
 
-    id<MTLCommandBuffer> buffer = [m_commandQueue commandBuffer];
-    [m_kernelBuffers addObject: buffer];
-    (*kernel) = new MetalComputeKernel(buffer, processFunction, processFunctionPSO);
+    std::unique_ptr<MetalComputeKernel> kernelPtr(
+        new MetalComputeKernel(m_commandQueue, processFunction, processFunctionPSO)
+        );
+    AMF_RETURN_IF_FALSE(kernelPtr != nullptr, AMF_FAIL);
+
+    (*kernel) = kernelPtr.get();
+    m_kernelBuffers.push_back(std::move(kernelPtr));
+
     return AMF_OK;
 }
 
 AMF_RESULT MetalCompute::FlushQueue()
 {
-    for (id<MTLCommandBuffer> buffer in m_kernelBuffers)
-    {
-        [buffer commit];
-    }
+    std::for_each(
+        m_kernelBuffers.begin(),
+        m_kernelBuffers.end(),
+        [](std::unique_ptr<MetalComputeKernel> & buffer)
+        {
+            buffer->FlushQueue();
+        }
+        );
 
     return AMF_OK;
 }
 
 AMF_RESULT MetalCompute::FinishQueue()
 {
-    for (id<MTLCommandBuffer> buffer in m_kernelBuffers)
-    {
-        [buffer waitUntilCompleted];
-    }
+    std::for_each(
+        m_kernelBuffers.begin(),
+        m_kernelBuffers.end(),
+        [](std::unique_ptr<MetalComputeKernel> & buffer)
+        {
+            buffer->FinishQueue();
+        }
+        );
 
     return AMF_OK;
 }

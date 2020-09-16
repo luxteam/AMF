@@ -5,9 +5,11 @@
 class MetalComputeKernel
 {
 public:
-    MetalComputeKernel( id<MTLCommandBuffer> buffer,
-                        id<MTLFunction> processFunction,
-                        id<MTLComputePipelineState> processFunctionPSO);
+    MetalComputeKernel(
+        id<MTLCommandQueue>         queue,
+        id<MTLFunction>             processFunction,
+        id<MTLComputePipelineState> processFunctionPSO
+        );
 
     AMF_RESULT SetArgBuffer(id<MTLBuffer> buffer, int index);
     AMF_RESULT SetArgInt32(int32_t value, int index);
@@ -17,8 +19,14 @@ public:
     MTLSize GetCompileWorkgroupSize(MTLSize maxSize);
 
     AMF_RESULT Enqueue(MTLSize workgroupSize, MTLSize sizeInWorkgroup);
+
+    virtual AMF_RESULT Reset();
+    virtual AMF_RESULT FlushQueue();
+    virtual AMF_RESULT FinishQueue();
+
 private:
-    id<MTLCommandBuffer> m_buffer;
+    id<MTLCommandQueue> mCommandQueue;
+    id<MTLCommandBuffer> mCommandBuffer;
     id<MTLComputeCommandEncoder> m_encoder;
     id<MTLFunction> m_processFunction;
     id<MTLComputePipelineState> m_processFunctionPSO;

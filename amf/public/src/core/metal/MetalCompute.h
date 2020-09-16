@@ -2,6 +2,9 @@
 #include "MetalComputeKernel.h"
 #include "../../../include/core/Result.h"
 
+#include <vector>
+#include <memory>
+
 class MetalCompute
 {
 public:
@@ -16,5 +19,6 @@ private:
     id<MTLDevice> m_device;
     id<MTLCommandQueue> m_commandQueue;
     id<MTLLibrary> m_library;
-    NSMutableArray * m_kernelBuffers;
+
+    std::vector<std::unique_ptr<MetalComputeKernel>> m_kernelBuffers;
 };
