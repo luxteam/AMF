@@ -26,13 +26,14 @@ id<MTLBuffer> MetalDevice::AllocateBuffer(size_t size)
     //NSLog(@"AllocateBuffer: %d, size: %zu", buffersCount++, size);
 
     id<MTLBuffer> buffer = [m_device newBufferWithLength:size options:MTLResourceStorageModeShared];
-
     if(buffer == nil)
     {
         NSLog(@"Failed to create buffer.");
 
         return nil;
     }
+
+    assert(!(NSUInteger(buffer.contents) % m_pageSize));
 
     //NSLog(@"Buffer created: %llx", buffer.contents);
 
