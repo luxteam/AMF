@@ -10,6 +10,7 @@ public:
         id<MTLFunction>             processFunction,
         id<MTLComputePipelineState> processFunctionPSO
         );
+    ~MetalComputeKernel();
 
     AMF_RESULT SetArgBuffer(id<MTLBuffer> buffer, int index);
     AMF_RESULT SetArgInt32(int32_t value, int index);
@@ -25,6 +26,17 @@ public:
     virtual AMF_RESULT FinishQueue();
 
 private:
+    enum PipelineState
+    {
+        PipelineState_NotSet,
+        PipelineState_New,
+        PipelineState_Enqueued,
+        PipelineState_Commited,
+        PipelineState_Finished
+    };
+
+    PipelineState mPipelineState = PipelineState_NotSet;
+
     id<MTLCommandQueue> mCommandQueue;
     id<MTLCommandBuffer> mCommandBuffer;
     id<MTLComputeCommandEncoder> m_encoder;
