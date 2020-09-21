@@ -94,7 +94,7 @@ AMF_RESULT MetalComputeKernel::FlushQueue()
     assert(mPipelineState == PipelineState_Enqueued);
     mPipelineState = PipelineState_Commited;
 
-    [mCommandBuffer presentDrawable];
+    //[mCommandBuffer presentDrawable];
     [mCommandBuffer commit];
 
     //NSLog(@"<<MCK::FlQ");
@@ -133,7 +133,8 @@ AMF_RESULT MetalComputeKernel::Reset()
         mCommandBuffer = [mCommandQueue commandBuffer];
     }
 
-    m_encoder = [mCommandBuffer computeCommandEncoder dispatchType:concurrent];
+    //m_encoder = [mCommandBuffer computeCommandEncoder dispatchType:concurrent];
+    m_encoder = [mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
     //m_encoder = [mCommandBuffer makeComputeCommandEncoder];
     assert(m_encoder != nil);
 
