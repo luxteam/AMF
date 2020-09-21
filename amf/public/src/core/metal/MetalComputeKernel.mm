@@ -18,7 +18,7 @@ MetalComputeKernel::MetalComputeKernel(
 
 MetalComputeKernel::~MetalComputeKernel()
 {
-    NSLog(@"~MetalComputeKernel");
+    NSLog(@"~MetalComputeKernel %p", this);
 }
 
 AMF_RESULT MetalComputeKernel::SetArgBuffer(id<MTLBuffer> buffer, int index)
@@ -73,6 +73,8 @@ MTLSize MetalComputeKernel::GetCompileWorkgroupSize(MTLSize maxSize)
 
 AMF_RESULT MetalComputeKernel::Enqueue(MTLSize workgroupSize, MTLSize sizeInWorkgroup)
 {
+    NSLog(@">>MCK::Enq %p", this);
+
     assert(mPipelineState == PipelineState_New);
     mPipelineState = PipelineState_Enqueued;
 
@@ -80,44 +82,68 @@ AMF_RESULT MetalComputeKernel::Enqueue(MTLSize workgroupSize, MTLSize sizeInWork
             threadsPerThreadgroup:sizeInWorkgroup];
     [m_encoder endEncoding];
 
+    //NSLog(@"<<MCK::Enq");
+
     return AMF_OK;
 }
 
 AMF_RESULT MetalComputeKernel::FlushQueue()
 {
+    NSLog(@">>MCK::FlQ %p", this);
+
     assert(mPipelineState == PipelineState_Enqueued);
     mPipelineState = PipelineState_Commited;
 
+    [mCommandBuffer presentDrawable];
     [mCommandBuffer commit];
+
+    //NSLog(@"<<MCK::FlQ");
 
     return AMF_OK;
 }
 
 AMF_RESULT MetalComputeKernel::FinishQueue()
 {
+    NSLog(@">>MCK::FiQ %p", this);
+
     assert(mPipelineState == PipelineState_Commited);
     mPipelineState = PipelineState_Finished;
 
     [mCommandBuffer waitUntilCompleted];
+
+    //NSLog(@"<<MCK::FiQ");
 
     return Reset();
 }
 
 AMF_RESULT MetalComputeKernel::Reset()
 {
+    NSLog(@">>MCK::Res %p", this);
+
     assert(mPipelineState == PipelineState_Finished || mPipelineState == PipelineState_NotSet);
 
-    mCommandBuffer = [mCommandQueue commandBuffer];
+    if(mPipelineState == PipelineState_Finished)
+    {
+        //[m_encoder endEncoding];
+    }
 
-    m_encoder = [mCommandBuffer computeCommandEncoder];
+    if(mPipelineState == PipelineState_NotSet)
+    {
+        //[m_encoder endEncoding];
+        mCommandBuffer = [mCommandQueue commandBuffer];
+    }
+
+    m_encoder = [mCommandBuffer computeCommandEncoder dispatchType:concurrent];
+    //m_encoder = [mCommandBuffer makeComputeCommandEncoder];
     assert(m_encoder != nil);
 
     [m_encoder setComputePipelineState:m_processFunctionPSO];
 
     mPipelineState = PipelineState_New;
 
+    //NSLog(@"<<MCK::Res");
+
     return mCommandBuffer && m_encoder
         ? AMF_OK
         : AMF_FAIL;
 }
-
