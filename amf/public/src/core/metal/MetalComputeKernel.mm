@@ -2,6 +2,9 @@
 
 #include "public/common/TraceAdapter.h"
 
+#include <thread>
+#include <iostream>
+
 #define AMF_FACILITY L"MetalComputeKernel"
 
 MetalComputeKernel::MetalComputeKernel(
@@ -73,7 +76,8 @@ MTLSize MetalComputeKernel::GetCompileWorkgroupSize(MTLSize maxSize)
 
 AMF_RESULT MetalComputeKernel::Enqueue(MTLSize workgroupSize, MTLSize sizeInWorkgroup)
 {
-    NSLog(@">>MCK::Enq %p", this);
+    //std::cout << ">>MCK::Enq " << std::this_thread::get_id() << ": " << this << std::endl;
+    //NSLog(@">>MCK::Enq %d %p", std::this_thread::get_id(), this);
 
     assert(mPipelineState == PipelineState_New);
     mPipelineState = PipelineState_Enqueued;
@@ -89,8 +93,8 @@ AMF_RESULT MetalComputeKernel::Enqueue(MTLSize workgroupSize, MTLSize sizeInWork
 
 AMF_RESULT MetalComputeKernel::FlushQueue()
 {
-    NSLog(@">>MCK::FlQ %p", this);
-
+    //std::cout << ">>MCK::Flu " << std::this_thread::get_id() << ": " << this << std::endl;
+    
     assert(mPipelineState == PipelineState_Enqueued);
     mPipelineState = PipelineState_Commited;
 
@@ -104,8 +108,8 @@ AMF_RESULT MetalComputeKernel::FlushQueue()
 
 AMF_RESULT MetalComputeKernel::FinishQueue()
 {
-    NSLog(@">>MCK::FiQ %p", this);
-
+    //std::cout << ">>MCK::Fin " << std::this_thread::get_id() << ": " << this << std::endl;
+    
     assert(mPipelineState == PipelineState_Commited);
     mPipelineState = PipelineState_Finished;
 
@@ -118,8 +122,8 @@ AMF_RESULT MetalComputeKernel::FinishQueue()
 
 AMF_RESULT MetalComputeKernel::Reset()
 {
-    NSLog(@">>MCK::Res %p", this);
-
+    //std::cout << ">>MCK::Res " << std::this_thread::get_id() << ": " << this << std::endl;
+    
     assert(mPipelineState == PipelineState_Finished || mPipelineState == PipelineState_NotSet);
 
     if(mPipelineState == PipelineState_Finished)
@@ -130,12 +134,19 @@ AMF_RESULT MetalComputeKernel::Reset()
     if(mPipelineState == PipelineState_NotSet)
     {
         //[m_encoder endEncoding];
-        mCommandBuffer = [mCommandQueue commandBuffer];
+        //mCommandBuffer = [mCommandQueue commandBuffer];
+    }
+    
+    else
+    {
+        [m_encoder release];
+        m_encoder = nil;
+        //[m_encoder dealloc];
     }
 
-    //m_encoder = [mCommandBuffer computeCommandEncoder dispatchType:concurrent];
-    m_encoder = [mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
-    //m_encoder = [mCommandBuffer makeComputeCommandEncoder];
+    mCommandBuffer = [mCommandQueue commandBuffer];
+    m_encoder = [mCommandBuffer computeCommandEncoder];
+    //m_encoder = [mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
     assert(m_encoder != nil);
 
     [m_encoder setComputePipelineState:m_processFunctionPSO];
