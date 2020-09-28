@@ -85,6 +85,7 @@ AMF_RESULT MetalComputeKernel::Enqueue(MTLSize workgroupSize, MTLSize sizeInWork
     [m_encoder dispatchThreads:workgroupSize
             threadsPerThreadgroup:sizeInWorkgroup];
     [m_encoder endEncoding];
+    [mCommandBuffer enqueue];
 
     //NSLog(@"<<MCK::Enq");
 
@@ -94,7 +95,7 @@ AMF_RESULT MetalComputeKernel::Enqueue(MTLSize workgroupSize, MTLSize sizeInWork
 AMF_RESULT MetalComputeKernel::FlushQueue()
 {
     //std::cout << ">>MCK::Flu " << std::this_thread::get_id() << ": " << this << std::endl;
-    
+
     assert(mPipelineState == PipelineState_Enqueued);
     mPipelineState = PipelineState_Commited;
 
@@ -109,7 +110,7 @@ AMF_RESULT MetalComputeKernel::FlushQueue()
 AMF_RESULT MetalComputeKernel::FinishQueue()
 {
     //std::cout << ">>MCK::Fin " << std::this_thread::get_id() << ": " << this << std::endl;
-    
+
     assert(mPipelineState == PipelineState_Commited);
     mPipelineState = PipelineState_Finished;
 
@@ -123,33 +124,32 @@ AMF_RESULT MetalComputeKernel::FinishQueue()
 AMF_RESULT MetalComputeKernel::Reset()
 {
     //std::cout << ">>MCK::Res " << std::this_thread::get_id() << ": " << this << std::endl;
-    
+
     assert(mPipelineState == PipelineState_Finished || mPipelineState == PipelineState_NotSet);
 
     if(mPipelineState == PipelineState_Finished)
     {
-        //[m_encoder endEncoding];
-    }
+        NSLog(@"Retain count1 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
+        //[m_encoder release];
+        //[mCommandQueue release];
+        [m_encoder autorelease];
+        [mCommandQueue autorelease];
 
-    if(mPipelineState == PipelineState_NotSet)
-    {
-        //[m_encoder endEncoding];
-        //mCommandBuffer = [mCommandQueue commandBuffer];
-    }
-    
-    else
-    {
-        [m_encoder release];
-        m_encoder = nil;
-        //[m_encoder dealloc];
+        NSLog(@"Retain count2 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
+
+        [newPool drain];
+        //NSLog(@"Retain count3 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
     }
 
     mCommandBuffer = [mCommandQueue commandBuffer];
-    m_encoder = [mCommandBuffer computeCommandEncoder];
-    //m_encoder = [mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
-    assert(m_encoder != nil);
+    //mCommandBuffer = [[mCommandQueue commandBuffer] autorelease];
 
+    //m_encoder = [mCommandBuffer computeCommandEncoder];
+    //m_encoder = [mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
+    m_encoder = [[mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent] autorelease];
     [m_encoder setComputePipelineState:m_processFunctionPSO];
+
+    NSLog(@"Retain count3 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
 
     mPipelineState = PipelineState_New;
 

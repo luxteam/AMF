@@ -35,6 +35,9 @@ private:
         PipelineState_Finished
     };
 
+    //make a new current global pool (the "new pool")
+    NSAutoreleasePool * newPool = [[NSAutoreleasePool alloc] init];
+
     PipelineState mPipelineState = PipelineState_NotSet;
 
     id<MTLCommandQueue> mCommandQueue;
