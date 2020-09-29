@@ -132,21 +132,28 @@ AMF_RESULT MetalComputeKernel::Reset()
         NSLog(@"Retain count1 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
         //[m_encoder release];
         //[mCommandQueue release];
-        [m_encoder autorelease];
-        [mCommandQueue autorelease];
+        //[m_encoder autorelease];
+        //[mCommandQueue autorelease];
 
-        NSLog(@"Retain count2 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
+        //NSLog(@"Retain count2 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
+        //[mCommandBuffer release];
 
-        [newPool drain];
+        //[mLocalPool drain];
         //NSLog(@"Retain count3 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
+        
+        [mLocalPool release];
+        //NSLog(@"Retain count2 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
     }
 
+    mLocalPool = [[NSAutoreleasePool alloc] init];
+    
     mCommandBuffer = [mCommandQueue commandBuffer];
+    //[newPool addObject: mCommandBuffer];
     //mCommandBuffer = [[mCommandQueue commandBuffer] autorelease];
 
     //m_encoder = [mCommandBuffer computeCommandEncoder];
-    //m_encoder = [mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
-    m_encoder = [[mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent] autorelease];
+    m_encoder = [mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
+    //m_encoder = [[mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent] autorelease];
     [m_encoder setComputePipelineState:m_processFunctionPSO];
 
     NSLog(@"Retain count3 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
