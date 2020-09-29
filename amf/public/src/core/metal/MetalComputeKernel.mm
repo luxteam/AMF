@@ -82,10 +82,12 @@ AMF_RESULT MetalComputeKernel::Enqueue(MTLSize workgroupSize, MTLSize sizeInWork
     assert(mPipelineState == PipelineState_New);
     mPipelineState = PipelineState_Enqueued;
 
+    NSLog(@">>command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
     [m_encoder dispatchThreads:workgroupSize
             threadsPerThreadgroup:sizeInWorkgroup];
     [m_encoder endEncoding];
     [mCommandBuffer enqueue];
+    NSLog(@"<<command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
 
     //NSLog(@"<<MCK::Enq");
 
@@ -99,11 +101,10 @@ AMF_RESULT MetalComputeKernel::FlushQueue()
     assert(mPipelineState == PipelineState_Enqueued);
     mPipelineState = PipelineState_Commited;
 
-    //[mCommandBuffer presentDrawable];
+    NSLog(@">>command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
     [mCommandBuffer commit];
-
-    //NSLog(@"<<MCK::FlQ");
-
+    NSLog(@"<<command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
+    
     return AMF_OK;
 }
 
@@ -114,9 +115,9 @@ AMF_RESULT MetalComputeKernel::FinishQueue()
     assert(mPipelineState == PipelineState_Commited);
     mPipelineState = PipelineState_Finished;
 
+    NSLog(@">>command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
     [mCommandBuffer waitUntilCompleted];
-
-    //NSLog(@"<<MCK::FiQ");
+    NSLog(@"<<command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
 
     return Reset();
 }
@@ -129,7 +130,7 @@ AMF_RESULT MetalComputeKernel::Reset()
 
     if(mPipelineState == PipelineState_Finished)
     {
-        NSLog(@"Retain count1 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
+        NSLog(@"used retain %llx %llx is %d %d %d", m_encoder, mCommandBuffer, [m_encoder retainCount], [mCommandBuffer retainCount], [mCommandQueue retainCount]);
         //[m_encoder release];
         //[mCommandQueue release];
         //[m_encoder autorelease];
@@ -156,7 +157,7 @@ AMF_RESULT MetalComputeKernel::Reset()
     //m_encoder = [[mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent] autorelease];
     [m_encoder setComputePipelineState:m_processFunctionPSO];
 
-    NSLog(@"Retain count3 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
+    NSLog(@"new retain %llx %llx is %d %d %d", m_encoder, mCommandBuffer, [m_encoder retainCount], [mCommandBuffer retainCount], [mCommandQueue retainCount]);
 
     mPipelineState = PipelineState_New;
 

@@ -67,13 +67,13 @@ int main(int argc, char *argv[])
         using namespace metal;
 
         kernel void add_array(
-            device float*           result,
+            device int32_t *        result,
             constant int32_t &      value,
 
             uint2 global_id [[thread_position_in_grid]]
             )
         {
-            result[global_id.x] += global_id.id;
+            result[global_id.x] += value;
         }
         )";
 
@@ -93,14 +93,14 @@ int main(int argc, char *argv[])
         }
         )";
 
-    amf::AMF_KERNEL_ID kernel1_1;
+    amf::AMF_KERNEL_ID kernel1_1(0);
     AMF_RETURN_IF_FAILED(pPrograms->RegisterKernelSource(&kernel1_1, L"init_src", "init_array", strlen(init_src), (amf_uint8*)init_src, ""));
 
-    amf::AMF_KERNEL_ID kernel1_2;
-    //AMF_RETURN_IF_FAILED(pPrograms->RegisterKernelSource(&kernel1_2, L"add_src", "add_array", strlen(init_src), (amf_uint8*)add_src, "option"));
+    amf::AMF_KERNEL_ID kernel1_2(0);
+    AMF_RETURN_IF_FAILED(pPrograms->RegisterKernelSource(&kernel1_2, L"add_src", "add_array", strlen(init_src), (amf_uint8*)add_src, "option"));
 
     amf::AMF_KERNEL_ID kernel12_1;
-    //AMF_RETURN_IF_FAILED(pPrograms->RegisterKernelSource(&kernel12_1, L"mult_src", "mult_array", strlen(mult_src), (amf_uint8*)mult_src, "option"));
+    AMF_RETURN_IF_FAILED(pPrograms->RegisterKernelSource(&kernel12_1, L"mult_src", "mult_array", strlen(mult_src), (amf_uint8*)mult_src, "option"));
 
     amf::AMFComputePtr pCompute1;
     AMF_RETURN_IF_FAILED(pComputeDevice->CreateCompute(nullptr, &pCompute1));
@@ -111,11 +111,14 @@ int main(int argc, char *argv[])
     amf::AMFComputeKernelPtr pKernel1;
     AMF_RETURN_IF_FAILED(pCompute1->GetKernel(kernel1_1, &pKernel1));
 
-    //amf::AMFComputeKernelPtr pKernel2;
-    //AMF_RETURN_IF_FAILED(pCompute1->GetKernel(kernel1_2, &pKernel2));
+    amf::AMFComputeKernelPtr pKernel2;
+    AMF_RETURN_IF_FAILED(pCompute1->GetKernel(kernel1_2, &pKernel2));
 
-    amf::AMFComputeKernelPtr pKernel3;
+    //amf::AMFComputeKernelPtr pKernel3;
     //AMF_RETURN_IF_FAILED(pCompute2->GetKernel(kernel12_1, &pKernel3));
+    
+    amf::AMFComputeKernelPtr pKernel4;
+    AMF_RETURN_IF_FAILED(pCompute1->GetKernel(kernel1_1, &pKernel4));
 
     const int arraysSize = 128;
 
@@ -127,8 +130,11 @@ int main(int argc, char *argv[])
         AMF_RETURN_IF_FAILED(pKernel1->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE));
         AMF_RETURN_IF_FAILED(pKernel1->SetArgInt32(1, cycle));
 
-        //AMF_RETURN_IF_FALSE(AMF_OK == pKernel2->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE), -1);
-        //AMF_RETURN_IF_FALSE(AMF_OK == pKernel2->SetArgInt32(1, cycle), -1);
+        AMF_RETURN_IF_FAILED(pKernel2->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE));
+        AMF_RETURN_IF_FAILED(pKernel2->SetArgInt32(1, cycle));
+        
+        AMF_RETURN_IF_FAILED(pKernel4->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE));
+        AMF_RETURN_IF_FAILED(pKernel4->SetArgInt32(1, cycle));
 
         amf_size sizeLocal[3] = {arraysSize, 1, 1};
         amf_size sizeGlobal[3] = {arraysSize, 1, 1};
@@ -141,7 +147,8 @@ int main(int argc, char *argv[])
         //    threadsPerThreadgroup:sizeInWorkgroup];
         //[MTLComputeCommandEncoder endEncoding];
         AMF_RETURN_IF_FAILED(pKernel1->Enqueue(1, 0, sizeGlobal, sizeLocal));
-        //AMF_RETURN_IF_FALSE(AMF_OK == pKernel2->Enqueue(1, 0, sizeGlobal, sizeLocal), -1);
+        AMF_RETURN_IF_FAILED(pKernel2->Enqueue(1, 0, sizeGlobal, sizeLocal));
+        AMF_RETURN_IF_FAILED(pKernel4->Enqueue(1, 0, sizeGlobal, sizeLocal));
         
         //continue;
         
