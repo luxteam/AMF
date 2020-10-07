@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #include "../../../include/core/Result.h"
+#include <vector>
 
 class MetalComputeKernel
 {
@@ -10,6 +11,24 @@ public:
         id<MTLFunction>             processFunction,
         id<MTLComputePipelineState> processFunctionPSO
         );
+    
+    struct Bindind
+    {
+        enum Type{
+            Buffer,
+            Int64,
+            Int32,
+            Float
+        };
+        Type type;
+        int index;
+        union {
+            int64_t value64;
+            int32_t value32;
+            float valueFloat;
+            id<MTLBuffer> buffer;
+        };
+    };
     ~MetalComputeKernel();
 
     AMF_RESULT SetArgBuffer(id<MTLBuffer> buffer, int index);
@@ -42,8 +61,9 @@ private:
     PipelineState mPipelineState = PipelineState_NotSet;
 
     id<MTLCommandQueue> mCommandQueue;
-    id<MTLCommandBuffer> mCommandBuffer;
-    id<MTLComputeCommandEncoder> m_encoder;
     id<MTLFunction> m_processFunction;
     id<MTLComputePipelineState> m_processFunctionPSO;
+    std::vector<MetalComputeKernel::Bindind> m_bindings;
+    MTLSize m_workgroupSize;
+    MTLSize m_sizeInWorkgroup;
 };

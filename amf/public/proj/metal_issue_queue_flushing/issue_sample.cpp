@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
         using namespace metal;
 
         kernel void init_array(
-            device int32_t *        result,
+            device float *        result,
             constant int32_t &      value,
 
             uint2 global_id [[thread_position_in_grid]]
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
         using namespace metal;
 
         kernel void add_array(
-            device int32_t *        result,
+            device float *        result,
             constant int32_t &      value,
 
             uint2 global_id [[thread_position_in_grid]]
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
             uint2 global_id [[thread_position_in_grid]]
             )
         {
-            result[global_id.x] = result[global_id.x] * value;
+            result[global_id.x] *= value;
         }
         )";
 
@@ -105,36 +105,30 @@ int main(int argc, char *argv[])
     amf::AMFComputePtr pCompute1;
     AMF_RETURN_IF_FAILED(pComputeDevice->CreateCompute(nullptr, &pCompute1));
 
-    amf::AMFComputePtr pCompute2;
-    //AMF_RETURN_IF_FAILED(pComputeDevice->CreateCompute(nullptr, &pCompute2));
-
     amf::AMFComputeKernelPtr pKernel1;
     AMF_RETURN_IF_FAILED(pCompute1->GetKernel(kernel1_1, &pKernel1));
 
     amf::AMFComputeKernelPtr pKernel2;
     AMF_RETURN_IF_FAILED(pCompute1->GetKernel(kernel1_2, &pKernel2));
 
-    //amf::AMFComputeKernelPtr pKernel3;
-    //AMF_RETURN_IF_FAILED(pCompute2->GetKernel(kernel12_1, &pKernel3));
-    
-    amf::AMFComputeKernelPtr pKernel4;
-    AMF_RETURN_IF_FAILED(pCompute1->GetKernel(kernel1_1, &pKernel4));
+    amf::AMFComputeKernelPtr pKernel3;
+    AMF_RETURN_IF_FAILED(pCompute1->GetKernel(kernel12_1, &pKernel3));
 
     const int arraysSize = 128;
 
     amf::AMFBufferPtr buf1;
     AMF_RETURN_IF_FAILED(context->AllocBuffer(amf::AMF_MEMORY_METAL, arraysSize * sizeof(int32_t), &buf1));
 
-    for(int cycle(0); cycle < 10000000000; ++cycle)
+    for(int cycle(0); cycle < 10000; ++cycle)
     {
         AMF_RETURN_IF_FAILED(pKernel1->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE));
-        AMF_RETURN_IF_FAILED(pKernel1->SetArgInt32(1, cycle));
+        AMF_RETURN_IF_FAILED(pKernel1->SetArgInt32(1, 2));
 
         AMF_RETURN_IF_FAILED(pKernel2->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE));
-        AMF_RETURN_IF_FAILED(pKernel2->SetArgInt32(1, cycle));
+        AMF_RETURN_IF_FAILED(pKernel2->SetArgInt32(1, 2));
         
-        AMF_RETURN_IF_FAILED(pKernel4->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE));
-        AMF_RETURN_IF_FAILED(pKernel4->SetArgInt32(1, cycle));
+        AMF_RETURN_IF_FAILED(pKernel3->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE));
+        AMF_RETURN_IF_FAILED(pKernel3->SetArgInt32(1, 2));
 
         amf_size sizeLocal[3] = {arraysSize, 1, 1};
         amf_size sizeGlobal[3] = {arraysSize, 1, 1};
@@ -148,7 +142,7 @@ int main(int argc, char *argv[])
         //[MTLComputeCommandEncoder endEncoding];
         AMF_RETURN_IF_FAILED(pKernel1->Enqueue(1, 0, sizeGlobal, sizeLocal));
         AMF_RETURN_IF_FAILED(pKernel2->Enqueue(1, 0, sizeGlobal, sizeLocal));
-        AMF_RETURN_IF_FAILED(pKernel4->Enqueue(1, 0, sizeGlobal, sizeLocal));
+        AMF_RETURN_IF_FAILED(pKernel3->Enqueue(1, 0, sizeGlobal, sizeLocal));
         
         //continue;
         
@@ -163,28 +157,6 @@ int main(int argc, char *argv[])
         //    [buffer waitUntilCompleted];
         //}
         AMF_RETURN_IF_FAILED(pCompute1->FinishQueue());
-        
-        /*
-        AMF_RETURN_IF_FAILED(buf1->Convert(amf::AMF_MEMORY_HOST));
-
-        {
-            int32_t *outputData = static_cast<int32_t*>(buf1->GetNative());
-
-            for (int k = 0; k < arraysSize; k++ )
-            {
-                std::cout << "result[" << k << "] = " << outputData[k] << std::endl;
-            }
-        }
-        
-        AMF_RETURN_IF_FAILED(buf1->Convert(amf::AMF_MEMORY_METAL));
-        */
-        
-        //AMF_RETURN_IF_FALSE(AMF_OK == pKernel3->SetArgBuffer(0, buf1, amf::AMF_ARGUMENT_ACCESS_WRITE), -1);
-        //AMF_RETURN_IF_FALSE(AMF_OK == pKernel3->SetArgInt32(1, cycle), -1);
-
-        //AMF_RETURN_IF_FALSE(AMF_OK == pKernel3->Enqueue(1, 0, sizeGlobal, sizeLocal), -1);
-        //AMF_RETURN_IF_FALSE(AMF_OK == pCompute2->FlushQueue(), -1);
-        //AMF_RETURN_IF_FALSE(AMF_OK == pCompute2->FinishQueue(), -1);
     }
 
     AMF_RETURN_IF_FAILED(buf1->Convert(amf::AMF_MEMORY_HOST));

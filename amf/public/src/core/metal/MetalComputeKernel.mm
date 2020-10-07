@@ -16,7 +16,7 @@ MetalComputeKernel::MetalComputeKernel(
     m_processFunction(processFunction),
     m_processFunctionPSO(processFunctionPSO)
 {
-    Reset();
+
 }
 
 MetalComputeKernel::~MetalComputeKernel()
@@ -26,36 +26,44 @@ MetalComputeKernel::~MetalComputeKernel()
 
 AMF_RESULT MetalComputeKernel::SetArgBuffer(id<MTLBuffer> buffer, int index)
 {
-    assert(mPipelineState == PipelineState_New);
-
-    [m_encoder setBuffer:buffer offset:0 atIndex:index];
-
+    Bindind bind;
+    bind.type = Bindind::Buffer;
+    bind.buffer = buffer;
+    bind.index = index;
+    m_bindings.push_back(bind);
+    
     return AMF_OK;
 }
 
 AMF_RESULT MetalComputeKernel::SetArgInt32(int32_t value, int index)
 {
-    assert(mPipelineState == PipelineState_New);
-
-    [m_encoder setBytes:&value length:sizeof(int32_t) atIndex:index];
+    Bindind bind;
+    bind.type = Bindind::Int32;
+    bind.value32 = value;
+    bind.index = index;
+    m_bindings.push_back(bind);
 
     return AMF_OK;
 }
 
 AMF_RESULT MetalComputeKernel::SetArgInt64(int64_t value, int index)
 {
-    assert(mPipelineState == PipelineState_New);
-
-    [m_encoder setBytes:&value length:sizeof(int64_t) atIndex:index];
+    Bindind bind;
+    bind.type = Bindind::Int64;
+    bind.value64 = value;
+    bind.index = index;
+    m_bindings.push_back(bind);
 
     return AMF_OK;
 }
 
 AMF_RESULT MetalComputeKernel::SetArgFloat(float value, int index)
 {
-    assert(mPipelineState == PipelineState_New);
-
-    [m_encoder setBytes:&value length:sizeof(float) atIndex:index];
+    Bindind bind;
+    bind.type = Bindind::Float;
+    bind.valueFloat = value;
+    bind.index = index;
+    m_bindings.push_back(bind);
 
     return AMF_OK;
 }
@@ -76,94 +84,55 @@ MTLSize MetalComputeKernel::GetCompileWorkgroupSize(MTLSize maxSize)
 
 AMF_RESULT MetalComputeKernel::Enqueue(MTLSize workgroupSize, MTLSize sizeInWorkgroup)
 {
-    //std::cout << ">>MCK::Enq " << std::this_thread::get_id() << ": " << this << std::endl;
-    //NSLog(@">>MCK::Enq %d %p", std::this_thread::get_id(), this);
-
-    assert(mPipelineState == PipelineState_New);
-    mPipelineState = PipelineState_Enqueued;
-
-    NSLog(@">>command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
-    [m_encoder dispatchThreads:workgroupSize
-            threadsPerThreadgroup:sizeInWorkgroup];
-    [m_encoder endEncoding];
-    [mCommandBuffer enqueue];
-    NSLog(@"<<command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
-
-    //NSLog(@"<<MCK::Enq");
+    m_workgroupSize = workgroupSize;
+    m_sizeInWorkgroup = sizeInWorkgroup;
 
     return AMF_OK;
 }
 
 AMF_RESULT MetalComputeKernel::FlushQueue()
 {
-    //std::cout << ">>MCK::Flu " << std::this_thread::get_id() << ": " << this << std::endl;
-
-    assert(mPipelineState == PipelineState_Enqueued);
-    mPipelineState = PipelineState_Commited;
-
-    NSLog(@">>command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
-    [mCommandBuffer commit];
-    NSLog(@"<<command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
-    
     return AMF_OK;
 }
 
 AMF_RESULT MetalComputeKernel::FinishQueue()
 {
-    //std::cout << ">>MCK::Fin " << std::this_thread::get_id() << ": " << this << std::endl;
-
-    assert(mPipelineState == PipelineState_Commited);
-    mPipelineState = PipelineState_Finished;
-
-    NSLog(@">>command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
-    [mCommandBuffer waitUntilCompleted];
-    NSLog(@"<<command buffer %llx status =  %lu.", mCommandBuffer, [mCommandBuffer status]);
-
+    @autoreleasepool {
+        id<MTLCommandBuffer> commandBuffer = [mCommandQueue commandBuffer];
+        id<MTLComputeCommandEncoder> encoder = [commandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
+        [encoder setComputePipelineState:m_processFunctionPSO];
+        
+        for(MetalComputeKernel::Bindind & bind : m_bindings)
+        {
+            switch (bind.type) {
+                case Bindind::Buffer:
+                    [encoder setBuffer:bind.buffer offset:0 atIndex:bind.index];
+                    break;
+                case MetalComputeKernel::Bindind::Int32:
+                    [encoder setBytes:&bind.value32 length:sizeof(int32_t) atIndex:bind.index];
+                    break;
+                case MetalComputeKernel::Bindind::Int64:
+                    [encoder setBytes:&bind.value64 length:sizeof(int64_t) atIndex:bind.index];
+                    break;
+                case MetalComputeKernel::Bindind::Float:
+                    [encoder setBytes:&bind.valueFloat length:sizeof(float) atIndex:bind.index];
+                    break;
+                default:
+                    break;
+            }
+        }
+        [encoder dispatchThreads:m_workgroupSize
+                threadsPerThreadgroup:m_sizeInWorkgroup];
+        [encoder endEncoding];
+        //[commandBuffer enqueue];
+        [commandBuffer commit];
+        [commandBuffer waitUntilCompleted];
+    }
     return Reset();
 }
 
 AMF_RESULT MetalComputeKernel::Reset()
 {
-    //std::cout << ">>MCK::Res " << std::this_thread::get_id() << ": " << this << std::endl;
-
-    assert(mPipelineState == PipelineState_Finished || mPipelineState == PipelineState_NotSet);
-
-    if(mPipelineState == PipelineState_Finished)
-    {
-        NSLog(@"used retain %llx %llx is %d %d %d", m_encoder, mCommandBuffer, [m_encoder retainCount], [mCommandBuffer retainCount], [mCommandQueue retainCount]);
-        //[m_encoder release];
-        //[mCommandQueue release];
-        //[m_encoder autorelease];
-        //[mCommandQueue autorelease];
-
-        //NSLog(@"Retain count2 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
-        //[mCommandBuffer release];
-
-        //[mLocalPool drain];
-        //NSLog(@"Retain count3 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
-        
-        [mLocalPool release];
-        //NSLog(@"Retain count2 is %d %d", [m_encoder retainCount], [mCommandQueue retainCount]);
-    }
-
-    mLocalPool = [[NSAutoreleasePool alloc] init];
-    
-    mCommandBuffer = [mCommandQueue commandBuffer];
-    //[newPool addObject: mCommandBuffer];
-    //mCommandBuffer = [[mCommandQueue commandBuffer] autorelease];
-
-    //m_encoder = [mCommandBuffer computeCommandEncoder];
-    m_encoder = [mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
-    //m_encoder = [[mCommandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent] autorelease];
-    [m_encoder setComputePipelineState:m_processFunctionPSO];
-
-    NSLog(@"new retain %llx %llx is %d %d %d", m_encoder, mCommandBuffer, [m_encoder retainCount], [mCommandBuffer retainCount], [mCommandQueue retainCount]);
-
-    mPipelineState = PipelineState_New;
-
-    //NSLog(@"<<MCK::Res");
-
-    return mCommandBuffer && m_encoder
-        ? AMF_OK
-        : AMF_FAIL;
+    m_bindings.clear();
+    return AMF_OK;
 }
