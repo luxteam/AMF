@@ -262,7 +262,7 @@ AMF_RESULT AMFComputeMetalImpl::CopyBufferToHost(AMFBuffer *pSrcBuffer, amf_size
 
 AMF_RESULT AMFComputeMetalImpl::CopyBufferFromHost(const void *pSource, amf_size size, AMFBuffer *pDstBuffer, amf_size dstOffsetInBytes, amf_bool blocking)
 {
-    return m_device->CopyBufferFromHost(pDstBuffer, dstOffsetInBytes, pSource, size, blocking);
+    return m_device->CopyBufferFromHost(pDstBuffer->GetNative(), dstOffsetInBytes, pSource, size, blocking);
 }
 
 AMF_RESULT AMFComputeMetalImpl::CopyPlaneToHost(AMFPlane *pSrcPlane, const amf_size origin[], const amf_size region[], void *pDest, amf_size dstPitch, amf_bool blocking)
