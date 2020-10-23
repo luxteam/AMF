@@ -11,7 +11,7 @@ public:
         id<MTLFunction>             processFunction,
         id<MTLComputePipelineState> processFunctionPSO
         );
-    
+
     struct Bindind
     {
         enum Type{
@@ -53,10 +53,6 @@ private:
         PipelineState_Commited,
         PipelineState_Finished
     };
-
-    //make a new current global pool (the "new pool")
-    //NSAutoreleasePool * newPool = [[NSAutoreleasePool alloc] init];
-    NSAutoreleasePool * mLocalPool = nullptr;
 
     PipelineState mPipelineState = PipelineState_NotSet;
 

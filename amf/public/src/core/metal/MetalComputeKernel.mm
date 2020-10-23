@@ -16,12 +16,10 @@ MetalComputeKernel::MetalComputeKernel(
     m_processFunction(processFunction),
     m_processFunctionPSO(processFunctionPSO)
 {
-
 }
 
 MetalComputeKernel::~MetalComputeKernel()
 {
-    NSLog(@"~MetalComputeKernel %p", this);
 }
 
 AMF_RESULT MetalComputeKernel::SetArgBuffer(id<MTLBuffer> buffer, int index)
@@ -31,7 +29,7 @@ AMF_RESULT MetalComputeKernel::SetArgBuffer(id<MTLBuffer> buffer, int index)
     bind.buffer = buffer;
     bind.index = index;
     m_bindings.push_back(bind);
-    
+
     return AMF_OK;
 }
 
@@ -101,7 +99,7 @@ AMF_RESULT MetalComputeKernel::FinishQueue()
         id<MTLCommandBuffer> commandBuffer = [mCommandQueue commandBuffer];
         id<MTLComputeCommandEncoder> encoder = [commandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
         [encoder setComputePipelineState:m_processFunctionPSO];
-        
+
         for(MetalComputeKernel::Bindind & bind : m_bindings)
         {
             switch (bind.type) {
