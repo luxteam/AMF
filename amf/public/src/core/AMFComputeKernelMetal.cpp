@@ -69,10 +69,11 @@ AMF_RESULT    AMFComputeKernelMetal::GetCompileWorkgroupSize(amf_size workgroupS
 AMF_RESULT    AMFComputeKernelMetal::Enqueue(amf_size dimension, amf_size globalOffset[3], amf_size globalSize[3], amf_size localSize[3])
 {
     AMF_RETURN_IF_FALSE(dimension >= 1 && dimension <= 2, AMF_NOT_SUPPORTED);
+    AMF_RETURN_IF_FALSE(globalSize != nullptr, AMF_INVALID_ARG);
     AMF_RETURN_IF_FALSE(!globalOffset, AMF_NOT_SUPPORTED);
 
     amf_size globalSizeCorrected[3] = {globalSize[0], dimension > 1 ? globalSize[1] : 1, 1};
-    amf_size localSizeCorrected[3] = {localSize[0], dimension > 1 ? localSize[1] : 1, 1};
+    amf_size localSizeCorrected[3] = {localSize ? localSize[0] : 1, dimension > 1 && localSize ? localSize[1] : 1, 1};
 
     return m_kernel->Enqueue(globalSizeCorrected, localSizeCorrected);
 }

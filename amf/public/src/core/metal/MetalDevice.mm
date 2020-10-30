@@ -111,36 +111,44 @@ AMF_RESULT MetalDevice::CopyBufferToHost(void *pDest, id<MTLBuffer> pSourceHandl
 
 AMF_RESULT MetalDevice::CopyBufferFromHost(id<MTLBuffer> pDestHandle, size_t dstOffset, const void *pSource, size_t size, bool blocking)
 {
-    id<MTLBuffer> tmpBuffer = [m_device newBufferWithLength:size options:MTLResourceStorageModeShared];
-    memcpy(tmpBuffer.contents, pSource, size);
-
-    id<MTLCommandBuffer> commandBuffer = [m_defaultCommandQueue commandBuffer];
-    if (commandBuffer == nil)
+    @autoreleasepool
     {
-        NSLog(@"Failed to find the process function.");
-        return AMF_FAIL;
+        id<MTLBuffer> tmpBuffer = [m_device newBufferWithLength:size options:MTLResourceStorageModeShared];
+        memcpy(tmpBuffer.contents, pSource, size);
+
+        id<MTLCommandBuffer> commandBuffer = [m_defaultCommandQueue commandBuffer];
+        if (commandBuffer == nil)
+        {
+            NSLog(@"Failed to create command buffer.");
+
+            return AMF_FAIL;
+        }
+
+        id <MTLBlitCommandEncoder> blitCommandEncoder = [commandBuffer blitCommandEncoder];
+        [blitCommandEncoder
+            copyFromBuffer: tmpBuffer
+            sourceOffset: 0
+            toBuffer: pDestHandle
+            destinationOffset: dstOffset
+            size: size
+            ];
+
+        [blitCommandEncoder endEncoding];
+        [commandBuffer addCompletedHandler:
+            ^(id<MTLCommandBuffer> cb)
+            {
+                //NSLog(@"CopyBufferFromHost finished");
+                //TODO: cleanup
+            }
+            ];
+
+        [commandBuffer commit];
+        if (blocking)
+        {
+            [commandBuffer waitUntilCompleted];
+        }
     }
 
-    id <MTLBlitCommandEncoder> blitCommandEncoder = [commandBuffer blitCommandEncoder];
-    [blitCommandEncoder
-        copyFromBuffer: tmpBuffer
-        sourceOffset: 0
-        toBuffer: pDestHandle
-        destinationOffset: dstOffset
-        size: size
-    ];
-
-    [blitCommandEncoder endEncoding];
-    [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> cb) {
-        NSLog(@"CopyBufferFromHost finished");
-        //TODO: cleanup
-    }];
-
-    [commandBuffer commit];
-    if (blocking)
-    {
-        [commandBuffer waitUntilCompleted];
-    }
     return AMF_OK;
 }
 
