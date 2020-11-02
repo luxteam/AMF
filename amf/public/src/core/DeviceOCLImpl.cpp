@@ -421,12 +421,21 @@ AMF_RESULT AMFDeviceOCLImpl::CopyBufferFromHost(void* pDestHandle, amf_size dstO
 
 AMF_RESULT AMFDeviceOCLImpl::FillBuffer(void* pDestHandle, amf_size dstOffset, amf_size dstSize, const void* pSourcePattern, amf_size patternSize)
 {
-    int err = clEnqueueFillBuffer(m_command_queue, (cl_mem)pDestHandle, pSourcePattern, patternSize, dstOffset, dstSize, 0, NULL, NULL);
+    int err = CL_SUCCESS;
+    cl_event event = clCreateUserEvent((cl_context)m_computeDevice->GetNativeContext(), &err);
+    if (err != CL_SUCCESS)
+    {
+        printf("Error: Failed to clCreateUserEvent(FillBuffer)! Code = %d\n", err);
+        return AMF_FAIL;
+    }
+    err = clEnqueueFillBuffer(m_command_queue, (cl_mem)pDestHandle, pSourcePattern, patternSize, dstOffset, dstSize, 0, NULL, NULL);
     if (err != CL_SUCCESS)
     {
         printf("Error: Failed to clEnqueueFillBuffer! Code = %d\n", err);
         return AMF_FAIL;
     }
+    err = clWaitForEvents(1, &event);
+
     return AMF_OK;
 }
 
