@@ -77,14 +77,25 @@ endif()
 if(OpenCL_INCLUDE_DIR AND (OpenCL_LIBRARIES OR AMF_CORE_STATIC))
   message("${AMF_NAME}> OpenCL paths was set externally")
 
-  get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
+  #test the ${OpenCL_INCLUDE_DIR} is not an absolute path
+  if(NOT IS_ABSOLUTE ${OpenCL_INCLUDE_DIR})
+    #test amf are included from other project
+    if(NOT ${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+      get_filename_component(Path_To_OpenCL "${CMAKE_SOURCE_DIR}/${OpenCL_INCLUDE_DIR}" ABSOLUTE)
+    #assume that amf are builden from itself
+    else()
+      get_filename_component(Path_To_OpenCL "${CMAKE_CURRENT_SOURCE_DIR}/${OpenCL_INCLUDE_DIR}" ABSOLUTE)
+    endif()
+  else()
+    get_filename_component(Path_To_OpenCL ${OpenCL_INCLUDE_DIR} ABSOLUTE)
+  endif()
+
   message("${AMF_NAME}> OpenCL_INCLUDE_DIRS: " ${Path_To_OpenCL})
-
-  include_directories(${Path_To_OpenCL})
-
   if(NOT AMF_CORE_STATIC AND OpenCL_LIBRARIES)
     message("${AMF_NAME}> OpenCL_LIBRARIES: " ${OpenCL_LIBRARIES})
   endif()
+
+  include_directories(${Path_To_OpenCL})
 else()
   find_package(OpenCL REQUIRED)
 
@@ -104,7 +115,6 @@ else()
     message("${AMF_NAME}> OpenCL_LIBRARY: ${OpenCL_LIBRARY}")
 
     include_directories(${OpenCL_INCLUDE_DIR})
-    #ADD_DEFINITIONS(-DCL_TARGET_OPENCL_VERSION=120)
   endif()
 endif()
 
