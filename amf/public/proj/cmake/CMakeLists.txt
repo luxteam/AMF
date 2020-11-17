@@ -127,7 +127,7 @@ set(
 if(WIN32)
   list(APPEND LOADER_SOURCES ../../common/Windows/ThreadWindows.cpp)
 else()
-  list(APPEND LOADER_SOURCES ../../common/Linux/ThreadLinux.cpp)
+  list(APPEND LOADER_SOURCES ../../common/Unix/ThreadUnix.cpp)
 endif()
 
 set(
