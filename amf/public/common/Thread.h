@@ -104,7 +104,7 @@ extern "C"
 #endif
 
     amf_handle  AMF_CDECL_CALL amf_create_shared_memory(const char * name, bool * created = nullptr);
-    bool        AMF_CDECL_CALL amf_delete_shared_memory(const char * name);
+    bool        AMF_CDECL_CALL amf_delete_shared_memory(amf_handle handle);
 }
 
 namespace amf

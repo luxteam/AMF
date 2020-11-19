@@ -81,13 +81,13 @@ extern "C" void AMF_STD_CALL amf_debug_trace(const wchar_t* text);
 
 void perror(const char* errorModule)
 {
-    char buf[128];
+    char buffer[256] = {};
 #if defined(__ANDROID__)
-    strerror_r(errno, buf, sizeof(buf));
-    fprintf(stderr, "%s: %s", buf, errorModule);
+    strerror_r(errno, buffer, 256);
+    fprintf(stderr, "\n%s: %s\n", buffer, errorModule);
 #else
-    /*char* err = */strerror_r(errno, buf, sizeof(buf));
-    fprintf(stderr, "%s: %s", buf, errorModule);
+    /*char* err = */strerror_r(errno, buffer, 256);
+    fprintf(stderr, "\n%s: %s\n", buffer, errorModule);
 #endif
 
     exit(1);
@@ -298,24 +298,29 @@ bool AMF_STD_CALL amf_wait_for_event_timeout(amf_handle hevent, amf_ulong ulTime
     return amf_wait_for_event_int(hevent, ulTimeout, false);
 }
 
-/*
-struct NamedSharedHandleInfo
+struct SharedMemoryDescriptor
 {
-    amf_handle  Handle      = nullptr;
-    size_t      NameLength  = 0;
-    wchar_t *   Name        = nullptr;
+    int                 Handle      = 0;
+    size_t              NameSize    = 0;
+    char *              SharedName  = nullptr;
 
-    void Fill()
-    (
-        const char * name,
-        size_t nameLength
-    )
+    SharedMemoryDescriptor(
+        int             handle,
+        size_t          nameSize,
+        const char *    sharedName
+        ):
+        Handle          (handle),
+        NameSize        (nameSize),
+        SharedName      (new char[nameSize + 1])
     {
-        NamedSharedHandleInfo *info = new(sharedAddress) NamedSharedHandleInfo();
-        info->NameLength = name.le
-        info->Name'
+        strncpy(SharedName, sharedName, nameSize);
     }
-};*/
+
+    virtual ~SharedMemoryDescriptor()
+    {
+        delete [] SharedName;
+    }
+};
 
 amf_handle AMF_STD_CALL amf_create_shared_memory(const char * name, bool * created)
 {
@@ -332,7 +337,7 @@ amf_handle AMF_STD_CALL amf_create_shared_memory(const char * name, bool * creat
     //reset errno
     errno = 0;
 
-    int sharedMemoryDescriptor = 0;
+    int sharedMemoryDescriptor = shm_open(name, O_RDWR, 0660);
 
     //try to open existing shared memory
     if((ENOENT == errno) || (-1 == sharedMemoryDescriptor))
@@ -360,14 +365,41 @@ amf_handle AMF_STD_CALL amf_create_shared_memory(const char * name, bool * creat
         }
     }
 
-    int *handle(new int(sharedMemoryDescriptor));
+    SharedMemoryDescriptor *description = new SharedMemoryDescriptor(
+        sharedMemoryDescriptor,
+        strlen(name),
+        name
+        );
 
-    return amf_handle(handle);
+    if(!description)
+    {
+        shm_unlink(name);
+    }
+
+    return amf_handle(description);
 }
 
-bool AMF_CDECL_CALL amf_delete_shared_memory(const char * name)
+bool AMF_CDECL_CALL amf_delete_shared_memory(amf_handle handle)
 {
-    return 0 == shm_unlink(name);
+    SharedMemoryDescriptor *sharedMemoryDescriptor(
+        reinterpret_cast<SharedMemoryDescriptor *>(handle)
+        );
+
+    if(!sharedMemoryDescriptor)
+    {
+        perror("Internal error");
+
+        return false;
+    }
+
+    bool deleted = 0 == shm_unlink(sharedMemoryDescriptor->SharedName);
+
+    if(deleted)
+    {
+        delete sharedMemoryDescriptor;
+    }
+
+    return deleted;
 }
 
 //----------------------------------------------------------------------------------------
@@ -395,11 +427,13 @@ amf_handle AMF_STD_CALL amf_create_mutex(bool initially_owned, const wchar_t* na
             return nullptr;
         }
 
-        int sharedMemoryDescriptor(*((int *)handle));
+        SharedMemoryDescriptor *sharedMemoryDescriptor(
+            reinterpret_cast<SharedMemoryDescriptor *>(handle)
+            );
 
         size_t demandedInfoSize = sizeof(amf_handle) + nameMultibyte.length();
 
-        int result = ftruncate(sharedMemoryDescriptor, demandedInfoSize);
+        int result = ftruncate(sharedMemoryDescriptor->Handle, demandedInfoSize);
 
         if(created && (0 != result))
         {
@@ -414,7 +448,7 @@ amf_handle AMF_STD_CALL amf_create_mutex(bool initially_owned, const wchar_t* na
             demandedInfoSize,
             PROT_READ|PROT_WRITE,
             MAP_SHARED,
-            sharedMemoryDescriptor,
+            sharedMemoryDescriptor->Handle,
             0
             );
 
