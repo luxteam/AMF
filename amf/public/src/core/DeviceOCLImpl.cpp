@@ -271,11 +271,9 @@ AMF_RESULT AMFComputeDeviceOCLImpl::CreateCompute(void* reserved, AMFCompute** p
     commandQueue = clCreateCommandQueue(m_context, m_deviceID, NULL, &status);
 #endif
 
-    if (!commandQueue)
-    {
-        printf("Error: Failed to create a commands Queue!\n");
-        return AMF_FAIL;
-    }
+    AMF_RETURN_IF_CL_FAILED(status, L"Error: Failed to create a commands queue");
+    AMF_RETURN_IF_FALSE(nullptr != commandQueue, AMF_FAIL, L"Error: Failed to create a commands queue");
+
     AMFComputeOCLImpl* computeOCL = new AMFComputeOCLImpl(m_platformID, m_deviceID, m_pContext, m_context, commandQueue);
     *ppCompute = computeOCL;
     (*ppCompute)->Acquire();
