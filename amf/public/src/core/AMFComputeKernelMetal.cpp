@@ -48,7 +48,7 @@ AMF_RESULT    AMFComputeKernelMetal::SetArgInt32(amf_size index, amf_int32 data)
 
 AMF_RESULT    AMFComputeKernelMetal::SetArgInt64(amf_size index, amf_int64 data)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_kernel->SetArgInt64(data, index);
 }
 
 AMF_RESULT    AMFComputeKernelMetal::SetArgFloat(amf_size index, amf_float data)
@@ -68,5 +68,12 @@ AMF_RESULT    AMFComputeKernelMetal::GetCompileWorkgroupSize(amf_size workgroupS
 
 AMF_RESULT    AMFComputeKernelMetal::Enqueue(amf_size dimension, amf_size globalOffset[3], amf_size globalSize[3], amf_size localSize[3])
 {
-    return m_kernel->Enqueue(globalSize, localSize);
+    AMF_RETURN_IF_FALSE(dimension >= 1 && dimension <= 2, AMF_NOT_SUPPORTED);
+    AMF_RETURN_IF_FALSE(globalSize != nullptr, AMF_INVALID_ARG);
+    AMF_RETURN_IF_FALSE(!globalOffset, AMF_NOT_SUPPORTED);
+
+    amf_size globalSizeCorrected[3] = {globalSize[0], dimension > 1 ? globalSize[1] : 1, 1};
+    amf_size localSizeCorrected[3] = {localSize ? localSize[0] : 1, dimension > 1 && localSize ? localSize[1] : 1, 1};
+
+    return m_kernel->Enqueue(globalSizeCorrected, localSizeCorrected);
 }

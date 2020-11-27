@@ -271,11 +271,9 @@ AMF_RESULT AMFComputeDeviceOCLImpl::CreateCompute(void* reserved, AMFCompute** p
     commandQueue = clCreateCommandQueue(m_context, m_deviceID, NULL, &status);
 #endif
 
-    if (!commandQueue)
-    {
-        printf("Error: Failed to create a commands Queue!\n");
-        return AMF_FAIL;
-    }
+    AMF_RETURN_IF_CL_FAILED(status, L"Error: Failed to create a commands queue");
+    AMF_RETURN_IF_FALSE(nullptr != commandQueue, AMF_FAIL, L"Error: Failed to create a commands queue");
+
     AMFComputeOCLImpl* computeOCL = new AMFComputeOCLImpl(m_platformID, m_deviceID, m_pContext, m_context, commandQueue);
     *ppCompute = computeOCL;
     (*ppCompute)->Acquire();
@@ -421,12 +419,31 @@ AMF_RESULT AMFDeviceOCLImpl::CopyBufferFromHost(void* pDestHandle, amf_size dstO
 
 AMF_RESULT AMFDeviceOCLImpl::FillBuffer(void* pDestHandle, amf_size dstOffset, amf_size dstSize, const void* pSourcePattern, amf_size patternSize)
 {
-    int err = clEnqueueFillBuffer(m_command_queue, (cl_mem)pDestHandle, pSourcePattern, patternSize, dstOffset, dstSize, 0, NULL, NULL);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error: Failed to clEnqueueFillBuffer! Code = %d\n", err);
-        return AMF_FAIL;
-    }
+    int error = CL_SUCCESS;
+    cl_event event = clCreateUserEvent((cl_context)m_computeDevice->GetNativeContext(), &error);
+
+    AMF_RETURN_IF_CL_FAILED(
+        error,
+        L"Error: Failed to clCreateUserEvent(FillBuffer)! Code = %d\n",
+        error
+        );
+
+    AMF_RETURN_IF_CL_FAILED(
+        clEnqueueFillBuffer(
+            m_command_queue,
+            (cl_mem)pDestHandle,
+            pSourcePattern,
+            patternSize,
+            dstOffset,
+            dstSize,
+            0,
+            NULL,
+            &event
+            )
+        );
+
+    AMF_RETURN_IF_CL_FAILED(clWaitForEvents(1, &event));
+
     return AMF_OK;
 }
 
@@ -568,7 +585,7 @@ AMF_RESULT AMFComputeOCLImpl::GetKernel(AMF_KERNEL_ID kernelID, AMFComputeKernel
         std::string source(reinterpret_cast<const char *>(&kernelData->data.front()), kernelData->data.size());
 		const char *pointer(source.c_str());
         program = clCreateProgramWithSource((cl_context)GetNativeContext(), 1, &pointer, nullptr, &err);
-        
+
         if (!program || err != CL_SUCCESS)
         {
             printf("Error: Failed to create compute program!\n");

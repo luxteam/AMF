@@ -17,6 +17,11 @@ AMF_RESULT MetalComputeKernelWrapper::SetArgInt32(int32_t value, int index)
     return m_kernel->SetArgInt32(value, index);
 }
 
+AMF_RESULT MetalComputeKernelWrapper::SetArgInt64(int64_t value, int index)
+{
+    return m_kernel->SetArgInt64(value, index);
+}
+
 AMF_RESULT MetalComputeKernelWrapper::SetArgFloat(float value, int index)
 {
     return m_kernel->SetArgFloat(value, index);
@@ -24,7 +29,9 @@ AMF_RESULT MetalComputeKernelWrapper::SetArgFloat(float value, int index)
 
 AMF_RESULT MetalComputeKernelWrapper::GetCompileWorkgroupSize(amf_size workgroupSize[3])
 {
-    MTLSize size = m_kernel->GetCompileWorkgroupSize(workgroupSize[0]);
+    MTLSize size = m_kernel->GetCompileWorkgroupSize(MTLSizeMake(workgroupSize[0],
+                                                                 workgroupSize[1],
+                                                                 workgroupSize[2]));
     workgroupSize[0] = size.width;
     workgroupSize[1] = size.height;
     workgroupSize[2] = size.depth;

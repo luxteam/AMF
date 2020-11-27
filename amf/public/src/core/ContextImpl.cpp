@@ -372,14 +372,22 @@ AMF_RESULT AMFContextImpl::CreateBufferFromOpenCLNative(void *pCLBuffer, amf_siz
 AMF_RESULT AMFContextImpl::GetCompute(AMF_MEMORY_TYPE eMemType, AMFCompute **ppCompute)
 {
 #if defined(__APPLE__) && defined(METAL_SUPPORT)
-
-    if (eMemType == AMF_MEMORY_METAL)
+    if(AMF_MEMORY_METAL == eMemType)
     {
         AMFDeviceMetalImpl* deviceImpl = dynamic_cast<AMFDeviceMetalImpl*>(m_pDeviceMetal.GetPtr());
 
         return deviceImpl->GetComputeDevice()->CreateCompute(nullptr, ppCompute);
     }
+    else
 #endif
+
+    if(AMF_MEMORY_OPENCL == eMemType)
+    {
+        AMFDeviceOCLImpl* deviceImpl = dynamic_cast<AMFDeviceOCLImpl*>(m_pDeviceOCL.GetPtr());
+
+        return deviceImpl->GetComputeDevice()->CreateCompute(nullptr, ppCompute);
+    }
+
     return AMF_NOT_IMPLEMENTED;
 }
 
