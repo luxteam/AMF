@@ -263,6 +263,17 @@ amf_string AMF_STD_CALL amf::amf_from_unicode_to_multibyte(const amf_wstring& st
     result.resize(Utf8BuffSize);
 */
 #else
+    std::mbstate_t state = std::mbstate_t();
+
+    const std::wstring::value_type *input(str.c_str());
+
+    std::size_t length = std::wcsrtombs(nullptr, &input, 0, &state) + 1;
+    std::vector<std::string::value_type> buffer(length);
+    std::wcsrtombs(buffer.data(), &input, buffer.size(), &state);
+
+    result = buffer.data();
+    
+    /*
     amf_size Utf8BuffSize = wcstombs(NULL, pwBuff, 0);
     if(static_cast<std::size_t>(-1) == Utf8BuffSize)
     {
@@ -273,6 +284,8 @@ amf_string AMF_STD_CALL amf::amf_from_unicode_to_multibyte(const amf_wstring& st
     result.resize(Utf8BuffSize);
     Utf8BuffSize = wcstombs(&result[0], pwBuff, Utf8BuffSize);
     result.resize(Utf8BuffSize);
+    */
+    
 #endif
     return result;
 }

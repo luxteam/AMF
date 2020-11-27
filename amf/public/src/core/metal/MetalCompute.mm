@@ -1,19 +1,27 @@
 #include "MetalCompute.h"
+#include "public/common/TraceAdapter.h"
 
-MetalCompute::MetalCompute(id<MTLDevice> device, id<MTLCommandQueue> commandQueue)
- :  m_device(device),
+#define AMF_FACILITY L"MetalCompute"
+
+MetalCompute::MetalCompute(id<MTLDevice> device, id<MTLCommandQueue> commandQueue):
+    m_device(device),
     m_commandQueue(commandQueue)
 {
-    m_commandBuffer = [m_commandQueue commandBuffer];
-    assert(m_commandBuffer != nil);
-    //m_library = [m_device newDefaultLibrary];
+}
+
+MetalCompute::~MetalCompute()
+{
 }
 
 AMF_RESULT MetalCompute::GetKernel(NSString * source, NSString * name, MetalComputeKernel ** kernel)
 {
     NSError* error = nil;
+    MTLCompileOptions * options = [MTLCompileOptions new];
 
-    m_library = [m_device newLibraryWithSource: source options:nil error:&error];
+    if (@available(macOS 10.15, iOS 13.0, *))
+        options.languageVersion = MTLLanguageVersion::MTLLanguageVersion2_2;
+
+    m_library = [m_device newLibraryWithSource: source options:options error:&error];
     if (m_library == nil)
     {
         NSLog(@"Failed to createLibrary from source: %@ %@", error, [error userInfo]);
@@ -36,25 +44,42 @@ AMF_RESULT MetalCompute::GetKernel(NSString * source, NSString * name, MetalComp
         NSLog(@"Failed to created pipeline state object, error %@.", error);
         return AMF_FAIL;
     }
-    id<MTLComputeCommandEncoder> computeEncoder = [m_commandBuffer computeCommandEncoder];
-    if (computeEncoder == nil)
-    {
-        NSLog(@"Failed to created computeEncoder");
-        return AMF_FAIL;
-    }
 
-    (*kernel) = new MetalComputeKernel(computeEncoder, processFunction, processFunctionPSO);
+    std::unique_ptr<MetalComputeKernel> kernelPtr(
+        new MetalComputeKernel(m_commandQueue, processFunction, processFunctionPSO)
+        );
+    AMF_RETURN_IF_FALSE(kernelPtr != nullptr, AMF_FAIL);
+
+    (*kernel) = kernelPtr.get();
+    m_kernelBuffers.push_back(std::move(kernelPtr));
+
     return AMF_OK;
 }
 
 AMF_RESULT MetalCompute::FlushQueue()
 {
-    [m_commandBuffer commit];
+    std::for_each(
+        m_kernelBuffers.begin(),
+        m_kernelBuffers.end(),
+        [](std::unique_ptr<MetalComputeKernel> & buffer)
+        {
+            buffer->FlushQueue();
+        }
+        );
+
     return AMF_OK;
 }
 
 AMF_RESULT MetalCompute::FinishQueue()
 {
-    [m_commandBuffer waitUntilCompleted];
+    std::for_each(
+        m_kernelBuffers.begin(),
+        m_kernelBuffers.end(),
+        [](std::unique_ptr<MetalComputeKernel> & buffer)
+        {
+            buffer->FinishQueue();
+        }
+        );
+
     return AMF_OK;
 }

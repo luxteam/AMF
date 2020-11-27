@@ -237,7 +237,7 @@ AMF_RESULT AMFComputeMetalImpl::FillPlane(AMFPlane *pPlane, const amf_size origi
 
 AMF_RESULT AMFComputeMetalImpl::FillBuffer(AMFBuffer *pBuffer, amf_size dstOffset, amf_size dstSize, const void *pSourcePattern, amf_size patternSize)
 {
-    return AMF_NOT_IMPLEMENTED;
+    return m_device->FillBuffer(pBuffer->GetNative(), dstOffset, dstSize, pSourcePattern, patternSize);
 }
 
 AMF_RESULT AMFComputeMetalImpl::ConvertPlaneToBuffer(AMFPlane *pSrcPlane, AMFBuffer **ppDstBuffer)
@@ -262,7 +262,7 @@ AMF_RESULT AMFComputeMetalImpl::CopyBufferToHost(AMFBuffer *pSrcBuffer, amf_size
 
 AMF_RESULT AMFComputeMetalImpl::CopyBufferFromHost(const void *pSource, amf_size size, AMFBuffer *pDstBuffer, amf_size dstOffsetInBytes, amf_bool blocking)
 {
-    return m_device->CopyBufferFromHost(pDstBuffer, dstOffsetInBytes, pSource, size, blocking);
+    return m_device->CopyBufferFromHost(pDstBuffer->GetNative(), dstOffsetInBytes, pSource, size, blocking);
 }
 
 AMF_RESULT AMFComputeMetalImpl::CopyPlaneToHost(AMFPlane *pSrcPlane, const amf_size origin[], const amf_size region[], void *pDest, amf_size dstPitch, amf_bool blocking)

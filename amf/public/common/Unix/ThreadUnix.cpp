@@ -61,7 +61,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <sys/time.h>
+#include <sys/mman.h>
 
 #if defined(__ANDROID__)
 #include <android/log.h>
@@ -77,16 +79,15 @@ using namespace amf;
 
 extern "C" void AMF_STD_CALL amf_debug_trace(const wchar_t* text);
 
-
 void perror(const char* errorModule)
 {
-    char buf[128];
+    char buffer[256] = {};
 #if defined(__ANDROID__)
-    strerror_r(errno, buf, sizeof(buf));
-    fprintf(stderr, "%s: %s", buf, errorModule);
+    strerror_r(errno, buffer, 256);
+    fprintf(stderr, "\n%s: %s\n", buffer, errorModule);
 #else
-    /*char* err = */strerror_r(errno, buf, sizeof(buf));
-    fprintf(stderr, "%s: %s", buf, errorModule);
+    /*char* err = */strerror_r(errno, buffer, 256);
+    fprintf(stderr, "\n%s: %s\n", buffer, errorModule);
 #endif
 
     exit(1);
@@ -158,7 +159,6 @@ struct MyEvent
 amf_handle AMF_STD_CALL amf_create_event(bool initially_owned, bool manual_reset, const wchar_t* name)
 {
     MyEvent* event = new MyEvent;
-
 
     // Linux does not natively support Named Condition variables
     // so raise an error.
@@ -297,17 +297,214 @@ bool AMF_STD_CALL amf_wait_for_event_timeout(amf_handle hevent, amf_ulong ulTime
 {
     return amf_wait_for_event_int(hevent, ulTimeout, false);
 }
+
+struct SharedMemoryDescriptor
+{
+    int                 Handle      = 0;
+    size_t              NameSize    = 0;
+    char *              SharedName  = nullptr;
+
+    SharedMemoryDescriptor(
+        int             handle,
+        size_t          nameSize,
+        const char *    sharedName
+        ):
+        Handle          (handle),
+        NameSize        (nameSize),
+        SharedName      (new char[nameSize + 1])
+    {
+        strncpy(SharedName, sharedName, nameSize);
+    }
+
+    virtual ~SharedMemoryDescriptor()
+    {
+        delete [] SharedName;
+    }
+};
+
+amf_handle AMF_STD_CALL amf_create_shared_memory(const char * name, bool * created)
+{
+    //name of the named shared memory
+    //must be started by '/' does not have any more '/'
+    //and have at least 1 character
+    if((*name != '/') || (strlen(name) < 2) || strchr(name + 1, L'/'))
+    {
+        perror("Invalid shared object name");
+
+        return nullptr;
+    }
+
+    //reset errno
+    errno = 0;
+
+    int sharedMemoryDescriptor = shm_open(name, O_RDWR, 0660);
+
+    //try to open existing shared memory
+    if((ENOENT == errno) || (-1 == sharedMemoryDescriptor))
+    {
+        //create new shared memory
+        sharedMemoryDescriptor = shm_open(name, O_RDWR|O_CREAT, 0660);
+
+        if(-1 == sharedMemoryDescriptor)
+        {
+            perror("Failed to open shared memory for named mutex");
+
+            return nullptr;
+        }
+
+        if(created)
+        {
+            *created = true;
+        }
+    }
+    else
+    {
+        if(created)
+        {
+            *created = false;
+        }
+    }
+
+    SharedMemoryDescriptor *description = new SharedMemoryDescriptor(
+        sharedMemoryDescriptor,
+        strlen(name),
+        name
+        );
+
+    if(!description)
+    {
+        shm_unlink(name);
+    }
+
+    return amf_handle(description);
+}
+
+bool AMF_CDECL_CALL amf_delete_shared_memory(amf_handle handle)
+{
+    SharedMemoryDescriptor *sharedMemoryDescriptor(
+        reinterpret_cast<SharedMemoryDescriptor *>(handle)
+        );
+
+    if(!sharedMemoryDescriptor)
+    {
+        perror("Internal error");
+
+        return false;
+    }
+
+    bool deleted = 0 == shm_unlink(sharedMemoryDescriptor->SharedName);
+
+    if(deleted)
+    {
+        delete sharedMemoryDescriptor;
+    }
+
+    return deleted;
+}
+
 //----------------------------------------------------------------------------------------
 amf_handle AMF_STD_CALL amf_create_mutex(bool initially_owned, const wchar_t* name)
 {
-    pthread_mutex_t* mutex = new pthread_mutex_t;
-    pthread_mutex_t mutex_tmp = PTHREAD_MUTEX_INITIALIZER;
-    *mutex = mutex_tmp;
+    amf_handle mutex = nullptr;
+
+    if(!name)
+    {
+        pthread_mutex_t* mutex = new pthread_mutex_t;
+        pthread_mutex_t mutex_tmp = PTHREAD_MUTEX_INITIALIZER;
+        *mutex = mutex_tmp;
+    }
+    else
+    {
+        //name converted to mbs
+        auto nameMultibyte = amf_from_unicode_to_multibyte(name);
+
+        bool created = false;
+
+        amf_handle handle(amf_create_shared_memory(nameMultibyte.c_str(), &created));
+
+        if(!handle)
+        {
+            return nullptr;
+        }
+
+        SharedMemoryDescriptor *sharedMemoryDescriptor(
+            reinterpret_cast<SharedMemoryDescriptor *>(handle)
+            );
+
+        size_t demandedInfoSize = sizeof(amf_handle) + nameMultibyte.length();
+
+        int result = ftruncate(sharedMemoryDescriptor->Handle, demandedInfoSize);
+
+        if(created && (0 != result))
+        {
+            perror("Failed to resize shared memory for named mutex");
+
+            return nullptr;
+        }
+
+        // Map pthread mutex into the shared memory.
+        void * sharedAddress = mmap(
+            nullptr,
+            demandedInfoSize,
+            PROT_READ|PROT_WRITE,
+            MAP_SHARED,
+            sharedMemoryDescriptor->Handle,
+            0
+            );
+
+        if(sharedAddress == MAP_FAILED)
+        {
+            perror("Failed to store mutex in shared memory");
+
+            return nullptr;
+        }
+
+        if(created)
+        {
+            pthread_mutexattr_t attributes = {0};
+            if(pthread_mutexattr_init(&attributes))
+            {
+                perror("Failed to init mutex");
+
+                return nullptr;
+            }
+
+            if(pthread_mutexattr_setpshared(&attributes, PTHREAD_PROCESS_SHARED))
+            {
+                perror("Failed to share mutex");
+
+                return nullptr;
+            }
+
+#if !defined(__APPLE__) && !defined(__MACOSX)
+            if(pthread_mutexattr_setrobust(&attributes, PTHREAD_MUTEX_ROBUST))
+            {
+                perror("Failed to set mutex robust");
+
+                return nullptr;
+            }
+#endif
+
+            mutex = (pthread_mutex_t *)sharedAddress;
+
+            if(pthread_mutex_init((pthread_mutex_t *)mutex, &attributes))
+            {
+                perror("Failed to init mutex");
+
+                return mutex;
+            }
+        }
+        else
+        {
+            mutex = (pthread_mutex_t *)sharedAddress;
+        }
+    }
 
     if(initially_owned)
     {
-        pthread_mutex_lock(mutex);
+        pthread_mutex_lock((pthread_mutex_t *)mutex);
     }
+
     return (amf_handle)mutex;
 }
 //----------------------------------------------------------------------------------------
@@ -355,30 +552,80 @@ int pthread_mutex_timedlock1(pthread_mutex_t* mutex, const struct timespec* time
 bool AMF_STD_CALL amf_wait_for_mutex(amf_handle hmutex, unsigned long timeout)
 {
     pthread_mutex_t* mutex = (pthread_mutex_t*)hmutex;
+
     if(timeout == AMF_INFINITE)
     {
-        return pthread_mutex_lock(mutex) == 0;
+        auto lockResult = pthread_mutex_lock(mutex);
+
+        if(EOWNERDEAD == lockResult)
+        {
+#ifndef __APPLE__
+            lockResult = pthread_mutex_consistent(mutex);
+
+            if(0 != lockResult)
+            {
+                perror("Could not lock mutex");
+
+                return false;
+            }
+#else
+            return false;
+#endif
+        }
+
+        return true;
     }
-    // ulTimeout is in milliseconds
-    timespec wait_time; //absolute time
-    clock_gettime(CLOCK_REALTIME, &wait_time);
+    else
+    {
+        int result = 0;
 
-    wait_time.tv_sec += timeout / 1000;      /* Seconds */
-    wait_time.tv_nsec += (timeout - (timeout / 1000) * 1000) * 1000;     /* Nanoseconds [0 .. 999999999] */
+#ifndef __APPLE__
 
-#ifdef __APPLE__
-    int* tmpptr = NULL;
-    *tmpptr = 1;
-//    assert(false); // not supported
-    return false;
+        // ulTimeout is in milliseconds
+        timespec wait_time; //absolute time
+        clock_gettime(CLOCK_REALTIME, &wait_time);
 
-#else
+        wait_time.tv_sec += timeout / 1000;      /* Seconds */
+        wait_time.tv_nsec += (timeout - (timeout / 1000) * 1000) * 1000;     /* Nanoseconds [0 .. 999999999] */
+
 #if defined(__ANDROID__)
-    return pthread_mutex_timedlock1(mutex, &wait_time) == 0;
+        result = pthread_mutex_timedlock1(mutex, &wait_time) == 0;
 #else
-    return pthread_mutex_timedlock(mutex, &wait_time) == 0;
+        result = pthread_mutex_timedlock(mutex, &wait_time) == 0;
 #endif
+
+#else
+        uint64_t total = 0;
+
+        do
+        {
+            result = pthread_mutex_trylock(mutex);
+
+            if(result == EBUSY)
+            {
+                timespec ts = {0};
+                ts.tv_sec = 0;
+                ts.tv_sec = 10000000;
+
+                /* Sleep for 10,000,000 nanoseconds before trying again. */
+                int status = -1;
+                while(status == -1)
+                {
+                    status = nanosleep(&ts, &ts);
+
+                    total += ts.tv_sec;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+        while(result != 0 && (total < timeout));
 #endif
+
+	    return result ? true : false;
+    }
 }
 //----------------------------------------------------------------------------------------
 bool AMF_STD_CALL amf_release_mutex(amf_handle hmutex)
@@ -550,7 +797,22 @@ void* AMF_STD_CALL amf_aligned_alloc(size_t count, size_t alignment)
 #ifndef __APPLE__
     return memalign(alignment, count);
 #else
-    throw "Error: not implemented!";
+    //test power of two and more then zero
+    if(alignment && (alignment & (alignment - 1)))
+    {
+        throw std::runtime_error("Error: alignment is not a power of 2!");
+    }
+
+    void *address(nullptr);
+
+    auto result = posix_memalign(&address, alignment, count);
+
+    if(!result)
+    {
+        return address;
+    }
+
+    return nullptr;
 #endif
 }
 //----------------------------------------------------------------------------------------
