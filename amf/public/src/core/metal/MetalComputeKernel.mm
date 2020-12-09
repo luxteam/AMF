@@ -85,7 +85,58 @@ AMF_RESULT MetalComputeKernel::Enqueue(MTLSize workgroupSize, MTLSize sizeInWork
     m_workgroupSize = workgroupSize;
     m_sizeInWorkgroup = sizeInWorkgroup;
 
-    return AMF_OK;
+    @autoreleasepool
+    {
+        id<MTLCommandBuffer> commandBuffer = [mCommandQueue commandBuffer];
+        id<MTLComputeCommandEncoder> encoder = [commandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
+
+        [commandBuffer addScheduledHandler:
+            ^(id<MTLCommandBuffer> commandBuffer)
+            {
+                NSLog(@"scheduled");
+            }
+            ];
+        [commandBuffer addCompletedHandler:
+            ^(id<MTLCommandBuffer> commandBuffer)
+            {
+                NSLog(@"completed");
+            }
+            ];
+
+        [encoder setComputePipelineState:m_processFunctionPSO];
+
+        for(MetalComputeKernel::Bindind & bind : m_bindings)
+        {
+            switch(bind.type)
+            {
+            case Bindind::Buffer:
+                [encoder setBuffer:bind.buffer offset:0 atIndex:bind.index];
+                break;
+            case MetalComputeKernel::Bindind::Int32:
+                [encoder setBytes:&bind.value32 length:sizeof(int32_t) atIndex:bind.index];
+                break;
+            case MetalComputeKernel::Bindind::Int64:
+                [encoder setBytes:&bind.value64 length:sizeof(int64_t) atIndex:bind.index];
+                break;
+            case MetalComputeKernel::Bindind::Float:
+                [encoder setBytes:&bind.valueFloat length:sizeof(float) atIndex:bind.index];
+                break;
+            default:
+                break;
+            }
+        }
+
+        [encoder
+            dispatchThreads:m_workgroupSize
+            threadsPerThreadgroup:m_sizeInWorkgroup];
+        [encoder endEncoding];
+
+        [commandBuffer enqueue];
+        [commandBuffer commit];
+        [commandBuffer waitUntilCompleted];
+    }
+
+    return Reset();
 }
 
 AMF_RESULT MetalComputeKernel::FlushQueue()
@@ -95,6 +146,7 @@ AMF_RESULT MetalComputeKernel::FlushQueue()
 
 AMF_RESULT MetalComputeKernel::FinishQueue()
 {
+    /*
     @autoreleasepool {
         id<MTLCommandBuffer> commandBuffer = [mCommandQueue commandBuffer];
         id<MTLComputeCommandEncoder> encoder = [commandBuffer computeCommandEncoderWithDispatchType:MTLDispatchTypeConcurrent];
@@ -127,6 +179,9 @@ AMF_RESULT MetalComputeKernel::FinishQueue()
         [commandBuffer waitUntilCompleted];
     }
     return Reset();
+    */
+
+    return AMF_OK;
 }
 
 AMF_RESULT MetalComputeKernel::Reset()
