@@ -145,7 +145,7 @@ AMF_RESULT AMFComputeKernelOCL::Enqueue(
     )
 {
     AMF_RETURN_IF_FALSE(
-        !globalOffset,//|| !globalOffset[0] && !globalOffset[1] && !globalOffset[2],
+        !globalOffset || (!globalOffset[0] && !globalOffset[1] && !globalOffset[2]),
         AMF_NOT_SUPPORTED,
         L"Error: offsets are not supported!"
         );
@@ -154,7 +154,7 @@ AMF_RESULT AMFComputeKernelOCL::Enqueue(
         m_command_queue,
         m_kernel,
         dimension,
-        &globalOffset[0],
+        nullptr, //reference documentation say that globalOffset must be NULL
         &globalSize[0],
         &localSize[0],
         0,
