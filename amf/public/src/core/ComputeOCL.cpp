@@ -137,31 +137,52 @@ void *AMFComputeKernelOCL::GetNative()
     return m_kernel;
 }
 
-AMF_RESULT AMFComputeKernelOCL::Enqueue(amf_size dimension, amf_size globalOffset[], amf_size globalSize[], amf_size localSize[])
+AMF_RESULT AMFComputeKernelOCL::Enqueue(
+    amf_size dimension,
+    amf_size globalOffset[3],
+    amf_size globalSize[3],
+    amf_size localSize[3]
+    )
 {
-    int err = 0;
-    err = clEnqueueNDRangeKernel(m_command_queue, m_kernel, dimension, &globalOffset[0], &globalSize[0], &localSize[0], 0, NULL, NULL);
-    if (err)
-    {
-        printf("Error: Failed to execute kernel!\n", err);
-        return AMF_FAIL;
-    }
+    AMF_RETURN_IF_FALSE(
+        !globalOffset || (!globalOffset[0] && !globalOffset[1] && !globalOffset[2]),
+        AMF_NOT_SUPPORTED,
+        L"Error: offsets are not supported!"
+        );
+
+    int error = clEnqueueNDRangeKernel(
+        m_command_queue,
+        m_kernel,
+        dimension,
+        nullptr, //reference documentation say that globalOffset must be NULL
+        &globalSize[0],
+        &localSize[0],
+        0,
+        NULL,
+        NULL
+        );
+    AMF_RETURN_IF_CL_FAILED(error, L"Error: Failed to execute kernel!");
+
     return AMF_OK;
 }
 
-AMF_RESULT AMFComputeKernelOCL::GetCompileWorkgroupSize(amf_size workgroupSize[])
+AMF_RESULT AMFComputeKernelOCL::GetCompileWorkgroupSize(amf_size workgroupSizes[3])
 {
-    int err = 0;
-    amf_size res[3];
-    err = clGetKernelWorkGroupInfo(m_kernel, m_deviceID, CL_KERNEL_WORK_GROUP_SIZE, 3 * sizeof(size_t), &res, NULL);
-    if (err != CL_SUCCESS)
-    {
-        printf("Error: Failed to retrieve kernel work group info! %d\n", err);
-        return AMF_FAIL;
-    }
-    workgroupSize[0] = res[0];
-    workgroupSize[1] = res[1];
-    workgroupSize[2] = res[2];
+    size_t returnedWorkgroupSizes[3] = {0};
+    size_t returnedSize(0);
+    cl_int returnedCode = clGetKernelWorkGroupInfo(
+        m_kernel,
+        m_deviceID,
+        CL_KERNEL_WORK_GROUP_SIZE,
+        3 * sizeof(size_t),
+        returnedWorkgroupSizes,
+        &returnedSize
+        );
+    AMF_RETURN_IF_CL_FAILED(returnedCode, L"Error: failed to retrieve kernel work group info!");
+
+    workgroupSizes[0] = amf_size(returnedWorkgroupSizes[0]);
+    workgroupSizes[1] = amf_size(returnedWorkgroupSizes[1]);
+    workgroupSizes[2] = amf_size(returnedWorkgroupSizes[2]);
 
     return AMF_OK;
 }

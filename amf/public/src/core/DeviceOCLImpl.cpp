@@ -175,7 +175,7 @@ cl_program CreateProgramFromBinary(
     if (errNum != CL_SUCCESS)
 	{
 		// Determine the reason for the error
-		char buildLog[16384];
+		char buildLog[16384] = {0};
 		clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG,
 			sizeof(buildLog), buildLog, NULL);
 		std::cerr << "Error in program: " << std::endl << buildLog << std::endl;
