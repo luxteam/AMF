@@ -3,8 +3,4 @@
 	url = https://github.com/luxteam/OpenAMF_Autotests.git
 [submodule "Thirdparty/OpenCL-Headers"]
 	path = Thirdparty/OpenCL-Headers
-<<<<<<< HEAD
 	url = https://github.com/KhronosGroup/OpenCL-Headers.git
-=======
-	url = https://github.com/KhronosGroup/OpenCL-Headers.git
->>>>>>> bb8cd615e0be561229d6cb905ce5059d06007521
