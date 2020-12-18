@@ -2,7 +2,7 @@
 #include "DeviceHostImpl.h"
 #include "DeviceOCLImpl.h"
 
-#if defined(__APPLE__) && defined(METAL_SUPPORT)
+#if defined(__APPLE__) && defined(ENABLE_METAL)
     #include "AMFDeviceMetalImpl.h"
     #include "AMFComputeFactoryMetal.h"
 #endif
@@ -173,7 +173,7 @@ AMF_RESULT AMFContextImpl::UnlockOpenCL()
 
 AMF_RESULT AMF_STD_CALL AMFContextImpl::InitMetal()
 {
-#if defined(__APPLE__) && defined(METAL_SUPPORT)
+#if defined(__APPLE__) && defined(ENABLE_METAL)
 
     //m_pDeviceMetal = new AMFDeviceMetalImpl(this, nullptr, this->);
 
@@ -211,7 +211,7 @@ AMF_RESULT AMF_STD_CALL AMFContextImpl::InitMetal()
 
 AMF_RESULT AMFContextImpl::GetMetalComputeFactory(AMFComputeFactory **ppFactory)
 {
-#if defined(__APPLE__) && defined(METAL_SUPPORT)
+#if defined(__APPLE__) && defined(ENABLE_METAL)
     AMFComputeFactoryMetal *computeFactoryMetal = new AMFComputeFactoryMetal(this);
     computeFactoryMetal->Init();
     *ppFactory = computeFactoryMetal;
@@ -223,7 +223,7 @@ AMF_RESULT AMFContextImpl::GetMetalComputeFactory(AMFComputeFactory **ppFactory)
 
 AMF_RESULT AMFContextImpl::InitMetalEx(AMFComputeDevice *pDevice)
 {
-#if defined(__APPLE__) && defined(METAL_SUPPORT)
+#if defined(__APPLE__) && defined(ENABLE_METAL)
     AMFComputeDeviceMetalImpl* deviceImpl = dynamic_cast<AMFComputeDeviceMetalImpl*>(pDevice);
 
     AMFDeviceImpl* device = deviceImpl->GetDevice();
@@ -371,7 +371,7 @@ AMF_RESULT AMFContextImpl::CreateBufferFromOpenCLNative(void *pCLBuffer, amf_siz
 
 AMF_RESULT AMFContextImpl::GetCompute(AMF_MEMORY_TYPE eMemType, AMFCompute **ppCompute)
 {
-#if defined(__APPLE__) && defined(METAL_SUPPORT)
+#if defined(__APPLE__) && defined(ENABLE_METAL)
     if(AMF_MEMORY_METAL == eMemType)
     {
         AMFDeviceMetalImpl* deviceImpl = dynamic_cast<AMFDeviceMetalImpl*>(m_pDeviceMetal.GetPtr());
