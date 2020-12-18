@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+﻿cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -160,7 +160,7 @@ set(
   ../../src/core/AMFConsoleTraceWriter.cpp
 )
 
-if(APPLE AND METAL_SUPPORT)
+if(APPLE AND ENABLE_METAL)
   list(APPEND LIBRARY_SOURCES ../../src/core/AMFDeviceMetalImpl.cpp)
   list(APPEND LIBRARY_SOURCES ../../src/core/AMFComputeKernelMetal.cpp)
   list(APPEND LIBRARY_SOURCES ../../src/core/AMFComputeFactoryMetal.cpp)
@@ -252,7 +252,7 @@ set(
       ../../src/core/AMFConsoleTraceWriter.h
       )
 
-  if(APPLE AND METAL_SUPPORT)
+  if(APPLE AND ENABLE_METAL)
     list(APPEND LIBRARY_HEADERS ../../src/core/AMFDeviceMetalImpl.h)
     list(APPEND LIBRARY_HEADERS ../../src/core/AMFComputeKernelMetal.h)
     list(APPEND LIBRARY_HEADERS ../../src/core/AMFComputeFactoryMetal.h)
@@ -312,12 +312,12 @@ else()
     )
 endif()
 
-if(APPLE AND METAL_SUPPORT)
+if(APPLE AND ENABLE_METAL)
   add_subdirectory(../../src/core/Metal AMF_Metal)
 endif()
 
-if (APPLE AND METAL_SUPPORT)
-  ADD_DEFINITIONS(-DMETAL_SUPPORT=1)
+if (APPLE AND ENABLE_METAL)
+  ADD_DEFINITIONS(-DENABLE_METAL=1)
   target_link_libraries(${AMF_NAME} AMF_Metal)
 endif()
 
@@ -331,7 +331,7 @@ if(NOT WIN32)
       target_compile_options(${AMF_NAME} PUBLIC -g)
     endif()
 
-    if (APPLE OR XCODE AND METAL_SUPPORT)
+    if (APPLE OR XCODE AND ENABLE_METAL)
       message("Link ${AMF_NAME} with Metal")
       set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} \
         -framework AppKit \
